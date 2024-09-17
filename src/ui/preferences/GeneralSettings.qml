@@ -328,7 +328,7 @@ Rectangle {
                                     Layout.preferredWidth:  _comboFieldWidth
                                     fact:                   _videoSettings.udpPort
                                     visible:                udpPortLabel.visible
-                                }
+                                }                               
 
                                 QGCLabel {
                                     id:         rtspUrlLabel
@@ -1122,6 +1122,7 @@ Rectangle {
                         }
                     }
 
+                    /*
                     Item { width: 1; height: _margins; visible: brandImageSectionLabel.visible }
                     QGCLabel {
                         id:         brandImageSectionLabel
@@ -1197,6 +1198,7 @@ Rectangle {
                             }
                         }
                     }
+                    */
 
                     Item { width: 1; height: _margins }
                     QGCLabel {

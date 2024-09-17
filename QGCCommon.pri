@@ -160,7 +160,7 @@ StableBuild {
     message("Stable Build")
 } else {
     message("Daily Build")
-    DEFINES += DAILY_BUILD
+    # DEFINES += DAILY_BUILD
 }
 
 # Set the QGC version from git
@@ -216,9 +216,9 @@ AndroidBuild {
     greaterThan(PATCH_VERSION, 99) {
         error(Patch version larger than 2 digits: $${PATCH_VERSION})
     }
-    greaterThan(DEV_VERSION, 999) {
-        error(Dev version larger than 3 digits: $${DEV_VERSION})
-    }
+    #greaterThan(DEV_VERSION, 999) {
+    #    error(Dev version larger than 3 digits: $${DEV_VERSION})
+    #}
 
     lessThan(PATCH_VERSION, 10) {
         PATCH_VERSION = $$join(PATCH_VERSION, "", "0")
@@ -236,6 +236,10 @@ AndroidBuild {
     # Use a shell command to strip "rc" and everything after it.
     # Otherwise rc version tags will break the Android build.
     PATCH_VERSION = $$system(echo $$PATCH_VERSION | sed 's/rc.*//')
+
+    # Strip herelink from dev version.
+    DEV_VERSION = $$system(echo $$DEV_VERSION | sed 's/herelink//')
+
 
     # Bitness for android version number is 66/34 instead of 64/32 in because of a required version number bump screw-up ages ago
     equals(ANDROID_TARGET_ARCH, arm64-v8a)  {

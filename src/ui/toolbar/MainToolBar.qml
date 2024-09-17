@@ -131,8 +131,10 @@ Rectangle {
         property string _userBrandImageOutdoor: QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor.value
         property bool   _userBrandingIndoor:    _userBrandImageIndoor.length != 0
         property bool   _userBrandingOutdoor:   _userBrandImageOutdoor.length != 0
-        property string _brandImageIndoor:      brandImageIndoor()
-        property string _brandImageOutdoor:     brandImageOutdoor()
+        property string _brandImageIndoor:      "/qmlimages/echomav.png"
+        property string _brandImageOutdoor:     "/qmlimages/echomav_outdoor.png"
+        //property string _brandImageIndoor:      brandImageIndoor()
+        //property string _brandImageOutdoor:     brandImageOutdoor()
 
         function brandImageIndoor() {
             if (_userBrandingIndoor) {

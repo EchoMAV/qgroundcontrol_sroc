@@ -45,6 +45,20 @@ Item {
 
     property double _thermalHeightFactor: 0.85 //-- TODO
 
+    Rectangle {
+        id:             noVideo
+        anchors.fill:   parent
+        color:          Qt.rgba(0,0,0,0.75)
+        visible:        !(QGroundControl.videoManager.decoding)
+        QGCLabel {
+            text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
+            font.family:        ScreenTools.demiboldFontFamily
+            color:              "white"
+            font.pointSize:     !QGroundControl.videoManager.fullScreen ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
+            anchors.centerIn:   parent
+        }
+    }
+/*
         Image {
             id:             noVideo
             anchors.fill:   parent
@@ -70,7 +84,7 @@ Item {
                 anchors.centerIn:   parent
             }
         }
-
+*/
     Rectangle {
         id:             videoBackground
         anchors.fill:   parent

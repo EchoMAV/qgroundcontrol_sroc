@@ -504,6 +504,7 @@ void Vehicle::_commonInit()
     _loadJoystickSettings();
 
     _gimbalController = new GimbalController(_mavlink, this);
+
 }
 
 Vehicle::~Vehicle()

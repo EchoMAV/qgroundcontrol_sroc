@@ -342,6 +342,17 @@ Rectangle {
                 font.pointSize:     ScreenTools.largeFontPointSize
                 visible:            _modeIndicatorPhotoMode
             }
+            QGCButton {
+                enabled:   true
+                text:       qsTr("Day/IR")
+                width:      100
+                onClicked: {
+                    if (_mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_BLEND || _mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_OFF || _mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_PIP)
+                        _mavlinkCamera.thermalMode = QGCCameraControl.THERMAL_FULL
+                    else
+                        _mavlinkCamera.thermalMode = QGCCameraControl.THERMAL_OFF
+                }
+            }
             QGCLabel {
                 Layout.alignment:   Qt.AlignHCenter
                 text:               _mavlinkCamera ? qsTr("Free Space: ") + _mavlinkCamera.storageFreeStr : ""
@@ -366,6 +377,32 @@ Rectangle {
 
             ColumnLayout {
                 spacing: _margins
+
+
+
+                GridLayout {
+                    Layout.margins: ScreenTools.defaultFontPixelWidth
+                    columns:        3
+                    visible:        false  // QGroundControl.corePlugin.isHerelink  //we are not using herelink video sources
+
+                    QGCLabel {
+                        text:               qsTr("video source used: HDMI ") + (_videoStreamSettings.cameraId.rawValue + 1)
+                        Layout.columnSpan:  3
+                    }
+                    QGCLabel {
+                        text:               qsTr("Select: ")
+                    }
+                    QGCButton {
+                        text:               qsTr("HDMI 1")
+                        enabled:            !QGroundControl.videoManager.videoStreamControl.settingInProgress
+                        onClicked:          _videoStreamSettings.cameraId.rawValue = 0
+                    }
+                    QGCButton {
+                        text:               qsTr("HDMI 2")
+                        enabled:            !QGroundControl.videoManager.videoStreamControl.settingInProgress
+                        onClicked:          _videoStreamSettings.cameraId.rawValue = 1
+                    }
+                }
 
                 GridLayout {
                     id:     gridLayout

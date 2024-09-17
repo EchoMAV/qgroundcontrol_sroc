@@ -138,6 +138,13 @@
     "enumValues":       "0,1,2,3,4,5",
     "default":           0,
     "qgcRebootRequired": true
+},
+{
+    "name":             "cameraId",
+    "shortDesc":        "Camera ID",
+    "longDesc":         "Camera ID used for video streaming.",
+    "type":             "uint32",
+    "default":          0
 }
 ]
 }
