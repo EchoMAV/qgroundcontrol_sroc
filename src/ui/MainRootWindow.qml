@@ -535,6 +535,16 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Critical Vehicle Message Popup
 
+    Timer {
+        id: delayTimer
+        interval: 500
+        running: true
+        repeat: false
+        onTriggered: {
+            criticalVehicleMessagePopup.close()
+        }
+    }
+
     function showCriticalVehicleMessage(message) {
         indicatorPopup.close()
         if (criticalVehicleMessagePopup.visible || QGroundControl.videoManager.fullScreen) {
@@ -545,6 +555,7 @@ ApplicationWindow {
             criticalVehicleMessagePopup.criticalVehicleMessage      = message
             criticalVehicleMessagePopup.dropMessageIndicatorOnClose = false
             criticalVehicleMessagePopup.open()
+            delayTimer()
         }
     }
 
