@@ -209,6 +209,8 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     _commonInit();
 
+    _initServos();
+
     _vehicleLinkManager->_addLink(link);
 
     // Set video stream to udp if running ArduSub and Video is disabled
@@ -487,6 +489,8 @@ void Vehicle::_commonInit()
             _addFactGroup(i.value(), i.key());
         }
     }
+
+
 
     _flightDistanceFact.setRawValue(0);
     _flightTimeFact.setRawValue(0);
@@ -2738,6 +2742,149 @@ void Vehicle::guidedModeRTL(bool smartRTL)
     }
     _firmwarePlugin->guidedModeRTL(this, smartRTL);
 }
+
+void Vehicle::_initServos()
+{
+    //set servo 7 and 8 low at start
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog) << "_sendMavCommandFromList: primary link gone!";
+        return;
+    }
+    mavlink_message_t msg;
+    mavlink_msg_command_long_pack_chan(_mavlink->getSystemId(),
+                                       _mavlink->getComponentId(),
+                                       sharedLink->mavlinkChannel(),
+                                       &msg,
+                                       _id,
+                                       defaultComponentId(),   // target component
+                                       MAV_CMD_DO_SET_SERVO,    // command id
+                                       0, //first transmission
+                                       7, //servo 7
+                                       1000,
+                                       0,
+                                       0,
+                                       0,
+                                       0,
+                                       0);
+
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+    _servo7High = false;
+    emit servo7Changed(_servo7High);
+
+    memset(&msg, 0, sizeof(msg));
+    mavlink_msg_command_long_pack_chan(_mavlink->getSystemId(),
+                                       _mavlink->getComponentId(),
+                                       sharedLink->mavlinkChannel(),
+                                       &msg,
+                                       _id,
+                                       defaultComponentId(),   // target component
+                                       MAV_CMD_DO_SET_SERVO,    // command id
+                                       0, //first transmission
+                                       8, //servo 8
+                                       0,
+                                       0,
+                                       0,
+                                       0,
+                                       0,
+                                       0);
+
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+    _servo8High = false;
+    emit servo8Changed(_servo8High);
+}
+
+void Vehicle::toggleServo7()
+{
+    mavlink_message_t msg;
+
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog) << "_sendMavCommandFromList: primary link gone!";
+        return;
+    }
+    int servoValue = 2000;
+    if (_servo7High)
+    {
+        qDebug() << "Setting Servo 7 to 1000";
+        servoValue = 1000;
+        _servo7High = false;
+        emit servo7Changed(false);
+    }
+    else
+    {
+        qDebug() << "Setting Servo 7 to 2000";
+        servoValue = 2000;
+        _servo7High = true;
+        emit servo7Changed(true);
+    }
+
+    mavlink_msg_command_long_pack_chan(_mavlink->getSystemId(),
+                                       _mavlink->getComponentId(),
+                                       sharedLink->mavlinkChannel(),
+                                       &msg,
+                                       _id,
+                                       defaultComponentId(),   // target component
+                                       MAV_CMD_DO_SET_SERVO,    // command id
+                                       0, //first transmission
+                                       7, //servo 7
+                                       servoValue,
+                                       0,
+                                       0,
+                                       0,
+                                       0,
+                                       0);
+
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+
+
+}
+
+void Vehicle::toggleServo8()
+{
+    qDebug() << "Toggling Servo 8";
+    mavlink_message_t msg;
+
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog) << "_sendMavCommandFromList: primary link gone!";
+        return;
+    }
+    int servoValue = 2000;
+    if (_servo8High)
+    {
+        qDebug() << "Setting Servo 8 to 1000";
+        servoValue = 1000;
+        _servo8High = false;
+        emit servo8Changed(false);
+    }
+    else
+    {
+        qDebug() << "Setting Servo 8 to 2000";
+        servoValue = 2000;
+        _servo8High = true;
+        emit servo8Changed(true);
+    }
+
+    mavlink_msg_command_long_pack_chan(_mavlink->getSystemId(),
+                                       _mavlink->getComponentId(),
+                                       sharedLink->mavlinkChannel(),
+                                       &msg,
+                                       _id,
+                                       defaultComponentId(),   // target component
+                                       MAV_CMD_DO_SET_SERVO,    // command id
+                                       0, //first transmission
+                                       8, //servo 8
+                                       servoValue,
+                                       0,
+                                       0,
+                                       0,
+                                       0,
+                                       0);
+
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+}
+
 
 void Vehicle::guidedModeLand()
 {

@@ -7,7 +7,7 @@ import QGroundControl.ScreenTools 1.0
 
 Button {
     id:             control
-    hoverEnabled:   !ScreenTools.isMobile
+    hoverEnabled:   true
     topPadding:     _verticalPadding
     bottomPadding:  _verticalPadding
     leftPadding:    _horizontalPadding
@@ -15,18 +15,21 @@ Button {
     focusPolicy:    Qt.ClickFocus
 
     property bool   primary:        false                               ///< primary button for a group of buttons
+    property bool   warning:        false                               ///< A type of button used for important or critical functions
+    property bool   caution:        false                               ///< A type of button used for semi-critical functions
+    property bool   recommended:          false                         ///< A type of button used for recommended functions (when more than one is available)
     property real   pointSize:      ScreenTools.defaultFontPointSize    ///< Point size for button text
     property bool   showBorder:     qgcPal.globalTheme === QGCPalette.Light
     property bool   iconLeft:       false
     property real   backRadius:     0
     property real   heightFactor:   0.5
-    property real   fontWeight:     Font.Normal // default for qml Text
+    property bool   highlight:      false
     property string iconSource
 
     property alias wrapMode:            text.wrapMode
     property alias horizontalAlignment: text.horizontalAlignment
 
-    property bool   _showHighlight:     pressed | hovered | checked
+    property bool   _showHighlight:     pressed | hovered | checked | highlight
 
     property int _horizontalPadding:    ScreenTools.defaultFontPixelWidth
     property int _verticalPadding:      Math.round(ScreenTools.defaultFontPixelHeight * heightFactor)
@@ -42,7 +45,9 @@ Button {
         border.color:   qgcPal.buttonText
         color:          _showHighlight ?
                             qgcPal.buttonHighlight :
-                            (primary ? qgcPal.primaryButton : qgcPal.button)
+                            (primary ? qgcPal.primaryButton :
+                                       (warning ? qgcPal.colorRed
+                                                : (caution ? qgcPal.colorOrange : (recommended ? qgcPal.colorGreen : qgcPal.button))))
     }
 
     contentItem: Item {
@@ -72,7 +77,6 @@ Button {
             text:                   control.text
             font.pointSize:         pointSize
             font.family:            ScreenTools.normalFontFamily
-            font.weight:            fontWeight
             color:                  _showHighlight ?
                                         qgcPal.buttonHighlightText :
                                         (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)

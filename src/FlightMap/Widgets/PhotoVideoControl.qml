@@ -353,6 +353,25 @@ Rectangle {
                         _mavlinkCamera.thermalMode = QGCCameraControl.THERMAL_OFF
                 }
             }
+            QGCButton {
+                enabled:   true
+                text:       qsTr("Toggle 7")
+                width:      100
+                warning:    _activeVehicle ? _activeVehicle.servo7High : false
+                onClicked: {
+                    _activeVehicle.toggleServo7()
+                }
+
+            }
+            QGCButton {
+                enabled:   true
+                text:       qsTr("Toggle 8")
+                width:      100
+                warning:    _activeVehicle ? _activeVehicle.servo8High : false
+                onClicked: {
+                    _activeVehicle.toggleServo8()
+                }
+            }
             QGCLabel {
                 Layout.alignment:   Qt.AlignHCenter
                 text:               _mavlinkCamera ? qsTr("Free Space: ") + _mavlinkCamera.storageFreeStr : ""
