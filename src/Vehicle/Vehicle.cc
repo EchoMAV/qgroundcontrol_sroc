@@ -66,6 +66,10 @@ QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 #define SET_HOME_TERRAIN_ALT_MAX 10000
 #define SET_HOME_TERRAIN_ALT_MIN -500
 
+#ifndef __USE_RC_CHANNELS_OVERRIDE_COMMAND__
+#define __USE_RC_CHANNELS_OVERRIDE_COMMAND__ 1
+#endif
+
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
 const char* Vehicle::_settingsGroup =               "Vehicle%1";        // %1 replaced with mavlink system id
@@ -2752,6 +2756,25 @@ void Vehicle::_initServos()
         return;
     }
     mavlink_message_t msg;
+#if __USE_RC_CHANNELS_OVERRIDE_COMMAND__
+    constexpr uint16_t const servo7Value=1000;
+    constexpr uint16_t const servo8Value=1000;
+    constexpr uint16_t const uintMaxMin1=std::numeric_limits<uint16_t>::max()-1;
+    mavlink_msg_rc_channels_override_pack(_mavlink->getSystemId(),
+                                          _mavlink->getComponentId(),
+                                          &msg,
+                                          _id, //target system
+                                          defaultComponentId(), //target component
+                                          0, 0, 0, 0, 0, 0,
+                                          servo7Value,//channel 7
+                                          servo8Value,//channel 8
+                                          uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1);
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+    _servo7High = false;
+    emit servo7Changed(_servo7High);
+    _servo8High = false;
+    emit servo8Changed(_servo8High);
+#else
     mavlink_msg_command_long_pack_chan(_mavlink->getSystemId(),
                                        _mavlink->getComponentId(),
                                        sharedLink->mavlinkChannel(),
@@ -2767,11 +2790,9 @@ void Vehicle::_initServos()
                                        0,
                                        0,
                                        0);
-
     sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     _servo7High = false;
     emit servo7Changed(_servo7High);
-
     memset(&msg, 0, sizeof(msg));
     mavlink_msg_command_long_pack_chan(_mavlink->getSystemId(),
                                        _mavlink->getComponentId(),
@@ -2788,10 +2809,10 @@ void Vehicle::_initServos()
                                        0,
                                        0,
                                        0);
-
     sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     _servo8High = false;
     emit servo8Changed(_servo8High);
+#endif
 }
 
 void Vehicle::toggleServo7()
@@ -2803,6 +2824,43 @@ void Vehicle::toggleServo7()
         qCDebug(VehicleLog) << "_sendMavCommandFromList: primary link gone!";
         return;
     }
+#if __USE_RC_CHANNELS_OVERRIDE_COMMAND__
+    uint16_t servo7Value=2000;
+    uint16_t servo8Value=2000;
+    if(_servo7High)
+    {
+        qDebug() << "Setting Servo 7 to 1000";
+        servo7Value = 1000;
+        _servo7High = false;
+        emit servo7Changed(false);
+    }
+    else
+    {
+        qDebug() << "Setting Servo 7 to 2000";
+        servo7Value = 2000;
+        _servo7High = true;
+        emit servo7Changed(true);
+    }
+    if(_servo8High)
+    {
+        servo8Value = 2000;
+    }
+    else
+    {
+        servo8Value = 1000;
+    }
+    constexpr uint16_t const uintMaxMin1=std::numeric_limits<uint16_t>::max()-1;
+    mavlink_msg_rc_channels_override_pack(_mavlink->getSystemId(),
+                                          _mavlink->getComponentId(),
+                                          &msg,
+                                          _id, //target system
+                                          defaultComponentId(), //target component
+                                          0, 0, 0, 0, 0, 0,
+                                          servo7Value,//channel 7
+                                          servo8Value,//channel 8
+                                          uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1);
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+#else
     int servoValue = 2000;
     if (_servo7High)
     {
@@ -2836,6 +2894,7 @@ void Vehicle::toggleServo7()
                                        0);
 
     sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+#endif
 
 
 }
@@ -2850,6 +2909,43 @@ void Vehicle::toggleServo8()
         qCDebug(VehicleLog) << "_sendMavCommandFromList: primary link gone!";
         return;
     }
+#if __USE_RC_CHANNELS_OVERRIDE_COMMAND__
+    uint16_t servo7Value=2000;
+    uint16_t servo8Value=2000;
+    if(_servo8High)
+    {
+        qDebug() << "Setting Servo 8 to 1000";
+        servo8Value = 1000;
+        _servo8High = false;
+        emit servo8Changed(false);
+    }
+    else
+    {
+        qDebug() << "Setting Servo 8 to 2000";
+        servo8Value = 2000;
+        _servo8High = true;
+        emit servo8Changed(true);
+    }
+    if(_servo7High)
+    {
+        servo7Value = 2000;
+    }
+    else
+    {
+        servo7Value = 1000;
+    }
+    constexpr uint16_t const uintMaxMin1=std::numeric_limits<uint16_t>::max()-1;
+    mavlink_msg_rc_channels_override_pack(_mavlink->getSystemId(),
+                                          _mavlink->getComponentId(),
+                                          &msg,
+                                          _id, //target system
+                                          defaultComponentId(), //target component
+                                          0, 0, 0, 0, 0, 0,
+                                          servo7Value,//channel 7
+                                          servo8Value,//channel 8
+                                          uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1);
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+#else
     int servoValue = 2000;
     if (_servo8High)
     {
@@ -2883,6 +2979,7 @@ void Vehicle::toggleServo8()
                                        0);
 
     sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+#endif
 }
 
 
