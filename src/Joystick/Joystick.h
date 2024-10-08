@@ -221,6 +221,8 @@ signals:
     void gripperAction              (GRIPPER_ACTIONS gripperAction);
     void landingGearDeploy          ();
     void landingGearRetract         ();
+    void toggleRC7                  ();
+    void toggleRC8                  ();
 
 protected:
     void    _setDefaultCalibration  ();
@@ -357,6 +359,8 @@ private:
     static const char* _buttonActionGripperRelease;
     static const char* _buttonActionLandingGearDeploy;
     static const char* _buttonActionLandingGearRetract;
+    static const char* _buttonActionToggleRC7;
+    static const char* _buttonActionToggleRC8;
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);

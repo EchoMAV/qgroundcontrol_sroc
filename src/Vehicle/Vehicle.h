@@ -260,9 +260,9 @@ public:
     Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
     Q_PROPERTY(QGCMapCircle*    orbitMapCircle  READ orbitMapCircle     CONSTANT)
 
-    //Servo States
-    Q_PROPERTY(bool     servo7High                  READ servo7High                                         NOTIFY servo7Changed)
-    Q_PROPERTY(bool     servo8High                  READ servo8High                                         NOTIFY servo8Changed)
+    //RC States
+    Q_PROPERTY(bool     rc7High                  READ rc7High                                         NOTIFY rc7Changed)
+    Q_PROPERTY(bool     rc8High                  READ rc8High                                         NOTIFY rc8Changed)
 
     // Vehicle state used for guided control
     Q_PROPERTY(bool     flying                  READ flying                                         NOTIFY flyingChanged)       ///< Vehicle is flying
@@ -355,11 +355,11 @@ public:
 
     Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust);
 
-    /// Command vehicle to toggle servo7
-    Q_INVOKABLE void toggleServo7(void);
+    /// Command vehicle to toggle RC 7
+    Q_INVOKABLE void toggleRC7(void);
 
-    /// Command vehicle to toggle servo8
-    Q_INVOKABLE void toggleServo8(void);
+    /// Command vehicle to toggle RC 8
+    Q_INVOKABLE void toggleRC8(void);
 
     /// Command vehicle to return to launch
     Q_INVOKABLE void guidedModeRTL(bool smartRTL);
@@ -620,8 +620,8 @@ public:
     uint            messagesSent                () const{ return _messagesSent; }
     uint            messagesLost                () const{ return _messagesLost; }
     bool            flying                      () const { return _flying; }
-    bool            servo7High                  () const { return _servo7High; }
-    bool            servo8High                  () const { return _servo8High; }
+    bool            rc7High                     () const { return _rc7High; }
+    bool            rc8High                     () const { return _rc8High; }
     bool            landing                     () const { return _landing; }
     bool            guidedMode                  () const;
     bool            vtolInFwdFlight             () const { return _vtolInFwdFlight; }
@@ -949,8 +949,8 @@ signals:
     void armedChanged                   (bool armed);
     void flightModeChanged              (const QString& flightMode);
     void flyingChanged                  (bool flying);
-    void servo7Changed                  (bool servo7High);
-    void servo8Changed                  (bool servo8High);
+    void rc7Changed                     (bool rc7High);
+    void rc8Changed                     (bool rc8High);
     void landingChanged                 (bool landing);
     void guidedModeChanged              (bool guidedMode);
     void vtolInFwdFlightChanged         (bool vtolInFwdFlight);
@@ -1127,7 +1127,7 @@ private:
     void _handleMavlinkLoggingDataAcked (mavlink_message_t& message);
     void _ackMavlinkLogData             (uint16_t sequence);
     void _commonInit                    ();
-    void _initServos                    ();
+    void _initRC                    ();
     void _setupAutoDisarmSignalling     ();
     void _setCapabilities               (uint64_t capabilityBits);
     void _updateArmed                   (bool armed);
@@ -1180,8 +1180,8 @@ private:
     int             _rcRSSI = 255;
     double          _rcRSSIstore = 255;
     bool            _flying = false;
-    bool            _servo7High = false;
-    bool            _servo8High = false;
+    bool            _rc7High = false;
+    bool            _rc8High = false;
     bool            _landing = false;
     bool            _vtolInFwdFlight = false;
     uint32_t        _onboardControlSensorsPresent = 0;
