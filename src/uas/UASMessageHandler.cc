@@ -204,7 +204,8 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     emit textMessageCountChanged(count);
 
     if (_showErrorsInToolbar && message->severityIsError()) {
-        _app->showCriticalVehicleMessage(message->getText());
+        //lets not show the critical message popup for production verions
+        //_app->showCriticalVehicleMessage(message->getText());
     }
 }
 
