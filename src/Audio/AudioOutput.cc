@@ -10,6 +10,7 @@
 #include <QApplication>
 #include <QDebug>
 #include <QRegularExpression>
+#include <QMediaPlayer>
 
 #include "AudioOutput.h"
 #include "QGCApplication.h"
@@ -19,6 +20,7 @@
 AudioOutput::AudioOutput(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool   (app, toolbox)
     , _tts      (nullptr)
+    , _mp       (nullptr)
 {
     if (qgcApp()->runningUnitTests()) {
         // Cloud based unit tests don't have speech capabilty. If you try to crank up
@@ -27,6 +29,7 @@ AudioOutput::AudioOutput(QGCApplication* app, QGCToolbox* toolbox)
     }
 
     _tts = new QTextToSpeech(this);
+    _mp  = new QMediaPlayer(this);
 
     //-- Force TTS engine to English as all incoming messages from the autopilot
     //   are in English and not localized.
@@ -34,6 +37,22 @@ AudioOutput::AudioOutput(QGCApplication* app, QGCToolbox* toolbox)
     _tts->setLocale(QLocale("en_US"));
 #endif
     connect(_tts, &QTextToSpeech::stateChanged, this, &AudioOutput::_stateChanged);
+
+    connect(_mp, &QMediaPlayer::stateChanged, [this](QMediaPlayer::State newState){
+        switch(newState)
+        {
+        case QMediaPlayer::State::StoppedState:
+            _stateChanged(QTextToSpeech::State::Ready);
+            break;
+        case QMediaPlayer::State::PausedState:
+            _stateChanged(QTextToSpeech::State::Paused);
+            break;
+        case QMediaPlayer::State::PlayingState:
+            _stateChanged(QTextToSpeech::State::Speaking);
+            break;
+        }
+    });
+
 }
 
 void AudioOutput::say(const QString& inText)
@@ -48,12 +67,13 @@ void AudioOutput::say(const QString& inText)
     if (!muted && !qgcApp()->runningUnitTests()) {
         QString text = fixTextMessageForAudio(inText);
         if(_tts->state() == QTextToSpeech::Speaking) {
-            if(!_texts.contains(text)) {
+            QPair<QString,bool> saythis(text,true);
+            if(!_toPlay.contains(saythis)) {
                 //-- Some arbitrary limit
-                if(_texts.size() > 20) {
-                    _texts.removeFirst();
+                if(_toPlay.size() > 20) {
+                    _toPlay.removeFirst();
                 }
-                _texts.append(text);
+                _toPlay.append(saythis);
             }
         } else {
             _tts->say(text);
@@ -61,13 +81,51 @@ void AudioOutput::say(const QString& inText)
     }
 }
 
+
+void AudioOutput::playFromFile(const QString& file)
+{
+    if (!_mp) {
+        qDebug() << "play " << file;
+        return;
+    }
+
+    bool muted = qgcApp()->toolbox()->settingsManager()->appSettings()->audioMuted()->rawValue().toBool();
+    muted |= qgcApp()->runningUnitTests();
+    if (!muted && !qgcApp()->runningUnitTests()) {
+        if(_tts->state() == QTextToSpeech::Speaking) {
+            QPair<QString,bool> saythis(file,false);
+            if(!_toPlay.contains(saythis)) {
+                //-- Some arbitrary limit
+                if(_toPlay.size() > 20) {
+                    _toPlay.removeFirst();
+                }
+                _toPlay.append(saythis);
+            }
+        } else {
+            _mp->setMedia(QUrl::fromLocalFile(file));
+            _mp->setVolume(100); //TODO add a volume setting
+            _mp->play();
+        }
+    }
+}
+
+
 void AudioOutput::_stateChanged(QTextToSpeech::State state)
 {
     if(state == QTextToSpeech::Ready) {
-        if(_texts.size()) {
-            QString text = _texts.first();
-            _texts.removeFirst();
-            _tts->say(text);
+        if(_toPlay.size()) {
+            QPair<QString,bool> playThis = _toPlay.first();
+            _toPlay.removeFirst();
+            if(playThis.second)
+            {
+                  _tts->say(playThis.first);
+            }
+            else
+            {
+                _mp->setMedia(QUrl::fromLocalFile(playThis.first));
+                _mp->setVolume(100); //TODO add a volume setting
+                _mp->play();
+            }
         }
     }
 }

@@ -12,12 +12,14 @@
 #include <QObject>
 #include <QTimer>
 #include <QThread>
-#include <QStringList>
+#include <QList>
+#include <QPair>
 #include <QTextToSpeech>
 
 #include "QGCToolbox.h"
 
 class QGCApplication;
+class QMediaPlayer;
 
 /// Text to Speech Interface
 class AudioOutput : public QGCTool
@@ -32,12 +34,15 @@ public:
 public slots:
     /// Convert string to speech output and say it
     void            say                     (const QString& text);
+    /// Play media from a file
+    void            playFromFile            (const QString& file);
 
 private slots:
     void            _stateChanged           (QTextToSpeech::State state);
 
 protected:
     QTextToSpeech*  _tts;
-    QStringList     _texts;
+    QMediaPlayer*   _mp;
+    QList<QPair<QString,bool>> _toPlay; //second bool: true = say, false = play file
 };
 

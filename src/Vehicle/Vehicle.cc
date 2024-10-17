@@ -2470,6 +2470,10 @@ void Vehicle::_firstRallyPointLoadComplete()
     _initialConnectStateMachine->advance();
 }
 
+#ifndef __BITCHIN_BETTY__
+#define __BITCHIN_BETTY__
+#endif
+
 void Vehicle::_parametersReady(bool parametersReady)
 {
     qCDebug(VehicleLog) << "_parametersReady" << parametersReady;
@@ -2489,6 +2493,16 @@ void Vehicle::_parametersReady(bool parametersReady)
 
     emit haveMRSpeedLimChanged();
     emit haveFWSpeedLimChanged();
+#if defined(__BITCHIN_BETTY__)
+    if(parametersReady)
+    {
+        //qgcApp()->toolbox()->audioOutput()->playFromFile("resources/audio/betty start fixed.mp3");
+        qgcApp()->toolbox()->audioOutput()->say("Reactor online");
+        qgcApp()->toolbox()->audioOutput()->say("Sensors online");
+        qgcApp()->toolbox()->audioOutput()->say("Weapons online");
+        qgcApp()->toolbox()->audioOutput()->say("All systems nominal");
+    }
+#endif
 }
 
 void Vehicle::_sendQGCTimeToVehicle()
