@@ -3152,6 +3152,8 @@ bool Vehicle::_commandCanBeDuplicated(MAV_CMD command)
         return true;
     case MAV_CMD_SET_CAMERA_ZOOM:
         return true;
+    case MAV_CMD_SET_CAMERA_MODE:
+        return true;
     default:
         return false;
     }
