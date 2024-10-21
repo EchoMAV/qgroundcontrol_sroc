@@ -49,6 +49,7 @@ public:
         AUTOROTATE  = 26,
         AUTO_RTL    = 27,
         TURTLE      = 28,
+        OPTICAL_FLOW = 99,
     };
 
     APMCopterMode(uint32_t mode, bool settable);
