@@ -408,6 +408,7 @@ QGCCameraManager::_requestCameraInfo(int compID, int tryCount)
                 false,                                  // showError
                 1,                                      // Do Request
                 72);                                    // MONARK ID
+        }
     }
 }
 
