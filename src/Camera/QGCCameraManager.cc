@@ -399,14 +399,15 @@ QGCCameraManager::_requestCameraInfo(int compID, int tryCount)
                 compID,                                 // target component
                 MAV_CMD_REQUEST_MESSAGE,                // command id
                 false,                                  // showError
-                MAVLINK_MSG_ID_CAMERA_INFORMATION);     // msgid
+                MAVLINK_MSG_ID_CAMERA_INFORMATION,      // msgid
+                72);                                    // MONARK ID
         } else {
             _vehicle->sendMavCommand(
                 compID,                                 // target component
                 MAV_CMD_REQUEST_CAMERA_INFORMATION,     // command id
                 false,                                  // showError
-                1);                                     // Do Request
-        }
+                1,                                      // Do Request
+                72);                                    // MONARK ID
     }
 }
 
