@@ -1336,25 +1336,25 @@ contains (DEFINES, QGC_GST_TAISYNC_DISABLED) {
 
 #-------------------------------------------------------------------------------------
 # Microhard
-QGC_GST_MICROHARD_DISABLED
 contains (DEFINES, QGC_GST_MICROHARD_DISABLED) {
     DEFINES -= QGC_GST_MICROHARD_ENABLED
     message("Microhard disabled")
 } else {
-    contains (DEFINES, QGC_GST_MICROHARD_ENABLED) {
-        INCLUDEPATH += \
-            src/Microhard
+    DEFINES += QGC_GST_MICROHARD_ENABLED  # Ensure this line is present
+    message("Microhard enabled")
 
-        HEADERS += \
-            src/Microhard/MicrohardManager.h \
-            src/Microhard/MicrohardHandler.h \
-            src/Microhard/MicrohardSettings.h \
+    INCLUDEPATH += \
+        src/Microhard
 
-        SOURCES += \
-            src/Microhard/MicrohardManager.cc \
-            src/Microhard/MicrohardHandler.cc \
-            src/Microhard/MicrohardSettings.cc \
-    }
+    HEADERS += \
+        src/Microhard/MicrohardManager.h \
+        src/Microhard/MicrohardHandler.h \
+        src/Microhard/MicrohardSettings.h \
+
+    SOURCES += \
+        src/Microhard/MicrohardManager.cc \
+        src/Microhard/MicrohardHandler.cc \
+        src/Microhard/MicrohardSettings.cc \
 }
 
 #-------------------------------------------------------------------------------------
