@@ -109,7 +109,7 @@ if (GST_FOUND)
         -DQGC_GST_STREAMING
     )
 
-    option(QGC_GST_MICROHARD_ENABLED "Enable microhard" OFF)
+    option(QGC_GST_MICROHARD_ENABLED "Enable microhard" ON)
     option(QGC_GST_TAISYNC_ENABLED "Enable taisyng" OFF)
 else()
 	if (QGC_GST_MICROHARD_ENABLED OR QGC_GST_TAISYNC_ENABLED)

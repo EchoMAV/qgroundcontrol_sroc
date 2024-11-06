@@ -11,7 +11,6 @@ QMAKE_PROJECT_DEPTH = 0 # undocumented qmake flag to force absolute paths in mak
 
 # These are disabled until proven correct
 DEFINES += QGC_GST_TAISYNC_DISABLED
-DEFINES += QGC_GST_MICROHARD_DISABLED
 
 exists($${OUT_PWD}/qgroundcontrol.pro) {
     error("You must use shadow build (e.g. mkdir build; cd build; qmake ../qgroundcontrol.pro).")
@@ -306,6 +305,8 @@ include(src/QtLocationPlugin/QGCLocationPlugin.pri)
 
 # Until pairing can be made to work cleanly on all OS it is turned off
 DEFINES+=QGC_DISABLE_PAIRING
+
+DEFINES+=QGC_GST_MICROHARD_ENABLED
 
 # Pairing
 contains (DEFINES, QGC_DISABLE_PAIRING) {
@@ -1336,26 +1337,18 @@ contains (DEFINES, QGC_GST_TAISYNC_DISABLED) {
 
 #-------------------------------------------------------------------------------------
 # Microhard
-QGC_GST_MICROHARD_DISABLED
-contains (DEFINES, QGC_GST_MICROHARD_DISABLED) {
-    DEFINES -= QGC_GST_MICROHARD_ENABLED
-    message("Microhard disabled")
-} else {
-    contains (DEFINES, QGC_GST_MICROHARD_ENABLED) {
-        INCLUDEPATH += \
-            src/Microhard
+INCLUDEPATH += \
+    src/Microhard
 
-        HEADERS += \
-            src/Microhard/MicrohardManager.h \
-            src/Microhard/MicrohardHandler.h \
-            src/Microhard/MicrohardSettings.h \
+HEADERS += \
+    src/Microhard/MicrohardManager.h \
+    src/Microhard/MicrohardHandler.h \
+    src/Microhard/MicrohardSettings.h \
 
-        SOURCES += \
-            src/Microhard/MicrohardManager.cc \
-            src/Microhard/MicrohardHandler.cc \
-            src/Microhard/MicrohardSettings.cc \
-    }
-}
+SOURCES += \
+    src/Microhard/MicrohardManager.cc \
+    src/Microhard/MicrohardHandler.cc \
+    src/Microhard/MicrohardSettings.cc \
 
 #-------------------------------------------------------------------------------------
 # Video Streaming
