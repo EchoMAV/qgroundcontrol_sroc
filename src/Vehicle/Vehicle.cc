@@ -7,6 +7,13 @@
  *
  ****************************************************************************/
 
+#include <QtCore/QTimer>
+#include <QFile>
+#include <QTextStream>
+#include <QDir>
+#include <QDateTime>
+#include <QDebug>
+
 #include <QTime>
 #include <QDateTime>
 #include <QLocale>
@@ -185,7 +192,12 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _efiFactGroup                 (this)
     , _terrainFactGroup             (this)
     , _terrainProtocolHandler       (new TerrainProtocolHandler(this, &_terrainFactGroup, this))
+    , _cot_timer(new QTimer(this)) // Timer for CoT XML packet generation
 {
+    // Setup the CoT timer to trigger every second
+    connect(_cot_timer, &QTimer::timeout, this, &Vehicle::_generateCotPacket);
+    _cot_timer->start(1000); // Trigger every 1000 ms (1 second)
+
     _linkManager = _toolbox->linkManager();
 
     connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadJoystickSettings);
@@ -343,6 +355,34 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
 
     _offlineFirmwareTypeSettingChanged(_firmwareType);  // This adds correct terrain capability bit
     _firmwarePlugin->initializeVehicle(this);
+}
+
+void Vehicle::_generateCotPacket()
+{
+    // Generate a simple XML CoT packet as a dummy packet
+    QString cotPacket = QStringLiteral(
+                            "<event version=\"2.0\" uid=\"dummy_uid\" type=\"a-f-G-U-C\" "
+                            "how=\"m-g\" time=\"%1\" start=\"%1\" stale=\"%2\">"
+                            "<point lat=\"34.0001\" lon=\"-118.0001\" hae=\"100.0\" ce=\"50.0\" le=\"50.0\"/>"
+                            "</event>\n"
+                            ).arg(QDateTime::currentDateTimeUtc().toString(Qt::ISODate))
+                            .arg(QDateTime::currentDateTimeUtc().addSecs(60).toString(Qt::ISODate)); // 60s expiry time
+
+    // Print to console
+    qDebug() << "Generated CoT Packet:\n" << cotPacket;
+
+    // Define file path on desktop
+    QString desktopPath = QDir::homePath() + "/Desktop/cot_packets.txt";
+    QFile file(desktopPath);
+
+    // Write to file, appending each packet
+    if (file.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream out(&file);
+        out << cotPacket;
+        file.close();
+    } else {
+        qCWarning(VehicleLog) << "Could not open file on desktop to write CoT packet";
+    }
 }
 
 void Vehicle::trackFirmwareVehicleTypeChanges(void)
@@ -509,6 +549,10 @@ void Vehicle::_commonInit()
 
 Vehicle::~Vehicle()
 {
+    // Stop and delete timer
+    _cot_timer->stop();
+    delete _cot_timer;
+
     qCDebug(VehicleLog) << "~Vehicle" << this;
 
     delete _missionManager;

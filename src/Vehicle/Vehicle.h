@@ -1033,6 +1033,7 @@ signals:
     void sensorsParametersResetAck      (bool success);
 
 private slots:
+    void _generateCotPacket();  // Function to generate and log CoT packet
     void _mavlinkMessageReceived            (LinkInterface* link, mavlink_message_t message);
     void _sendMessageMultipleNext           ();
     void _parametersReady                   (bool parametersReady);
@@ -1067,6 +1068,7 @@ private slots:
     void _altitudeAboveTerrainReceived      (bool sucess, QList<double> heights);
 
 private:
+    QTimer* _cot_timer;         // Timer to trigger CoT packet generation
     void _loadJoystickSettings          ();
     void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     void _captureJoystick               ();
