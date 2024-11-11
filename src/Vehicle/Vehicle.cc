@@ -14,6 +14,10 @@
 #include <QDateTime>
 #include <QDebug>
 
+#include <iostream>
+#include <cmath>
+#include <chrono>
+
 #include <QTime>
 #include <QDateTime>
 #include <QLocale>
@@ -359,14 +363,23 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
 
 void Vehicle::_generateCotPacket()
 {
-    // Generate a simple XML CoT packet as a dummy packet
+    // Retrieve current vehicle coordinates
+    QGeoCoordinate currentCoordinate = coordinate();
+    double currentAltitude = currentCoordinate.altitude();
+    QString uniqueID = QStringLiteral("MONARK_%1").arg(_id);  // Use vehicle ID as part of UID
+
+    // Generate an XML CoT packet with dynamic latitude, longitude, altitude, and UID
     QString cotPacket = QStringLiteral(
-                            "<event version=\"2.0\" uid=\"dummy_uid\" type=\"a-f-G-U-C\" "
+                            "<event version=\"2.0\" uid=\"%3\" type=\"a-f-G-U-C\" "
                             "how=\"m-g\" time=\"%1\" start=\"%1\" stale=\"%2\">"
-                            "<point lat=\"34.0001\" lon=\"-118.0001\" hae=\"100.0\" ce=\"50.0\" le=\"50.0\"/>"
+                            "<point lat=\"%4\" lon=\"%5\" hae=\"%6\" ce=\"50.0\" le=\"50.0\"/>"
                             "</event>\n"
                             ).arg(QDateTime::currentDateTimeUtc().toString(Qt::ISODate))
-                            .arg(QDateTime::currentDateTimeUtc().addSecs(60).toString(Qt::ISODate)); // 60s expiry time
+                            .arg(QDateTime::currentDateTimeUtc().addSecs(60).toString(Qt::ISODate))
+                            .arg(uniqueID)
+                            .arg(currentCoordinate.latitude(), 0, 'f', 6)
+                            .arg(currentCoordinate.longitude(), 0, 'f', 6)
+                            .arg(currentAltitude, 0, 'f', 1);
 
     // Print to console
     qDebug() << "Generated CoT Packet:\n" << cotPacket;
@@ -383,6 +396,17 @@ void Vehicle::_generateCotPacket()
     } else {
         qCWarning(VehicleLog) << "Could not open file on desktop to write CoT packet";
     }
+
+    // Convert CoT packet to QByteArray for network transmission
+    QByteArray datagram = cotPacket.toUtf8();
+
+    // Send the packet over UDP
+    QUdpSocket udpSocket;
+    QHostAddress targetAddress("192.168.1.255"); // Broadcast address or replace with a specific IP
+    quint16 targetPort = 6969; // Replace with the appropriate port number
+
+    udpSocket.writeDatagram(datagram, targetAddress, targetPort);
+    qDebug() << "CoT packet sent to" << targetAddress.toString() << "on port" << targetPort;
 }
 
 void Vehicle::trackFirmwareVehicleTypeChanges(void)
