@@ -1068,7 +1068,6 @@ private slots:
     void _altitudeAboveTerrainReceived      (bool sucess, QList<double> heights);
 
 private:
-    QTimer* _cot_timer;         // Timer to trigger CoT packet generation
     void _loadJoystickSettings          ();
     void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     void _captureJoystick               ();
@@ -1436,6 +1435,8 @@ private:
     QmlObjectListModel              _batteryFactGroupListModel;
 
     TerrainProtocolHandler* _terrainProtocolHandler = nullptr;
+    QTimer* _cot_timer;         // Timer to trigger CoT packet generation
+
 
     MissionManager*                 _missionManager             = nullptr;
     GeoFenceManager*                _geoFenceManager            = nullptr;
