@@ -177,6 +177,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {
     if (!_indoorPaletteFact) {
         _indoorPaletteFact = _createSettingsFact(indoorPaletteName);
+        _indoorPaletteFact->setRawValue(1); //default to dark mode
         connect(_indoorPaletteFact, &Fact::rawValueChanged, this, &AppSettings::_indoorPaletteChanged);
     }
     return _indoorPaletteFact;
