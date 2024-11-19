@@ -59,7 +59,7 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         APMCopterMode(APMCopterMode::STABILIZE,     false),
         APMCopterMode(APMCopterMode::ACRO,          false),
         APMCopterMode(APMCopterMode::ALT_HOLD,      true),
-        APMCopterMode(APMCopterMode::AUTO,          true),
+        APMCopterMode(APMCopterMode::AUTO,          false),
         APMCopterMode(APMCopterMode::GUIDED,        true),
         APMCopterMode(APMCopterMode::LOITER,        true),
         APMCopterMode(APMCopterMode::RTL,           true),
@@ -75,14 +75,14 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         APMCopterMode(APMCopterMode::AVOID_ADSB,    false),
         APMCopterMode(APMCopterMode::GUIDED_NOGPS,  false),
         APMCopterMode(APMCopterMode::SMART_RTL,     false),
-        APMCopterMode(APMCopterMode::FLOWHOLD,      false),
+        APMCopterMode(APMCopterMode::FLOWHOLD,      true),
         APMCopterMode(APMCopterMode::FOLLOW,        false),
         APMCopterMode(APMCopterMode::ZIGZAG,        false),
         APMCopterMode(APMCopterMode::SYSTEMID,      false),
         APMCopterMode(APMCopterMode::AUTOROTATE,    false),
         APMCopterMode(APMCopterMode::AUTO_RTL,      true),
         APMCopterMode(APMCopterMode::TURTLE,        false),
-        APMCopterMode(APMCopterMode::OPTICAL_FLOW,        true),
+        APMCopterMode(APMCopterMode::OPTICAL_FLOW,  false),
     });
 
     if (!_remapParamNameIntialized) {
