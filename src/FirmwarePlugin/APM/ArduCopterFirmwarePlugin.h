@@ -42,14 +42,14 @@ public:
         AVOID_ADSB  = 19,
         GUIDED_NOGPS= 20,
         SMART_RTL   = 21,  // SMART_RTL returns to home by retracing its steps
-        FLOWHOLD    = 22,  // FLOWHOLD holds position with optical flow without rangefinder
+        FLOWHOLD    = 99,  // This truly points to EchoMAV "Optical Flow" mode and not stock "FLOWHOLD" mode
         FOLLOW      = 23,  // follow attempts to follow another vehicle or ground station
         ZIGZAG      = 24,  // ZIGZAG mode is able to fly in a zigzag manner with predefined point A and point B
         SYSTEMID    = 25,
         AUTOROTATE  = 26,
         AUTO_RTL    = 27,
         TURTLE      = 28,
-        OPTICAL_FLOW = 99,
+        OPTICAL_FLOW = 22, // This is the stock "FLOWHOLD" mode which is essentially unused in EchoMAV ArduPilot
     };
 
     APMCopterMode(uint32_t mode, bool settable);
