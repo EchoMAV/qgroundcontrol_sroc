@@ -6,6 +6,7 @@
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
+#include "ATAKVehicleManagerSettings.h"
 
 #include <QtCore/QTimer>
 #include <QFile>
@@ -400,10 +401,14 @@ void Vehicle::_generateCotPacket()
     // Convert CoT packet to QByteArray for network transmission
     QByteArray datagram = cotPacket.toUtf8();
 
+    ATAKVehicleManagerSettings* settings = qgcApp()->toolbox()->settingsManager()->atakVehicleManagerSettings();
+
     // Send the packet over UDP
     QUdpSocket udpSocket;
-    QHostAddress targetAddress("192.168.1.255"); // Broadcast address or replace with a specific IP
-    quint16 targetPort = 6969; // Replace with the appropriate port number
+    QHostAddress targetAddress(settings->atakServerHostAddress()->rawValue().toString());
+    quint16 targetPort = settings->atakServerPort()->rawValue().toInt();
+    // QHostAddress targetAddress("192.168.1.255"); // Broadcast address or replace with a specific IP
+    // quint16 targetPort = 6969; // Replace with the appropriate port number
 
     udpSocket.writeDatagram(datagram, targetAddress, targetPort);
     qDebug() << "CoT packet sent to" << targetAddress.toString() << "on port" << targetPort;
