@@ -4,6 +4,14 @@
     "QGC.MetaData.Facts":
 [
 {
+    "name":                 "atakServerConnectEnabled",
+    "shortDesc":     "Connect to ATAK server",
+    "longDesc":      "Connect to ATAK server using specified address/port",
+    "type":                 "bool",
+    "default":         false,
+    "qgcRebootRequired":    true
+},
+{
     "name":                 "atakServerHostAddress",
     "shortDesc":     "Host address",
     "type":                 "string",

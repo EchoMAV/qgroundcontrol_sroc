@@ -10,3 +10,4 @@ DECLARE_SETTINGGROUP(ATAKVehicleManager, "ATAKVehicleManager")
 
 DECLARE_SETTINGSFACT(ATAKVehicleManagerSettings, atakServerHostAddress)
 DECLARE_SETTINGSFACT(ATAKVehicleManagerSettings, atakServerPort)
+DECLARE_SETTINGSFACT(ATAKVehicleManagerSettings, atakServerConnectEnabled)

@@ -410,7 +410,10 @@ void Vehicle::_generateCotPacket()
     // QHostAddress targetAddress("192.168.1.255"); // Broadcast address or replace with a specific IP
     // quint16 targetPort = 6969; // Replace with the appropriate port number
 
-    udpSocket.writeDatagram(datagram, targetAddress, targetPort);
+    if (settings->atakServerConnectEnabled()->rawValue().toBool())
+    {
+        udpSocket.writeDatagram(datagram, targetAddress, targetPort);
+    }
     qDebug() << "CoT packet sent to" << targetAddress.toString() << "on port" << targetPort;
 }
 

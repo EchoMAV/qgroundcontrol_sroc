@@ -11,4 +11,5 @@ public:
 
     DEFINE_SETTINGFACT(atakServerHostAddress)
     DEFINE_SETTINGFACT(atakServerPort)
+    DEFINE_SETTINGFACT(atakServerConnectEnabled)
 };

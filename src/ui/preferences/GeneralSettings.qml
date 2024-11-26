@@ -1163,6 +1163,12 @@ Rectangle {
 
                             property var  atakSettings:    QGroundControl.settingsManager.atakVehicleManagerSettings
 
+                            FactCheckBox {
+                                text:                   atakGrid.atakSettings.atakServerConnectEnabled.shortDescription
+                                fact:                   atakGrid.atakSettings.atakServerConnectEnabled
+                                visible:                atakGrid.atakSettings.atakServerConnectEnabled.visible
+                                Layout.columnSpan:      2
+                            }
                             QGCLabel {
                                 text:               atakGrid.atakSettings.atakServerHostAddress.shortDescription
                                 visible:            atakGrid.atakSettings.atakServerHostAddress.visible
