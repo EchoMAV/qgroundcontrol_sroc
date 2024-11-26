@@ -131,6 +131,13 @@ Rectangle {
 
                                 property Fact _showLogReplayStatusBar: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar
                             }
+                            FactCheckBox {
+                                text:       qsTr("testbox69420")
+                                fact:       _showTestbox69420
+                                visible:    _showTestbox69420.visible
+
+                                property Fact _showTestbox69420: QGroundControl.settingsManager.flyViewSettings.showTestbox69420
+                            }
 
                             RowLayout {
                                 spacing: ScreenTools.defaultFontPixelWidth
@@ -1107,6 +1114,62 @@ Rectangle {
                             FactTextField {
                                 fact:                   adsbGrid.adsbSettings.adsbServerHostAddress
                                 visible:                adsbGrid.adsbSettings.adsbServerHostAddress.visible
+                                Layout.fillWidth:       true
+                            }
+
+                            QGCLabel {
+                                text:               adsbGrid.adsbSettings.adsbServerPort.shortDescription
+                                visible:            adsbGrid.adsbSettings.adsbServerPort.visible
+                            }
+                            FactTextField {
+                                fact:                   adsbGrid.adsbSettings.adsbServerPort
+                                visible:                adsbGrid.adsbSettings.adsbServerPort.visible
+                                Layout.preferredWidth:  _valueFieldWidth
+                            }
+                        }
+                    }
+
+                    Item { width: 1; height: _margins; visible: atakSectionLabel.visible }
+                    QGCLabel {
+                        id:         atakSectionLabel
+                        text:       qsTr("ATAK Server")
+                        visible:    QGroundControl.settingsManager.atakVehicleManagerSettings.visible
+                    }
+                    Rectangle {
+                        Layout.preferredHeight: atakGrid.y + atakGrid.height + _margins
+                        Layout.preferredWidth:  atakGrid.width + (_margins * 2)
+                        color:                  qgcPal.windowShade
+                        visible:                atakSectionLabel.visible
+                        Layout.fillWidth:       true
+
+                        QGCLabel {
+                            id:                 atakwarningLabel
+                            anchors.margins:    _margins
+                            anchors.top:        parent.top
+                            anchors.left:       parent.left
+                            anchors.right:      parent.right
+                            font.pointSize:     ScreenTools.smallFontPointSize
+                            wrapMode:           Text.WordWrap
+                            text:               qsTr("Note this is a warningLabel for atak that I am not sure what to put for yet")
+                        }
+
+                        GridLayout {
+                            id:                         atakGrid
+                            anchors.topMargin:          _margins
+                            anchors.top:                atakwarningLabel.bottom
+                            Layout.fillWidth:           true
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            columns:                    2
+
+                            property var  atakSettings:    QGroundControl.settingsManager.atakVehicleManagerSettings
+
+                            QGCLabel {
+                                text:               atakGrid.atakSettings.atakServerHostAddress.shortDescription
+                                visible:            atakGrid.atakSettings.atakServerHostAddress.visible
+                            }
+                            FactTextField {
+                                fact:                   atakGrid.atakSettings.atakServerHostAddress
+                                visible:                atakGrid.atakSettings.atakServerHostAddress.visible
                                 Layout.fillWidth:       true
                             }
 
