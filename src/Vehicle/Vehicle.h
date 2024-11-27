@@ -256,6 +256,11 @@ public:
     Q_PROPERTY(double               loadProgress                READ loadProgress                                                   NOTIFY loadProgressChanged)
     Q_PROPERTY(bool                 initialConnectComplete      READ isInitialConnectComplete                                       NOTIFY initialConnectComplete)
 
+    // The following properties relate to RSSI
+    Q_PROPERTY(QVariantList         RadioRSSI                   READ RadioRSSI                                                      NOTIFY RSSIChanged)
+    Q_PROPERTY(int                  RadioRSSIMax                READ RadioRSSIMax                                                   NOTIFY RSSIChanged)
+    Q_PROPERTY(int                  RadioRSSIMin                READ RadioRSSIMin                                                   NOTIFY RSSIChanged)
+
     // The following properties relate to Orbit status
     Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
     Q_PROPERTY(QGCMapCircle*    orbitMapCircle  READ orbitMapCircle     CONSTANT)
@@ -462,6 +467,9 @@ public:
     /// Trigger camera using MAV_CMD_DO_DIGICAM_CONTROL command
     Q_INVOKABLE void triggerSimpleCamera(void);
 
+    void _getMicrohardRSSI                 ();
+    void _getMicrohardRSSIstep2            (QString value, QString value2);
+
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_INVOKABLE void flashBootloader();
 #endif
@@ -574,6 +582,11 @@ public:
     //-- Mavlink Logging
     void startMavlinkLog();
     void stopMavlinkLog();
+
+    // RSSI related
+    QVariantList RadioRSSI() const;
+    int RadioRSSIMax() const;
+    int RadioRSSIMin() const;
 
     /// Requests the specified data stream from the vehicle
     ///     @param stream Stream which is being requested

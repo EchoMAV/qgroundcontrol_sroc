@@ -252,6 +252,11 @@ Vehicle::Vehicle(LinkInterface*             link,
     _chunkedStatusTextTimer.setInterval(1000);
     connect(&_chunkedStatusTextTimer, &QTimer::timeout, this, &Vehicle::_chunkedStatusTextTimeout);
 
+    // Microhard RSSI Fetch Timer
+    _MicrohardRssiTimer.setInterval(5000);
+    _MicrohardRssiTimer.setSingleShot(false);
+    connect(&_MicrohardRssiTimer, &QTimer::timeout, this, &Vehicle::_getMicrohardRSSI);
+
     _mav = uas();
 
     // Listen for system messages
@@ -284,6 +289,23 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     // Start timer to limit altitude above terrain queries
     _altitudeAboveTerrQueryTimer.restart();
+
+    //get current RSSI source
+    _rssiSource = _settingsManager->appSettings()->rssiRadioSelect()->rawValue().toInt();
+
+    switch(_rssiSource) {
+    case 1:
+        //Persistent Systems MPU5 -> not currently supported
+        break;
+    case 2:
+        //Doodle Labs, start a timer that tries to do a periodic JSON-RPC call
+        qDebug() << "Starting doodle rssi timer";
+        _MicrohardRssiTimer.start();
+        break;
+    default:
+        //default packet loss based
+        break;
+    }
 }
 
 // Disconnected Vehicle for offline editing
@@ -2396,6 +2418,41 @@ QVariantList Vehicle::links() const {
 }
 #endif
 
+QVariantList Vehicle::RadioRSSI() const {
+    QVariantList ret;
+
+    for( const auto &item: _RSSIList )
+        ret << QVariant::fromValue(item);
+
+    return ret;
+}
+
+int Vehicle::RadioRSSIMax() const {
+    int ret = -255;
+
+    for( const RSSIEntry_t &item: _RSSIList )
+    {
+        //find the max value
+        if (item.percentage > ret)
+            ret = item.percentage;
+    }
+
+    return ret;
+}
+
+int Vehicle::RadioRSSIMin() const {
+    int ret = 255;
+
+    for( const RSSIEntry_t &item: _RSSIList )
+    {
+        //find the min value
+        if (item.percentage < ret)
+            ret = item.percentage;
+    }
+
+    return ret;
+}
+
 void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate, bool sendMultiple)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
@@ -4270,6 +4327,184 @@ void Vehicle::_writeCsvLine()
     }
 
     stream << allFactValues.join(",") << "\n";
+}
+
+void Vehicle::_getMicrohardRSSI()
+{
+    try {
+
+        bool enabled = (_settingsManager->appSettings()->rssiRadioSelect()->rawValue().toInt() == 2);
+
+        if (!enabled)
+            return;
+
+        // //pull info from settings
+        // QString microhardIP = _settingsManager->appSettings()->MicrohardIP()->rawValue().toString();
+        // QString microhardURI = QString("https://%1/ubus").arg(microhardIP);
+        // QString microhardUser = _settingsManager->appSettings()->MicrohardUser()->rawValue().toString();
+        // QString microhardPassword= _settingsManager->appSettings()->MicrohardPassword()->rawValue().toString();
+
+        // QNetworkAccessManager *mgr = new QNetworkAccessManager(this);
+        // const QUrl url(microhardURI);
+        // QNetworkRequest request(url);
+        // request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        // QSslConfiguration conf = request.sslConfiguration();
+        // conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+        // request.setSslConfiguration(conf);
+
+        // QString command = QString("{\"jsonrpc\":\"2.0\",\"id\": 1,\"method\": \"call\",\"params\": [ \"00000000000000000000000000000000\", \"session\", \"login\", { \"username\": \"%1\", \"password\": \"%2\" } ] }").arg(microhardUser).arg(microhardPassword);
+        // QByteArray data(command.toUtf8());
+        // QNetworkReply *reply = mgr->post(request, data);
+
+        // reply->ignoreSslErrors();
+
+        // QObject::connect(reply, &QNetworkReply::finished, [=](){
+        //     if(reply->error() == QNetworkReply::NoError){
+        //         QString contents = QString::fromUtf8(reply->readAll());
+
+        //         QJsonDocument document = QJsonDocument::fromJson(contents.toUtf8());
+
+        //         if (!document.isObject())
+        //             qDebug() << "document is not an object";
+
+        //         QJsonObject object = document.object();
+        //         QJsonValue result = object.value("result");
+        //         QJsonArray array = result.toArray();
+        //         QString token;
+
+        //         if (array.count()<=1)
+        //         {
+        //             qDebug() << "Error, array empty in response";
+        //             if (_RSSIList.count())
+        //             {
+        //                 _RSSIList.clear();
+        //                 emit RSSIChanged();
+        //             }
+        //             return;
+        //         }
+
+        //         if (array[1].toObject().contains("ubus_rpc_session"))
+        //         {
+        //             token = array[1].toObject().value("ubus_rpc_session").toString();
+        //         }
+        //         else
+        //         {
+        //             qDebug() << "Error, ubus_rpc_session not found in response";
+        //             if (_RSSIList.count())
+        //             {
+        //                 _RSSIList.clear();
+        //                 emit RSSIChanged();
+        //             }
+        //             return;
+        //         }
+
+        //         _getMicrohardRSSIstep2(token, microhardURI);
+
+        //     }
+        //     else{
+        //         QString err = reply->errorString();
+        //         qDebug() << "Error communicating with Doodle radio" << err;
+        //         if (_RSSIList.count())
+        //         {
+        //             _RSSIList.clear();
+        //             emit RSSIChanged();
+        //         }
+        //     }
+        //     reply->deleteLater();
+        // });
+    }  catch (...) {
+
+        qDebug() << "Error in getDoodleRssi";
+    }
+
+
+}
+
+void Vehicle::_getMicrohardRSSIstep2(QString token, QString urlString)
+{
+    const int rssi_limits[2] = {-85, -40};
+
+    QNetworkAccessManager *mgr = new QNetworkAccessManager(this);
+    const QUrl url(urlString);
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+
+    QByteArray data = QString("{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"call\", \"params\": [ \"%1\", \"iwinfo\", \"assoclist\", {\"device\":\"wlan0\"} ] }").arg(token).toUtf8();
+
+    QNetworkReply *reply = mgr->post(request, data);
+
+    reply->ignoreSslErrors();
+
+    QObject::connect(reply, &QNetworkReply::finished, [=](){
+        if(reply->error() == QNetworkReply::NoError){
+            _RSSIList.clear();
+            QString contents = QString::fromUtf8(reply->readAll());
+            //qDebug() << contents;
+            QJsonDocument document = QJsonDocument::fromJson(contents.toUtf8());
+
+            if (!document.isObject()){                
+                emit RSSIChanged();
+                qDebug() << "document is not an object";
+                return;
+            }
+
+            QJsonObject object = document.object();
+            QJsonValue result = object.value("result");            
+            QJsonArray arrayouter = result.toArray();
+            QJsonArray arrayinner;
+            if (arrayouter.count() >= 1)
+            {
+                arrayinner = arrayouter[1].toObject().value("results").toArray();
+            }
+            else
+            {
+                qDebug() << "Doodle RPC-JSON missing results, aborting";
+                emit RSSIChanged();
+                return;
+            }
+
+            if (arrayinner.count()==0)
+            {
+                emit RSSIChanged();
+                return;
+            }
+            foreach (const QJsonValue & value, arrayinner)
+            {
+                QString mac = value.toObject().value("mac").toString();
+                qint16 signal = value.toObject().value("signal").toInt();
+                qDebug() << "Station"<< mac << "Signal"<< signal;
+                RSSIEntry_t   rssi;
+                rssi.mac =      mac;
+                rssi.signal =   signal;
+
+                //calculate the percentage
+
+                if (signal >= rssi_limits[1]) rssi.percentage = 100;
+                else if (signal <= rssi_limits[0]) rssi.percentage = 0;
+                else
+                {
+                    rssi.percentage = ((100.0 / ((float)(rssi_limits[1] - rssi_limits[0]))) * (signal - rssi_limits[0] + 1));
+                }
+                _RSSIList.append(rssi);
+            }
+
+
+            //if (_RSSIList.count() > 0)
+            //{
+                emit RSSIChanged();
+            //}
+        }
+        else{
+            QString err = reply->errorString();
+            _RSSIList.clear();
+            emit RSSIChanged();
+            qDebug() << "Error getting RSSI from Doodle radio step 2" << err;
+        }
+        reply->deleteLater();
+    });
 }
 
 #if !defined(NO_ARDUPILOT_DIALECT)
