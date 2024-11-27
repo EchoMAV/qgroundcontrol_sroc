@@ -69,7 +69,6 @@ public:
     DEFINE_SETTINGFACT(forwardMavlinkAPMSupportHostName)
     DEFINE_SETTINGFACT(rssiRadioSelect)
     DEFINE_SETTINGFACT(MicrohardPassword)
-    DEFINE_SETTINGFACT(MicrohardUser)
     DEFINE_SETTINGFACT(MicrohardIP)
 
 

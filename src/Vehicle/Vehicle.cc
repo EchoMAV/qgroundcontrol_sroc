@@ -254,7 +254,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(&_chunkedStatusTextTimer, &QTimer::timeout, this, &Vehicle::_chunkedStatusTextTimeout);
 
     // Microhard RSSI Fetch Timer
-    _MicrohardRssiTimer.setInterval(5000);
+    _MicrohardRssiTimer.setInterval(16000); // be careful not to flood AT SSH timeouts
     _MicrohardRssiTimer.setSingleShot(false);
     connect(&_MicrohardRssiTimer, &QTimer::timeout, this, &Vehicle::_getMicrohardRSSI);
 
@@ -740,9 +740,9 @@ void Vehicle::_rssiSourceChanged()
     }
     else if (_rssiSource == 2)
     {
-        //changing to Microhard
+        //changing to Doodle
         qDebug() << "RSSI source changed to Doodle but this is not supported";
-        _MicrohardRssiTimer.start();
+        _MicrohardRssiTimer.stop();
     }
     else if (_rssiSource == 3)
     {
@@ -4384,11 +4384,7 @@ void Vehicle::_getMicrohardRSSI()
         QString microhardPassword= _settingsManager->appSettings()->MicrohardPassword()->rawValue().toString();
 
         std::vector<std::string> commands;
-        if(!m_paired)
-        {
-            commands.emplace_back("AT+MWRADIO=1\n");
-        }
-        commands.emplace_back("AT+MWTXPOWER="+txPower+"\n");
+        commands.emplace_back("AT+MWRSSI\n");
         auto saveResult=MonarkState::SaveSettingsFailed;
         auto const& returnStr = _connectToSRM(microhardIP,microhardPassword.c_str(), &commands);
 
