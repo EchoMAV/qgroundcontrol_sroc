@@ -1058,6 +1058,8 @@ signals:
 
     void sensorsParametersResetAck      (bool success);
 
+    void RSSIChanged                    ();
+
 private slots:
     void _generateCotPacket();  // Function to generate and log CoT packet
     void _mavlinkMessageReceived            (LinkInterface* link, mavlink_message_t message);
@@ -1332,6 +1334,8 @@ private:
     } ChunkedStatusTextInfo_t;
     QMap<uint8_t /* compId */, ChunkedStatusTextInfo_t> _chunkedStatusTextInfoMap;
     QTimer _chunkedStatusTextTimer;
+
+    QTimer _MicrohardRssiTimer;
 
     /// Callback for waitForMavlinkMessage
     ///     @param resultHandleData     Opaque data passed in to waitForMavlinkMessage call
