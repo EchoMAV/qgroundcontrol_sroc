@@ -59,6 +59,8 @@ Item {
                 return (100 - _activeVehicle.mavlinkLossPercent.toFixed(0)) + "%"
             case 1:  //mpu5
             case 2:  //doodle
+                    return "--"
+            case 3:  //microhard
                 if (_activeVehicle.RadioRSSI.length > 1)  //a mesh detectected, return worst case neightbor signal
                     return _activeVehicle.RadioRSSIMin + "% (Mesh)"
                 else if (_activeVehicle.RadioRSSIMax != -255) //single Radio detected, return max which will be the single value in this case
@@ -80,6 +82,8 @@ Item {
                 return "MPU5 RSSI Status"
             case 2: //doodle
                 return "Doodle RSSI Status"
+            case 2: //microhard
+                return "Microhard RSSI Status"
             default:
                 return "Unknown"
         }
@@ -131,13 +135,13 @@ Item {
                 }
                 // MPU5 Single Radio Row with no data
                 Row {
-                    id: singleRssiDoodleNoData
+                    id: singleRssiMicrohardNoData
                     visible: (_activeVehicle.RadioRSSI.length === 0 && _rssiSource === 2) ? true : false
                     QGCLabel { text : (_activeVehicle.RadioRSSI.length === 0) ? qsTr("Error: No Data Available, Check Settings") : "" }
                 }
-                // Doodle Single Radio Row (doodle does not provide IP)
+                // Microhard Single Radio Row
                 Row {
-                    id: singleRssiDoodle
+                    id: singleRssiMicrohard
                     visible: (_activeVehicle.RadioRSSI.length === 1 && _rssiSource === 2) ? true : false
                     QGCLabel { text : (_activeVehicle.RadioRSSI.length === 1) ? _activeVehicle.RadioRSSI[0].qmac + ", " : "" }
                     QGCLabel { text : (_activeVehicle.RadioRSSI.length === 1) ? _activeVehicle.RadioRSSI[0].qsignal + " dBm " : ""}
@@ -157,9 +161,9 @@ Item {
                         QGCLabel { text : "(" + modelData.qpercentage + "%)" }
                     }
                 }
-                //Doodle Multi Radio
+                //Microhard Multi Radio
                 Repeater {
-                    id:     rssiListDoodle
+                    id:     rssiListMicrohard
                     model:  _activeVehicle.RadioRSSI
                     Row {
                         visible: (_activeVehicle.RadioRSSI.length > 1 && _rssiSource === 2) ? true : false
