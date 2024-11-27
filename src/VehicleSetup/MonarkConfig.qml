@@ -82,6 +82,8 @@ SetupPage {
                          FactTextField{
                              fact: QGroundControl.settingsManager.monarkSettings.encryptionKey
                              echoMode: TextInput.Password
+                             //8 to 16 characters, all ASCII except comma and equals
+                             validator: RegExpValidator {regExp: /^[!-+\--<>-~]{8,16}$/ }
                          }
                          QGCLabel{
                              Layout.alignment: Qt.AlignRight

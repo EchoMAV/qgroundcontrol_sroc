@@ -269,15 +269,6 @@ void MonarkManager::setToolbox(QGCToolbox *const p_toolbox)
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<MonarkManager> ("QGroundControl.MonarkManager", 1, 0, "MonarkManager", "Reference only");
     mp_monarkSettings = p_toolbox->settingsManager()->monarkSettings();
-    connect(this,
-            &MonarkManager::monarkStateChanged,
-            this,
-            [](int const monarkState)
-            {
-                qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::monarkStateChanged slot() scanState="<<(int)monarkState;
-
-                qCDebug(MonarkManagerLog)<<"EXIT:  MonarkManager::monarkStateChanged slot() scanState="<<(int)monarkState;
-            });
     qCDebug(MonarkManagerLog)<<"EXIT:  MonarkManager::setToolbox()";
 }
 
@@ -292,7 +283,7 @@ void MonarkManager::startScanning()
         qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::startScanning()";
         m_monarkState=(int)MonarkState::ScanInProgress;
         emit monarkStateChanged(m_monarkState);
-        auto scanningResult=MonarkState::ScanFailedNotDetected; //TODO this is a placeholder
+        auto scanningResult=MonarkState::ScanFailedNotDetected;
         auto pingPairedResponseFuture = std::async(std::launch::async,[this](){
             auto password = this->mp_monarkSettings->encryptionKey()->cookedValueString();
             return _connectToSRM(np_srmPairedIp, password.toStdString().c_str(), nullptr);
@@ -319,7 +310,46 @@ void MonarkManager::startScanning()
             else
             {
                 m_paired=false;
+
             }
+        }
+        QString macAddress="";
+#if 0
+        auto const& allnetworkInterfaces=QNetworkInterface::allInterfaces();
+
+        for(auto const& networkInterface : allnetworkInterfaces)
+        {
+            {
+                auto const& addressEntries=networkInterface.addressEntries();
+                for(auto const& entry: addressEntries)
+                {
+                    auto const& ip = entry.ip();
+                   // if(ip.protocol() == QAbstractSocket::IPv4Protocol)
+                    {
+                        auto const& ipString = ip.toString();
+                        qCDebug(MonarkManagerLog)<<"MAC address="<<networkInterface.hardwareAddress()<<", IP Address="<<ipString;
+                        if(ipString==np_srmDefaultIp || ipString==np_srmPairedIp)
+                        {
+                            macAddress=networkInterface.hardwareAddress();
+                            break;
+                        }
+
+                    }
+                }
+                if(!macAddress.isEmpty())
+                {
+                    break;
+                }
+            }
+        }
+#endif
+
+        this->mp_monarkSettings->networkID()->setCookedValue("MONARK-"+macAddress);
+        if(!m_paired)
+        {
+            this->mp_monarkSettings->encryptionKey()->setCookedValue("admin");
+            this->mp_monarkSettings->groundFrequency()->setCookedValue(1711);
+            this->mp_monarkSettings->groundTxPower()->setCookedValue(20);
         }
         m_monarkState=(int)scanningResult;
         emit monarkStateChanged(m_monarkState);
@@ -344,6 +374,13 @@ void MonarkManager::saveFlutterManagementSettings()
         auto encryptionKey=mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
         using namespace std::string_literals;
         std::vector<std::string> commands;
+        //if(!m_paired)
+        //{
+        //    if(encryptionKey=="admin")
+        //    {
+        //
+        //    }
+        //}
         if(!m_paired)
         {
             commands.emplace_back("AT+MWRADIO=1\n");
