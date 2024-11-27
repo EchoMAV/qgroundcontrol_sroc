@@ -158,17 +158,11 @@ std::string _connectToSRM(char const*const p_host, char const*const p_password, 
                 {
                     auto const& command=(*p_commands)[commandIndex];
                     auto [commandSuccess, returnStr] = _runMicrohardCommand(p_channel, command);
-                    if(!commandSuccess)
+                    if(++commandIndex==p_commands->size() || !commandSuccess)
                     {
-                        break;
-                    }
-                    if(++commandIndex==p_commands->size())
-                    {
-
                         break;
                     }
                 }
-
             }
         }
         else{

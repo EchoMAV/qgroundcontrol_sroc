@@ -4397,13 +4397,12 @@ void Vehicle::_getMicrohardRSSI()
             _RSSIList.clear();
             emit RSSIChanged();
         }
-
         else {
             saveResult = MonarkState::SaveSettingsSuccess;
             // sample output is
             // |    | 00:0f:92:fd:bd:67 -11
             // |    | OK
-            
+
             // Extract MAC and signal
             // TODO if there are more radios this will be a list
             std::istringstream iss(returnStr);
