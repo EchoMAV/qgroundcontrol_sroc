@@ -61,8 +61,34 @@ bool waitForResponse(int isStdErr, ssh_channel p_channel)
     return commandSuccess;
 }
 
+std::tuple<bool, std::string> _runMicrohardCommand(ssh_channel p_channel, std::string const& p_command)
+{
+    std::string returnStr="";
+    ssh_channel_write(p_channel,p_command.c_str(), p_command.size());
+
+    // Buffer to store the output
+    char buffer[256];
+    std::string output;
+
+    // Read the output from the channel
+    int nbytes;
+    while ((nbytes = ssh_channel_read(p_channel, buffer, sizeof(buffer), 0)) > 0) {
+        output.append(buffer, nbytes);
+    }
+
+    auto const commandSuccess = waitForResponse(0,p_channel);
+    if(!commandSuccess)
+    {
+        qCCritical(MonarkManagerLog)<<"::_runMicrohardCommand("<<p_command<<") : command failed";
+        output="command failed";
+    }
+    return std::make_tuple(commandSuccess, output);
+}
+
 std::string _connectToSRM(char const*const p_host, char const*const p_password, std::vector<std::string> const*const p_commands)
 {
+    // returnStr will be an error text if something went wrong executing commands. Otherwise, it will be the microhard output of the
+    // last ran command in the list.
     qCDebug(MonarkManagerLog)<<"ENTER: ::_connectToSRM("<<p_host<<")";
     int returnCode=0;
     ssh_session p_session = nullptr;
@@ -131,12 +157,9 @@ std::string _connectToSRM(char const*const p_host, char const*const p_password, 
                 for(;;)
                 {
                     auto const& command=(*p_commands)[commandIndex];
-                    ssh_channel_write(p_channel,command.c_str(), command.size());
-                    auto const commandSuccess = waitForResponse(0,p_channel);
+                    auto [commandSuccess, returnStr] = _runMicrohardCommand(p_channel, command);
                     if(!commandSuccess)
                     {
-                        qCCritical(MonarkManagerLog)<<"::_connectToSRM("<<p_host<<") : command at index "<<commandIndex<<" failed";
-                        returnStr="command at index "+std::to_string(commandIndex)+" failed";
                         break;
                     }
                     if(++commandIndex==p_commands->size())
@@ -147,6 +170,9 @@ std::string _connectToSRM(char const*const p_host, char const*const p_password, 
                 }
 
             }
+        }
+        else{
+            returnStr="PASSWORD required";
         }
         if(returnStr.empty())
         {

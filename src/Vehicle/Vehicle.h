@@ -481,7 +481,6 @@ public:
     Q_INVOKABLE void triggerSimpleCamera(void);
 
     void _getMicrohardRSSI                 ();
-    void _getMicrohardRSSIstep2            (QString value, QString value2);
 
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_INVOKABLE void flashBootloader();
