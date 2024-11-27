@@ -272,6 +272,18 @@ Rectangle {
                 property bool   _forcedToButtonsOnly:   !QGroundControl.corePlugin.options.allowJoystickSelection && _buttonsOnly
             }
 
+            SubMenuButton {
+                id: monarkButton
+                imageResource:    "/qmlimages/Joystick.png" //TODO replace with the monark logo
+                setupIndicator:   false //TODO what does this mean?
+                setupComplete:    false //TODO what does this mean?
+                exclusiveGroup:   setupButtonGroup //TODO what does this mean?
+                visible:          true  //TODO determine under what circumstances this should be visible?
+                text:             qsTr("MONARK")
+                Layout.fillWidth: true
+                onClicked:        showPanel(this, "MonarkConfig.qml")
+            }
+
             Repeater {
                 id:     componentRepeater
                 model:  _fullParameterVehicleAvailable ? QGroundControl.multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0

@@ -1,0 +1,35 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+    [
+        {
+            "name":             "networkID",
+            "shortDesc": "Network ID",
+            "longDesc":  "Network ID",
+            "type":             "string",
+            "default":     ""
+        },
+        {
+            "name":             "encryptionKey",
+            "shortDesc": "Encryption Key",
+            "longDesc":  "Encryption Key",
+            "type":             "string",
+            "default":     ""
+        },
+        {
+            "name":             "groundTxPower",
+            "shortDesc": "Ground Tx Power",
+            "longDesc":  "Ground Tx Power",
+            "type":             "uint16",
+            "default":    20
+        },
+        {
+            "name":             "groundFrequency",
+            "shortDesc": "Ground Frequency",
+            "longDesc":  "Ground Frequency",
+            "type":             "uint16",
+            "default":     1711
+        }
+    ]
+}

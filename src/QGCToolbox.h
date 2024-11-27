@@ -42,6 +42,7 @@ class TaisyncManager;
 #if defined(QGC_GST_MICROHARD_ENABLED)
 class MicrohardManager;
 #endif
+class MonarkManager;
 
 /// This is used to manage all of our top level services/tools
 class QGCToolbox : public QObject {
@@ -79,6 +80,7 @@ public:
 #if defined(QGC_GST_MICROHARD_ENABLED)
     MicrohardManager*           microhardManager        () { return _microhardManager; }
 #endif
+    MonarkManager*              monarkManager           () { return _monarkManager; }
 
 private:
     void setChildToolboxes(void);
@@ -115,6 +117,7 @@ private:
 #if defined(QGC_GST_MICROHARD_ENABLED)
     MicrohardManager*           _microhardManager       = nullptr;
 #endif
+    MonarkManager*              _monarkManager          = nullptr;
     friend class QGCApplication;
 };
 

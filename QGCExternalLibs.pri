@@ -248,6 +248,13 @@ contains(DEFINES, QGC_ENABLE_PAIRING) {
     }
 }
 
+#LibSSH
+AndroidBuild {
+    INCLUDEPATH += $$SOURCE_DIR/libs/libSSH/include
+    LIBS += -L$$SOURCE_DIR/libs/libSSH/Android
+    LIBS += -lcrypto -ldecrepit -lssh -lssh-boringssl-compat -lssl -lcrypto
+}
+
 #
 # [OPTIONAL] Zeroconf for UDP links
 #

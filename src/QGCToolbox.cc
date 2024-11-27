@@ -40,6 +40,7 @@
 #if defined(QGC_GST_MICROHARD_ENABLED)
 #include "MicrohardManager.h"
 #endif
+#include "Monark/MonarkManager.h"
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
@@ -79,6 +80,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 #if defined(QGC_GST_MICROHARD_ENABLED)
     _microhardManager       = new MicrohardManager          (app, this);
 #endif
+    _monarkManager          = new MonarkManager             (app, this);
 }
 
 void QGCToolbox::setChildToolboxes(void)
@@ -115,6 +117,7 @@ void QGCToolbox::setChildToolboxes(void)
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager->setToolbox(this);
 #endif
+    _monarkManager->setToolbox(this);
 }
 
 void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)
