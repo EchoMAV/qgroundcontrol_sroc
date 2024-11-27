@@ -2367,6 +2367,7 @@ bool Vehicle::setFlightModeCustom(const QString& flightMode, uint8_t* base_mode,
     return _firmwarePlugin->setFlightMode(flightMode, base_mode, custom_mode);
 }
 
+
 void Vehicle::setFlightMode(const QString& flightMode)
 {
     uint8_t     base_mode;

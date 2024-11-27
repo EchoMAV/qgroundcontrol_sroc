@@ -80,6 +80,19 @@ class Autotune;
 class RemoteIDManager;
 class GimbalController;
 
+struct RSSIEntry_t {
+    Q_GADGET
+public:
+    QString     mac;
+    QString     ip;
+    int         signal;
+    int         percentage;
+    Q_PROPERTY(QString qmac MEMBER mac)
+    Q_PROPERTY(QString qip MEMBER ip)
+    Q_PROPERTY(int qsignal MEMBER signal)
+    Q_PROPERTY(int qpercentage MEMBER percentage)
+} ;
+
 namespace events {
 namespace parser {
 class ParsedEvent;
@@ -1212,6 +1225,8 @@ private:
     SysStatusSensorInfo _sysStatusSensorInfo;
 
     QGCCameraManager* _cameraManager = nullptr;
+
+    QList<RSSIEntry_t>        _RSSIList;
 
     QString             _prearmError;
     QTimer              _prearmErrorTimer;
