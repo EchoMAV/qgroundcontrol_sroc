@@ -299,7 +299,10 @@ Vehicle::Vehicle(LinkInterface*             link,
         break;
     case 2:
         //Doodle Labs, start a timer that tries to do a periodic JSON-RPC call
-        qDebug() << "Starting doodle rssi timer";
+        qDebug() << "Doodle timer not supported";
+        break;
+    case 3:
+        qDebug() << "Starting microhard rssi timer";
         _MicrohardRssiTimer.start();
         break;
     default:
@@ -710,6 +713,42 @@ void Vehicle::resetCounters()
     _messagesLost       = 0;
     _messageSeq         = 0;
     _heardFrom          = false;
+}
+
+void Vehicle::_rssiSourceChanged()
+{
+    int _currentRssiSource = _rssiSource;
+    _rssiSource = _settingsManager->appSettings()->rssiRadioSelect()->rawValue().toInt();
+
+    if (_rssiSource == _currentRssiSource)
+        return;
+
+    if (_rssiSource == 0)
+    {
+        qDebug() << "RSSI source changed to Disabled";
+        //changed to disabled
+        _MicrohardRssiTimer.stop();
+        return;
+    }
+    else if (_rssiSource == 1)  //currently not implemented
+    {
+        //going from disabled to mpu5
+        qDebug() << "RSSI source changed to MPU5 but this is not supported";
+        _MicrohardRssiTimer.stop();
+
+    }
+    else if (_rssiSource == 2)
+    {
+        //changing to Microhard
+        qDebug() << "RSSI source changed to Doodle but this is not supported";
+        _MicrohardRssiTimer.start();
+    }
+    else if (_rssiSource == 3)
+    {
+        //changing to Microhard
+        qDebug() << "RSSI source changed to Microhard";
+        _MicrohardRssiTimer.start();
+    }
 }
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)

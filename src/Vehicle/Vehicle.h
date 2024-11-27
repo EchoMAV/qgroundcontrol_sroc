@@ -1094,6 +1094,7 @@ private slots:
     void _doSetHomeTerrainReceived          (bool success, QList<double> heights);
     void _updateAltAboveTerrain             ();
     void _altitudeAboveTerrainReceived      (bool sucess, QList<double> heights);
+    void _rssiSourceChanged();
 
 private:
     void _loadJoystickSettings          ();
@@ -1171,6 +1172,7 @@ private:
     bool                _soloFirmware = false;
     QGCToolbox*         _toolbox = nullptr;
     SettingsManager*    _settingsManager = nullptr;
+    int                 _rssiSource = 0;
 
     QTimer              _csvLogTimer;
     QFile               _csvLogFile;
