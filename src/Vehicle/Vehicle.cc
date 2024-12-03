@@ -69,6 +69,7 @@
 #endif
 #include "Autotune.h"
 #include "RemoteIDManager.h"
+#include "Monark/MonarkManager.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -4385,16 +4386,14 @@ void Vehicle::_getMicrohardRSSI()
 
         std::vector<std::string> commands;
         commands.emplace_back("AT+MWRSSI\n");
-        auto saveResult=MonarkState::SaveSettingsFailed;
-        auto const& returnStr = _connectToSRM(microhardIP,microhardPassword.c_str(), &commands);
+        auto const& returnStr = MonarkManager::connectToMicrohard(microhardIP.toStdString().c_str(),microhardPassword.toStdString().c_str(), &commands);
 
         if (returnStr.find("OK") == std::string::npos) {
-            qCDebug(VehicleLog) << "Error getting Microhard RSSI: " << returnStr;
+            qCDebug(VehicleLog) << "Error getting Microhard RSSI: " << returnStr.c_str();
             _RSSIList.clear();
             emit RSSIChanged();
         }
         else {
-            saveResult = MonarkState::SaveSettingsSuccess;
             // sample output is
             // |    | 00:0f:92:fd:bd:67 -11
             // |    | OK
@@ -4409,7 +4408,7 @@ void Vehicle::_getMicrohardRSSI()
             const int rssi_limits[2] = {-85, -40};
 
             RSSIEntry_t   rssi;
-            rssi.mac =      mac;
+            rssi.mac =      QString(mac.c_str());
             rssi.signal =   signal;
 
             //calculate the percentage

@@ -74,6 +74,7 @@ SetupPage {
                          FactTextField{
                              fact: QGroundControl.settingsManager.monarkSettings.networkID
                              readOnly: true
+                             Layout.fillWidth: true
                          }
                          QGCLabel{
                              Layout.alignment: Qt.AlignRight
@@ -81,9 +82,10 @@ SetupPage {
                          }
                          FactTextField{
                              fact: QGroundControl.settingsManager.monarkSettings.encryptionKey
-                             echoMode: TextInput.Password
+                             echoMode: TextInput.PasswordEchoOnEdit
                              //8 to 16 characters, all ASCII except comma and equals
                              validator: RegExpValidator {regExp: /^[!-+\--<>-~]{8,16}$/ }
+                            Layout.fillWidth: true
                          }
                          QGCLabel{
                              Layout.alignment: Qt.AlignRight
@@ -92,6 +94,7 @@ SetupPage {
                          FactTextField{
                              fact: QGroundControl.settingsManager.monarkSettings.groundTxPower
                              validator: IntValidator {bottom: 1; top: 10000} //TODO find acceptable range
+                              Layout.fillWidth: true
                          }
                          QGCLabel{
                              Layout.alignment: Qt.AlignRight
@@ -100,6 +103,7 @@ SetupPage {
                          FactTextField{
                              fact: QGroundControl.settingsManager.monarkSettings.groundFrequency
                              validator: IntValidator {bottom: 1; top: 10000} //TODO find acceptable range
+                              Layout.fillWidth: true
                          }
 
                      }

@@ -14,6 +14,26 @@ public:
     DEFINE_SETTINGFACT(groundTxPower)
     DEFINE_SETTINGFACT(groundFrequency)
 
+    bool networkIdDirty() ;
+    bool encryptionKeyDirty() ;
+    bool groundTxPowerDirty() ;
+    bool groundFreqencyDirty() ;
+
+    QString getOldEncryptionKey() const{ return m_oldEncryptionKey;}
+
+
+public slots:
+    void onSaveSettings();
+
 private slots:
-    void _configChanged             (QVariant value);
+    void _networkIdChanged             (QVariant value);
+    void _encryptionKeyChanged         (QVariant value);
+    void _groundTxPowerChanged         (QVariant value);
+    void _groundFrequencyChanged       (QVariant value);
+
+private:
+    QString m_oldNetworkId="";
+    QString m_oldEncryptionKey="";
+    uint32_t m_oldGroundTxPower=0;
+    uint32_t m_oldGroundFrequency=0;
 };
