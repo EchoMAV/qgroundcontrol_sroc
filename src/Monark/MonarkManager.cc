@@ -1,6 +1,7 @@
 #include "MonarkManager.h"
 #include "QGCApplication.h"
 #include "Settings/SettingsManager.h"
+#include "MonarkQRCodeProvider.h"
 
 #include <libssh/libssh.h>
 
@@ -224,6 +225,7 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , mp_slotHandler{std::make_unique<MonarkManagerWorkerWorker>()}
     , m_monarkState{(int)MonarkState::BeforeScan}
     , mp_monarkSettings{nullptr}
+    , mp_monarkQRCodeProvider{nullptr}
     , m_paired{false}
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::MonarkManager()()";
@@ -244,6 +246,7 @@ void MonarkManager::setToolbox(QGCToolbox *const p_toolbox)
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<MonarkManager> ("QGroundControl.MonarkManager", 1, 0, "MonarkManager", "Reference only");
     mp_monarkSettings = p_toolbox->settingsManager()->monarkSettings();
+    mp_monarkQRCodeProvider = p_toolbox->monarkQRCodeProvider();
     qCDebug(MonarkManagerLog)<<"EXIT:  MonarkManager::setToolbox()";
 }
 
@@ -310,8 +313,15 @@ void MonarkManager::startScanning()
             }
 
         }
-
-        this->mp_monarkSettings->networkID()->setCookedValue("MONARK-"+QString::fromStdString(macAddress));
+        if(macAddress.empty())
+        {
+            scanningResult=MonarkState::ScanFailedNotDetected;
+            m_paired=false;
+        }
+        else
+        {
+            this->mp_monarkSettings->networkID()->setCookedValue("MONARK-"+QString::fromStdString(macAddress));
+        }
         if(!m_paired)
         {
             this->mp_monarkSettings->encryptionKey()->setCookedValue("");
@@ -381,4 +391,32 @@ void MonarkManager::saveFlutterManagementSettings()
         emit monarkStateChanged(m_monarkState);
         qCDebug(MonarkManagerLog)<<"EXIT:  MonarkManager::saveFlutterManagementSettings()";
     }
+}
+
+void MonarkManager::detect()
+{
+    if(mp_slotHandler->needDispatch())
+    {
+        mp_slotHandler->dispatch([this](){detect();});
+    }
+    else
+    {
+        qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::detect()";
+        m_monarkState=(int)MonarkState::DetectionInProgress;
+        emit monarkStateChanged(m_monarkState);
+        //TODO
+        std::this_thread::sleep_for(std::chrono::seconds(10));
+        bool detected=true;
+        if(detected)
+        {
+             m_monarkState=(int)MonarkState::DetectionSuccess;
+        }
+        else
+        {
+            m_monarkState=(int)MonarkState::DetectionFailed;
+        }
+        emit monarkStateChanged(m_monarkState);
+        qCDebug(MonarkManagerLog)<<"EXIT:  MonarkManager::detect()";
+    }
+
 }

@@ -20,6 +20,7 @@
 #include "MissionCommandTree.h"
 #include "MultiVehicleManager.h"
 #include "QGCImageProvider.h"
+#include "Monark/MonarkQRCodeProvider.h"
 #include "UASMessageHandler.h"
 #include "QGCMapEngineManager.h"
 #include "FollowMe.h"
@@ -59,6 +60,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _gpsManager             = new GPSManager                (app, this);
 #endif
     _imageProvider          = new QGCImageProvider          (app, this);
+    _monarkQRCodeProvider   = new MonarkQRCodeProvider      (app, this);
     _joystickManager        = new JoystickManager           (app, this);
     _linkManager            = new LinkManager               (app, this);
     _mavlinkProtocol        = new MAVLinkProtocol           (app, this);
@@ -96,6 +98,7 @@ void QGCToolbox::setChildToolboxes(void)
     _gpsManager->setToolbox(this);
 #endif
     _imageProvider->setToolbox(this);
+    _monarkQRCodeProvider->setToolbox(this);
     _joystickManager->setToolbox(this);
     _linkManager->setToolbox(this);
     _mavlinkProtocol->setToolbox(this);

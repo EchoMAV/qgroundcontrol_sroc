@@ -26,6 +26,7 @@ class MultiVehicleManager;
 class QGCMapEngineManager;
 class QGCApplication;
 class QGCImageProvider;
+class MonarkQRCodeProvider;
 class UASMessageHandler;
 class QGCPositionManager;
 class VideoManager;
@@ -60,6 +61,7 @@ public:
     MultiVehicleManager*        multiVehicleManager     () { return _multiVehicleManager; }
     QGCMapEngineManager*        mapEngineManager        () { return _mapEngineManager; }
     QGCImageProvider*           imageProvider           () { return _imageProvider; }
+    MonarkQRCodeProvider*       monarkQRCodeProvider    () { return _monarkQRCodeProvider; }
     UASMessageHandler*          uasMessageHandler       () { return _uasMessageHandler; }
     FollowMe*                   followMe                () { return _followMe; }
     QGCPositionManager*         qgcPositionManager      () { return _qgcPositionManager; }
@@ -94,6 +96,7 @@ private:
     GPSManager*                 _gpsManager             = nullptr;
 #endif
     QGCImageProvider*           _imageProvider          = nullptr;
+    MonarkQRCodeProvider*       _monarkQRCodeProvider   = nullptr;
     JoystickManager*            _joystickManager        = nullptr;
     LinkManager*                _linkManager            = nullptr;
     MAVLinkProtocol*            _mavlinkProtocol        = nullptr;

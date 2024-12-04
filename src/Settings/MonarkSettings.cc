@@ -46,6 +46,15 @@ DECLARE_SETTINGSFACT_NO_FUNC(MonarkSettings, groundFrequency)
     return _groundFrequencyFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(MonarkSettings, monarkID)
+{
+    if (!_monarkIDFact) {
+        _monarkIDFact = _createSettingsFact(monarkIDName);
+        connect(_monarkIDFact, &Fact::valueChanged, this, &MonarkSettings::_monarkIDChanged);
+    }
+    return _monarkIDFact;
+}
+
 void MonarkSettings::onSaveSettings()
 {
     m_oldNetworkId=networkID()->cookedValueString();
@@ -79,4 +88,8 @@ void MonarkSettings::_groundTxPowerChanged(QVariant newVal)
 void MonarkSettings::_groundFrequencyChanged(QVariant newVal)
 {
 //TODO
+}
+void MonarkSettings::_monarkIDChanged(QVariant newVal)
+{
+    //TODO
 }

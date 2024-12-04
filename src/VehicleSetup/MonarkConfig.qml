@@ -32,15 +32,18 @@ SetupPage {
                      Layout.columnSpan:      2
                      wrapMode:               Text.WordWrap
                      font.pointSize:         ScreenTools.largeFontPointSize
-                     text:                     QGroundControl.monarkManager.monarkState === 0 ? qsTr("Press to connect to ground radio (placeholder text)") //TODO
-                                             : QGroundControl.monarkManager.monarkState === 1 ? qsTr("Waiting for ground radio to connect... (placeholder text)") //TODO
-                                             : QGroundControl.monarkManager.monarkState === 2 ? qsTr("Pairing Required (placeholder text)") //TODO
-                                             : QGroundControl.monarkManager.monarkState === 3 ? qsTr("Bad credentials (placeholder text)") //TODO
-                                             : QGroundControl.monarkManager.monarkState === 4 ? qsTr("Already paired (placeholder text)") //TODO
-                                             : QGroundControl.monarkManager.monarkState === 5 ? qsTr("Scan failed (placeholder text)") //TODO
-                                             : QGroundControl.monarkManager.monarkState === 6 ? qsTr("Saving settings... (placeholder text)") //TODO
-                                             : QGroundControl.monarkManager.monarkState === 7 ? qsTr("Settings saved (placeholder text)") //TODO
-                                             : QGroundControl.monarkManager.monarkState === 8 ? qsTr("Save settings failed (placeholder text)") //TODO
+                     text:                     QGroundControl.monarkManager.monarkState === 0 ? qsTr("Press to connect to ground radio")
+                                             : QGroundControl.monarkManager.monarkState === 1 ? qsTr("Waiting for ground radio to connect...")
+                                             : QGroundControl.monarkManager.monarkState === 2 ? qsTr("SRM pairing required")
+                                             : QGroundControl.monarkManager.monarkState === 3 ? qsTr("Bad credentials")
+                                             : QGroundControl.monarkManager.monarkState === 4 ? qsTr("Already paired to SRM")
+                                             : QGroundControl.monarkManager.monarkState === 5 ? qsTr("Scan failed")
+                                             : QGroundControl.monarkManager.monarkState === 6 ? qsTr("Saving settings...")
+                                             : QGroundControl.monarkManager.monarkState === 7 ? qsTr("Settings saved")
+                                             : QGroundControl.monarkManager.monarkState === 8 ? qsTr("Save settings failed")
+                                             : QGroundControl.monarkManager.monarkState === 9 ? qsTr("Detection in progress...")
+                                             : QGroundControl.monarkManager.monarkState === 10 ? qsTr("MONARK detected...")
+                                             : QGroundControl.monarkManager.monarkState === 11 ? qsTr("MONARK not detected...")
                                                                                               : qsTr("INVALID STATE REACHED PLEASE RESTART THE APPLICATION")
                  }
                  QGCButton {
@@ -55,6 +58,27 @@ SetupPage {
                          //When scanning concludes, show an appropriate response
                      }
                  }
+                 Image {
+                     visible: QGroundControl.monarkManager.monarkState === 9 //DetectionInProgress
+                     source:         "image://MONARKQRCodes/"+monarkIdTextField.text
+                     sourceSize.width: 500
+                     sourceSize.height: 500
+                     Layout.fillWidth: true
+                     height:         width
+                     cache:          false
+                     fillMode:       Image.PreserveAspectFit
+                 }
+
+                 BusyIndicator{
+                     width: parent.width
+                     height: parent.height
+                     Layout.alignment:       Qt.AlignHCenter
+                     visible: QGroundControl.monarkManager.monarkState === 1 //ScanInProgress
+                              ||    QGroundControl.monarkManager.monarkState === 6 //SaveSettingsInProgress
+
+                     running: QGroundControl.monarkManager.monarkState === 1 //ScanInProgress
+                              ||    QGroundControl.monarkManager.monarkState === 6 //SaveSettingsInProgress
+                 }
 
                  ColumnLayout{
                      Layout.fillWidth: true
@@ -64,6 +88,8 @@ SetupPage {
                             || QGroundControl.monarkManager.monarkState === 4 //ScanSuccessAndPaired
                             || QGroundControl.monarkManager.monarkState === 7 //SaveSettingsSuccess
                             || QGroundControl.monarkManager.monarkState === 8 //SaveSettingsFailed
+                            || QGroundControl.monarkManager.monarkState === 10 //DetectionSuccess
+                            || QGroundControl.monarkManager.monarkState === 11 //DetectionFailed
                      GridLayout{
                          Layout.alignment:       Qt.AlignHCenter
                          columns: 2
@@ -75,6 +101,7 @@ SetupPage {
                              fact: QGroundControl.settingsManager.monarkSettings.networkID
                              readOnly: true
                              Layout.fillWidth: true
+                             textColor: acceptableInput ? "black" : "red"
                          }
                          QGCLabel{
                              Layout.alignment: Qt.AlignRight
@@ -86,6 +113,8 @@ SetupPage {
                              //8 to 16 characters, all ASCII except comma and equals
                              validator: RegExpValidator {regExp: /^[!-+\--<>-~]{8,16}$/ }
                             Layout.fillWidth: true
+                            id: encryptionKeyTextField
+                            textColor: acceptableInput ? "black" : "red"
                          }
                          QGCLabel{
                              Layout.alignment: Qt.AlignRight
@@ -94,7 +123,9 @@ SetupPage {
                          FactTextField{
                              fact: QGroundControl.settingsManager.monarkSettings.groundTxPower
                              validator: IntValidator {bottom: 1; top: 10000} //TODO find acceptable range
-                              Layout.fillWidth: true
+                             Layout.fillWidth: true
+                             id: groundTxPowerTextField
+                             textColor: acceptableInput ? "black" : "red"
                          }
                          QGCLabel{
                              Layout.alignment: Qt.AlignRight
@@ -103,7 +134,9 @@ SetupPage {
                          FactTextField{
                              fact: QGroundControl.settingsManager.monarkSettings.groundFrequency
                              validator: IntValidator {bottom: 1; top: 10000} //TODO find acceptable range
-                              Layout.fillWidth: true
+                             Layout.fillWidth: true
+                             id: groundFrequencyTextField
+                             textColor: acceptableInput ? "black" : "red"
                          }
 
                      }
@@ -113,17 +146,49 @@ SetupPage {
                          onClicked : {
                              QGroundControl.monarkManager.saveFlutterManagementSettings()
                          }
+                         enabled: encryptionKeyTextField.acceptableInput && groundTxPowerTextField.acceptableInput && groundFrequencyTextField.acceptableInput
                      }
+                     QGCLabel {
+                         Layout.fillWidth: true
+                         visible : QGroundControl.monarkManager.monarkState === 7 //SaveSettingsSuccess
+                         Layout.alignment:       Qt.AlignLeft
+                         wrapMode:               Text.WordWrap
+                         font.pointSize:         ScreenTools.largeFontPointSize
+                         text:                   qsTr("Connect USB-C cable to the \"Pair\" port of the MONARK and connect the battery")
+                     }
+                     GridLayout{
+                         Layout.alignment:       Qt.AlignHCenter
+                         columns: 2
+                         visible: QGroundControl.monarkManager.monarkState === 7 //SaveSettingsSuccess
+                              || QGroundControl.monarkManager.monarkState === 10 //DetectionSuccess
+                              || QGroundControl.monarkManager.monarkState === 11 //DetectionFailed
+                         QGCLabel{
+                             Layout.alignment: Qt.AlignRight
+                             text: qsTr("MONARK ID")
 
+                         }
+                         FactTextField{
+                             fact: QGroundControl.settingsManager.monarkSettings.monarkID
+                             validator: IntValidator {bottom: 1; top: 255} //TODO find acceptable range
+                             Layout.fillWidth: true
+                             id: monarkIdTextField
+                             textColor: acceptableInput ? "black" : "red"
+                         }
+                     }
+                     QGCButton {
+                         Layout.alignment:       Qt.AlignLeft
+                         text: qsTr("DETECT")
+                         onClicked : {
+                             QGroundControl.monarkManager.detect()
+                         }
+                         enabled: monarkIdTextField.acceptableInput
+                         visible: QGroundControl.monarkManager.monarkState === 7 //SaveSettingsSuccess
+                              || QGroundControl.monarkManager.monarkState === 10 //DetectionSuccess
+                              || QGroundControl.monarkManager.monarkState === 11 //DetectionFailed
+                     }
                  }
-                 QGCLabel {
-                     Layout.fillWidth: true
-                     visible : QGroundControl.monarkManager.monarkState === 7
-                     Layout.alignment:       Qt.AlignLeft
-                     wrapMode:               Text.WordWrap
-                     font.pointSize:         ScreenTools.largeFontPointSize
-                     text:                   qsTr("Connect USB-C cable to the \"Pair\" port of the MONARK and connect the battery")
-                 }
+
+
 
              }
 

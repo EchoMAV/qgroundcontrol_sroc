@@ -432,6 +432,8 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 
 HEADERS += \
     src/Monark/MonarkManager.h \
+    src/Monark/MonarkQRCodeProvider.h \
+    src/Monark/qrcodegen.h \
     src/QmlControls/CustomAction.h \
     src/QmlControls/CustomActionManager.h \
     src/QmlControls/QmlUnitsConversion.h \
@@ -450,6 +452,8 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 
 SOURCES += \
     src/Monark/MonarkManager.cc \
+    src/Monark/MonarkQRCodeProvider.cc \
+    src/Monark/qrcodegen.cc \
     src/QmlControls/CustomActionManager.cc \
     src/Settings/MonarkSettings.cc \
     src/Vehicle/VehicleEscStatusFactGroup.cc \

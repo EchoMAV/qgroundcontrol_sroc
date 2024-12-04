@@ -13,6 +13,7 @@ public:
     DEFINE_SETTINGFACT(encryptionKey)
     DEFINE_SETTINGFACT(groundTxPower)
     DEFINE_SETTINGFACT(groundFrequency)
+    DEFINE_SETTINGFACT(monarkID)
 
     bool networkIdDirty() ;
     bool encryptionKeyDirty() ;
@@ -30,6 +31,7 @@ private slots:
     void _encryptionKeyChanged         (QVariant value);
     void _groundTxPowerChanged         (QVariant value);
     void _groundFrequencyChanged       (QVariant value);
+    void _monarkIDChanged              (QVariant value);
 
 private:
     QString m_oldNetworkId="";

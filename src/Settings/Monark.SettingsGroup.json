@@ -30,6 +30,13 @@
             "longDesc":  "Ground Frequency",
             "type":             "uint16",
             "default":     1711
+        },
+        {
+            "name":             "monarkID",
+            "shortDesc": "MONARK ID",
+            "longDesc":  "MONARK ID",
+            "type":             "uint16",
+            "default":     1
         }
     ]
 }

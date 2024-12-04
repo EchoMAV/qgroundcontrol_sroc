@@ -26,6 +26,7 @@ private:
 };
 
 class MonarkSettings;
+class MonarkQRCodeProvider;
 
 class MonarkManager : public QGCTool
 {
@@ -43,6 +44,9 @@ public:
         SaveSettingsInProgress=6,
         SaveSettingsSuccess=7,
         SaveSettingsFailed=8,
+        DetectionInProgress=9,
+        DetectionSuccess=10,
+        DetectionFailed=11,
 
 
     };
@@ -65,6 +69,8 @@ public:
 
     Q_INVOKABLE void saveFlutterManagementSettings();
 
+    Q_INVOKABLE void detect();
+
     static std::string connectToMicrohard(char const*const p_host, char const*const p_password, std::vector<std::string> const*const p_commands);
 
 signals:
@@ -74,6 +80,7 @@ protected:
     std::unique_ptr<MonarkManagerWorkerWorker> mp_slotHandler;
     QAtomicInteger<int> m_monarkState;
     MonarkSettings*          mp_monarkSettings;
+    MonarkQRCodeProvider*    mp_monarkQRCodeProvider;
     bool m_paired;
 
 };
