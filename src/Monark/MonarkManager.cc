@@ -65,7 +65,7 @@ std::string MonarkManager::connectToMicrohard(char const*const p_host, char cons
                 returnStr="ssh_userauth_password failed";
                 break;
             }
-            if(p_commands)
+            if(p_commands && !p_commands->empty())
             {
                 p_channel=ssh_channel_new(p_session);
                 if(!p_channel)
@@ -269,6 +269,7 @@ void MonarkManager::startScanning()
         auto const pingDefaultResponse=connectToMicrohard(np_srmDefaultIp, nullptr, nullptr);
         if(pingDefaultResponse == np_successStr)
         {
+            qCDebug(MonarkManagerLog)<<"ScanSuccessPairingRequired";
             scanningResult=MonarkState::ScanSuccessPairingRequired;
             m_paired=false;
         }
@@ -277,51 +278,24 @@ void MonarkManager::startScanning()
             auto const pingPairedResponse = pingPairedResponseFuture.get();
             if(pingPairedResponse == "ssh_userauth_password failed")
             {
+                qCDebug(MonarkManagerLog)<<"ScanSuccessBadCredentials";
                 scanningResult = MonarkState::ScanSuccessBadCredentials;
                 m_paired=true;
             }
             else if(pingPairedResponse==np_successStr)
             {
+                qCDebug(MonarkManagerLog)<<"ScanSuccessAndPaired";
                 scanningResult=MonarkState::ScanSuccessAndPaired;
                 m_paired=true;
             }
             else
             {
+                qCDebug(MonarkManagerLog)<<"ScanFailedNotDetected";
                 m_paired=false;
 
             }
         }
-        std::string macAddress="";
-        if(scanningResult!=MonarkState::ScanFailedNotDetected)
-        {
-            std::vector<std::string> commands;
-            commands.emplace_back("AT+MNEMAC\n");
-            auto encryptionKey=m_paired?mp_monarkSettings->encryptionKey()->cookedValueString().toStdString():np_sshUsername;
-            auto const& returnStr = connectToMicrohard(m_paired?np_srmPairedIp:np_srmDefaultIp,encryptionKey.c_str(), &commands);
-            //qCDebug(MonarkManagerLog)<<"returnStr = '"<<returnStr.c_str()<<"' (end returnStr)";
-
-            if(returnStr.find(np_successStr) != std::string::npos)
-            {
-                auto macStart = returnStr.find_first_of('"',0);
-                auto macEnd = returnStr.find_first_of('"',macStart+1);
-                if(macStart != std::string::npos && macEnd!= std::string::npos && macStart != macEnd)
-                {
-                    ++macStart;
-                    macAddress = returnStr.substr(macStart, macEnd-macStart);
-                    macAddress.erase(std::remove(std::begin(macAddress), std::end(macAddress),':'), std::end(macAddress));
-                }
-            }
-
-        }
-        if(macAddress.empty())
-        {
-            scanningResult=MonarkState::ScanFailedNotDetected;
-            m_paired=false;
-        }
-        else
-        {
-            this->mp_monarkSettings->networkID()->setCookedValue("MONARK-"+QString::fromStdString(macAddress));
-        }
+        _initializeNetworkId();
         if(!m_paired)
         {
             this->mp_monarkSettings->encryptionKey()->setCookedValue("");
@@ -331,6 +305,32 @@ void MonarkManager::startScanning()
         m_monarkState=(int)scanningResult;
         emit monarkStateChanged(m_monarkState);
         qCDebug(MonarkManagerLog)<<"EXIT:  MonarkManager::startScanning()";
+    }
+}
+
+void MonarkManager::_initializeNetworkId()
+{
+    std::string macAddress="";
+    std::vector<std::string> commands;
+    commands.emplace_back("AT+MNEMAC\n");
+    auto encryptionKey=m_paired?mp_monarkSettings->getOldEncryptionKey().toStdString():np_sshUsername;
+    auto const& returnStr = connectToMicrohard(m_paired?np_srmPairedIp:np_srmDefaultIp,encryptionKey.c_str(), &commands);
+    //qCDebug(MonarkManagerLog)<<"returnStr = '"<<returnStr.c_str()<<"' (end returnStr)";
+
+    if(returnStr.find(np_successStr) != std::string::npos)
+    {
+        auto macStart = returnStr.find_first_of('"',0);
+        auto macEnd = returnStr.find_first_of('"',macStart+1);
+        if(macStart != std::string::npos && macEnd!= std::string::npos && macStart != macEnd)
+        {
+            ++macStart;
+            macAddress = returnStr.substr(macStart, macEnd-macStart);
+            macAddress.erase(std::remove(std::begin(macAddress), std::end(macAddress),':'), std::end(macAddress));
+        }
+    }
+    if(!macAddress.empty())
+    {
+        this->mp_monarkSettings->networkID()->setCookedValue("MONARK-"+QString::fromStdString(macAddress));
     }
 }
 
@@ -345,6 +345,7 @@ void MonarkManager::saveFlutterManagementSettings()
         qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::saveFlutterManagementSettings()";
         m_monarkState=(int)MonarkState::SaveSettingsInProgress;
         emit monarkStateChanged(m_monarkState);
+         _initializeNetworkId();
         auto txPower=mp_monarkSettings->groundTxPower()->cookedValueString().toStdString();
         auto frequency=mp_monarkSettings->groundFrequency()->cookedValueString().toStdString();
         auto networkId=mp_monarkSettings->networkID()->cookedValueString().toStdString();
@@ -379,13 +380,20 @@ void MonarkManager::saveFlutterManagementSettings()
             commands.emplace_back("AT+MNLAN=LAN,EDIT,0,"s+np_srmPairedIp+",255.255.0.0,0\n");
             commands.emplace_back("AT+MNLANDHCP=LAN,1,"s+np_srocIp+",1,0\n");
         }
-        commands.emplace_back("AT&W\n");
         auto saveResult=MonarkState::SaveSettingsFailed;
-        auto const& returnStr = connectToMicrohard(m_paired?np_srmPairedIp:np_srmDefaultIp,m_paired?oldEncryptionKey.toStdString().c_str():np_sshUsername, &commands);
-        if(returnStr.find(np_successStr)!= std::string::npos)
+        if(commands.empty())
         {
             saveResult=MonarkState::SaveSettingsSuccess;
-            mp_monarkSettings->onSaveSettings();
+        }
+        else
+        {
+            commands.emplace_back("AT&W\n");
+            auto const& returnStr = connectToMicrohard(m_paired?np_srmPairedIp:np_srmDefaultIp,m_paired?oldEncryptionKey.toStdString().c_str():np_sshUsername, &commands);
+            if(returnStr.find(np_successStr)!= std::string::npos)
+            {
+                saveResult=MonarkState::SaveSettingsSuccess;
+                mp_monarkSettings->onSaveSettings();
+            }
         }
         m_monarkState=(int)saveResult;
         emit monarkStateChanged(m_monarkState);
@@ -404,17 +412,27 @@ void MonarkManager::detect()
         qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::detect()";
         m_monarkState=(int)MonarkState::DetectionInProgress;
         emit monarkStateChanged(m_monarkState);
-        //TODO
-        std::this_thread::sleep_for(std::chrono::seconds(10));
-        bool detected=true;
-        if(detected)
+        auto detectionResult=MonarkState::DetectionFailed;
+        auto encryptionKey=mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
+        std::vector<std::string> commands;
+        //TODO populate commands
+        std::string ip = "172.20.2."+std::to_string(mp_monarkSettings->monarkID()->cookedValue().toUInt());
+        auto const startTime = std::chrono::system_clock::now();
+        for(;;)
         {
-             m_monarkState=(int)MonarkState::DetectionSuccess;
+            if((std::chrono::system_clock::now()-startTime) > std::chrono::minutes(2))
+            {
+                break;
+            }
+            auto const& returnStr = connectToMicrohard(ip.c_str(),encryptionKey.c_str(), &commands);
+            if(returnStr.find(np_successStr)!= std::string::npos)
+            {
+                detectionResult=MonarkState::DetectionSuccess;
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-        else
-        {
-            m_monarkState=(int)MonarkState::DetectionFailed;
-        }
+        m_monarkState=(int)detectionResult;
         emit monarkStateChanged(m_monarkState);
         qCDebug(MonarkManagerLog)<<"EXIT:  MonarkManager::detect()";
     }

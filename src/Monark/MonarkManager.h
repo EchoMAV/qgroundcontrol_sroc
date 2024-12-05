@@ -73,8 +73,15 @@ public:
 
     static std::string connectToMicrohard(char const*const p_host, char const*const p_password, std::vector<std::string> const*const p_commands);
 
+
 signals:
+
+
     void monarkStateChanged(int monarkState);
+
+private:
+    void _initializeNetworkId();
+
 
 protected:
     std::unique_ptr<MonarkManagerWorkerWorker> mp_slotHandler;

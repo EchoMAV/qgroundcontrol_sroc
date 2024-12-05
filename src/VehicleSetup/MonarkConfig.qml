@@ -60,7 +60,14 @@ SetupPage {
                  }
                  Image {
                      visible: QGroundControl.monarkManager.monarkState === 9 //DetectionInProgress
-                     source:         "image://MONARKQRCodes/"+monarkIdTextField.text
+                     source:         "image://MONARKQRCodes/"+
+                                     "{"+
+                                         "\"e\":\""+encryptionKeyTextField.text+"\","+
+                                         "\"n\":\""+networkIdTextField.text+"\","+
+                                         "\"t\":\""+groundTxPowerTextField.text+"\","+
+                                         "\"f\":\""+groundFrequencyTextField.text+"\","+
+                                         "\"m\":\""+monarkIdTextField.text+"\""+
+                                     "}"
                      sourceSize.width: 500
                      sourceSize.height: 500
                      Layout.fillWidth: true
@@ -102,6 +109,7 @@ SetupPage {
                              readOnly: true
                              Layout.fillWidth: true
                              textColor: acceptableInput ? "black" : "red"
+                             id: networkIdTextField
                          }
                          QGCLabel{
                              Layout.alignment: Qt.AlignRight
@@ -110,8 +118,8 @@ SetupPage {
                          FactTextField{
                              fact: QGroundControl.settingsManager.monarkSettings.encryptionKey
                              echoMode: TextInput.PasswordEchoOnEdit
-                             //8 to 16 characters, all ASCII except comma and equals
-                             validator: RegExpValidator {regExp: /^[!-+\--<>-~]{8,16}$/ }
+                             //8 to 16 characters, all ASCII except comma, quotes, and equals
+                             validator: RegExpValidator {regExp: /^[!#-+\--<>-~]{8,16}$/ }
                             Layout.fillWidth: true
                             id: encryptionKeyTextField
                             textColor: acceptableInput ? "black" : "red"
