@@ -42,11 +42,15 @@ public:
         ScanSuccessAndPaired=4,
         ScanFailedNotDetected=5,
         SaveSettingsInProgress=6,
-        SaveSettingsSuccess=7,
-        SaveSettingsFailed=8,
-        DetectionInProgress=9,
-        DetectionSuccess=10,
-        DetectionFailed=11,
+
+        //SaveSettingsSuccess=7,
+        SaveSettingsFailed=7,
+        BeforePairNewDrone=8,
+        ShowQRCode=9,
+        ResetUnpairMonark=10,
+        //DetectionInProgress=8,
+        //DetectionSuccess=9,
+        //DetectionFailed=10,
 
 
     };
@@ -57,8 +61,13 @@ public:
     //TODO Q_PROPERTYs go here
     Q_PROPERTY(int monarkState READ monarkState NOTIFY monarkStateChanged)
 
+    Q_PROPERTY(QStringList connectedDroneList READ connectedDroneList NOTIFY connectedDroneListChanged)
+
+
     //TODO public getters go here
     int monarkState() const { return m_monarkState;}
+
+    QString connectedDroneList() const { return m_connectedDroneList;}
 
 
     //TODO public setters go here
@@ -69,6 +78,9 @@ public:
 
     Q_INVOKABLE void saveFlutterManagementSettings();
 
+    Q_INVOKABLE void saveEncryptionKey();
+
+
     Q_INVOKABLE void detect();
 
     static std::string connectToMicrohard(char const*const p_host, char const*const p_password, std::vector<std::string> const*const p_commands);
@@ -78,16 +90,20 @@ signals:
 
 
     void monarkStateChanged(int monarkState);
+    void connectedDroneListChanged(QStringList connectedDroneList);
 
 private:
-    void _initializeNetworkId();
+    void _initializeNetworkId(bool paired);
 
+    void _pingAllDrones();
 
 protected:
     std::unique_ptr<MonarkManagerWorkerWorker> mp_slotHandler;
     QAtomicInteger<int> m_monarkState;
     MonarkSettings*          mp_monarkSettings;
     MonarkQRCodeProvider*    mp_monarkQRCodeProvider;
-    bool m_paired;
+    std::vector<uint32_t> m_connectedDroneIDs;
+    QStringList m_connectedDroneList;
+    //bool m_paired;
 
 };

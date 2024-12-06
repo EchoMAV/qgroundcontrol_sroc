@@ -17,6 +17,8 @@ static constexpr inline char const*const np_srmDefaultIp="192.168.168.1";
 static constexpr inline char const*const np_srmPairedIp="172.20.1.2";
 static constexpr inline char const*const np_srocIp="172.20.1.1";
 static constexpr inline char const*const np_successStr = "\r\nOK\r\n";
+static constexpr inline uint16_t const n_defaultGroundTxPower= 20;
+static constexpr inline uint16_t const n_defaultGroundFrequency = 1711;
 
 }
 
@@ -226,7 +228,9 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , m_monarkState{(int)MonarkState::BeforeScan}
     , mp_monarkSettings{nullptr}
     , mp_monarkQRCodeProvider{nullptr}
-    , m_paired{false}
+    , m_connectedDroneIDs{}
+    , m_connectedDroneList{}
+    //, m_paired{false}
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::MonarkManager()()";
     mp_slotHandler->start();
@@ -259,6 +263,8 @@ void MonarkManager::startScanning()
     else
     {
         qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::startScanning()";
+        assert(m_monarkState == (int)MonarkState::BeforeScan
+             ||m_monarkState == (int)MonarkState::ScanFailedNotDetected );
         m_monarkState=(int)MonarkState::ScanInProgress;
         emit monarkStateChanged(m_monarkState);
         auto scanningResult=MonarkState::ScanFailedNotDetected;
@@ -266,41 +272,61 @@ void MonarkManager::startScanning()
             auto password = this->mp_monarkSettings->encryptionKey()->cookedValueString();
             return connectToMicrohard(np_srmPairedIp, password.toStdString().c_str(), nullptr);
         });
+
+
         auto const pingDefaultResponse=connectToMicrohard(np_srmDefaultIp, nullptr, nullptr);
+
+
         if(pingDefaultResponse == np_successStr)
         {
             qCDebug(MonarkManagerLog)<<"ScanSuccessPairingRequired";
             scanningResult=MonarkState::ScanSuccessPairingRequired;
-            m_paired=false;
+            this->mp_monarkSettings->encryptionKey()->setCookedValue("");
+            this->mp_monarkSettings->groundFrequency()->setCookedValue(n_defaultGroundFrequency);
+            this->mp_monarkSettings->groundTxPower()->setCookedValue(n_defaultGroundTxPower);
+            _initializeNetworkId(false);
         }
         else
         {
+
             auto const pingPairedResponse = pingPairedResponseFuture.get();
             if(pingPairedResponse == "ssh_userauth_password failed")
             {
                 qCDebug(MonarkManagerLog)<<"ScanSuccessBadCredentials";
                 scanningResult = MonarkState::ScanSuccessBadCredentials;
-                m_paired=true;
+                _initializeNetworkId(true);
             }
             else if(pingPairedResponse==np_successStr)
             {
+                m_connectedDroneList.clear();
+                m_connectedDroneIDs.clear();
+                std::vector<std::future<std::string>> dronePingResponses;
+                for(auto i=0;i<255;++i)
+                {
+                    dronePingResponses.push_back(std::async(std::launch::async,[i](){
+                        auto const ip = "172.20.2."+std::to_string(i);
+                        return connectToMicrohard(ip.c_str(), nullptr, nullptr);
+                    }));
+                }
                 qCDebug(MonarkManagerLog)<<"ScanSuccessAndPaired";
                 scanningResult=MonarkState::ScanSuccessAndPaired;
-                m_paired=true;
+
+                _initializeNetworkId(true);
+                for(auto i=0;i<255;++i)
+                {
+                    auto responseStr = dronePingResponses[i].get();
+                    if(np_successStr==responseStr)
+                    {
+                        m_connectedDroneIDs.push_back(i);
+                        m_connectedDroneList.push_back(QString("MONARK ")+i);
+                    }
+                }
+                emit connectedDroneListChanged(m_connectedDroneList);
             }
             else
             {
                 qCDebug(MonarkManagerLog)<<"ScanFailedNotDetected";
-                m_paired=false;
-
             }
-        }
-        _initializeNetworkId();
-        if(!m_paired)
-        {
-            this->mp_monarkSettings->encryptionKey()->setCookedValue("");
-            this->mp_monarkSettings->groundFrequency()->setCookedValue(1711);
-            this->mp_monarkSettings->groundTxPower()->setCookedValue(20);
         }
         m_monarkState=(int)scanningResult;
         emit monarkStateChanged(m_monarkState);
@@ -308,13 +334,13 @@ void MonarkManager::startScanning()
     }
 }
 
-void MonarkManager::_initializeNetworkId()
+void MonarkManager::_initializeNetworkId(bool paired)
 {
     std::string macAddress="";
     std::vector<std::string> commands;
     commands.emplace_back("AT+MNEMAC\n");
-    auto encryptionKey=m_paired?mp_monarkSettings->getOldEncryptionKey().toStdString():np_sshUsername;
-    auto const& returnStr = connectToMicrohard(m_paired?np_srmPairedIp:np_srmDefaultIp,encryptionKey.c_str(), &commands);
+    auto encryptionKey=paired?mp_monarkSettings->getOldEncryptionKey().toStdString():np_sshUsername;
+    auto const& returnStr = connectToMicrohard(paired?np_srmPairedIp:np_srmDefaultIp,encryptionKey.c_str(), &commands);
     //qCDebug(MonarkManagerLog)<<"returnStr = '"<<returnStr.c_str()<<"' (end returnStr)";
 
     if(returnStr.find(np_successStr) != std::string::npos)
@@ -343,61 +369,75 @@ void MonarkManager::saveFlutterManagementSettings()
     else
     {
         qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::saveFlutterManagementSettings()";
+        assert(m_monarkState == (int)MonarkState::ScanSuccessPairingRequired
+            || m_monarkState == (int)MonarkState::ScanSuccessBadCredentials
+            || m_monarkState == (int)MonarkState::SaveSettingsFailed );
+        auto const paired = m_monarkState==(int)MonarkState::ScanSuccessBadCredentials;
         m_monarkState=(int)MonarkState::SaveSettingsInProgress;
         emit monarkStateChanged(m_monarkState);
-         _initializeNetworkId();
-        auto txPower=mp_monarkSettings->groundTxPower()->cookedValueString().toStdString();
-        auto frequency=mp_monarkSettings->groundFrequency()->cookedValueString().toStdString();
-        auto networkId=mp_monarkSettings->networkID()->cookedValueString().toStdString();
-        auto const oldEncryptionKey = mp_monarkSettings->getOldEncryptionKey();
-        auto encryptionKey=mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
-        using namespace std::string_literals;
         std::vector<std::string> commands;
-        if(!m_paired)
+        if(!paired)
         {
+            using namespace std::string_literals;
+            auto txPower=mp_monarkSettings->groundTxPower()->cookedValueString().toStdString();
+            auto frequency=mp_monarkSettings->groundFrequency()->cookedValueString().toStdString();
+            auto networkId=mp_monarkSettings->networkID()->cookedValueString().toStdString();
+            auto encryptionKey=mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
             commands.emplace_back("AT+MWRADIO=1\n");
-        }
-        if(!m_paired || mp_monarkSettings->groundTxPowerDirty())
-        {
             commands.emplace_back("AT+MWTXPOWER="+txPower+"\n");
-        }
-        if(!m_paired || mp_monarkSettings->groundFreqencyDirty())
-        {
             commands.emplace_back("AT+MWFREQ="+frequency+"\n");
-        }
-        if(!m_paired || mp_monarkSettings->networkIdDirty())
-        {
             commands.emplace_back("AT+MWNETWORKID="+networkId+"\n");
-        }
-        if(!m_paired || mp_monarkSettings->encryptionKeyDirty())
-        {
             commands.emplace_back("AT+MWVENCRYPT=2,"+encryptionKey+"\n");
             commands.emplace_back("AT+MSPWD="+encryptionKey+","+encryptionKey+"\n");
-        }
-        if(!m_paired)
-        {
             commands.emplace_back("AT+MWVMODE=0\n");
             commands.emplace_back("AT+MNLAN=LAN,EDIT,0,"s+np_srmPairedIp+",255.255.0.0,0\n");
             commands.emplace_back("AT+MNLANDHCP=LAN,1,"s+np_srocIp+",1,0\n");
-        }
-        auto saveResult=MonarkState::SaveSettingsFailed;
-        if(commands.empty())
-        {
-            saveResult=MonarkState::SaveSettingsSuccess;
-        }
-        else
-        {
             commands.emplace_back("AT&W\n");
-            auto const& returnStr = connectToMicrohard(m_paired?np_srmPairedIp:np_srmDefaultIp,m_paired?oldEncryptionKey.toStdString().c_str():np_sshUsername, &commands);
-            if(returnStr.find(np_successStr)!= std::string::npos)
-            {
-                saveResult=MonarkState::SaveSettingsSuccess;
-                mp_monarkSettings->onSaveSettings();
-            }
+        }
+        auto saveResult=paired ? MonarkState::ScanSuccessBadCredentials: MonarkState::SaveSettingsFailed;
+        auto const& returnStr = connectToMicrohard(paired?np_srmPairedIp:np_srmDefaultIp,paired?mp_monarkSettings->getOldEncryptionKey().toStdString().c_str():np_sshUsername, &commands);
+        if(returnStr.find(np_successStr)!= std::string::npos)
+        {
+            saveResult=MonarkState::ScanSuccessAndPaired;
+            mp_monarkSettings->onSaveSettings();
         }
         m_monarkState=(int)saveResult;
         emit monarkStateChanged(m_monarkState);
         qCDebug(MonarkManagerLog)<<"EXIT:  MonarkManager::saveFlutterManagementSettings()";
+    }
+}
+
+void MonarkManager::saveEncryptionKey()
+{
+    if(mp_slotHandler->needDispatch())
+    {
+        mp_slotHandler->dispatch([this](){saveEncryptionKey();});
+    }
+    else
+    {
+        qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::saveEncryptionKey()";
+#if 0
+        assert(m_monarkState == (int)MonarkState::ScanSuccessBadCredentials);
+        m_monarkState=(int)MonarkState::SaveSettingsInProgress;
+        emit monarkStateChanged(m_monarkState);
+        auto const oldEncryptionKey = mp_monarkSettings->getOldEncryptionKey();
+        auto encryptionKey=mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
+        using namespace std::string_literals;
+        std::vector<std::string> commands;
+        commands.emplace_back("AT+MWVENCRYPT=2,"+encryptionKey+"\n");
+        commands.emplace_back("AT+MSPWD="+encryptionKey+","+encryptionKey+"\n");
+        commands.emplace_back("AT&W\n");
+        auto saveResult=MonarkState::ScanSuccessBadCredentials;
+        auto const& returnStr = connectToMicrohard(np_srmPairedIp,oldEncryptionKey.toStdString().c_str(), &commands);
+        if(returnStr.find(np_successStr)!= std::string::npos)
+        {
+            saveResult=MonarkState::ScanSuccessAndPaired;
+            mp_monarkSettings->onSaveSettings();
+        }
+        m_monarkState=(int)saveResult;
+        emit monarkStateChanged(m_monarkState);
+#endif
+        qCDebug(MonarkManagerLog)<<"EXIT:  MonarkManager::saveEncryptionKey()";
     }
 }
 
@@ -410,6 +450,7 @@ void MonarkManager::detect()
     else
     {
         qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::detect()";
+#if 0
         m_monarkState=(int)MonarkState::DetectionInProgress;
         emit monarkStateChanged(m_monarkState);
         auto detectionResult=MonarkState::DetectionFailed;
@@ -434,6 +475,7 @@ void MonarkManager::detect()
         }
         m_monarkState=(int)detectionResult;
         emit monarkStateChanged(m_monarkState);
+#endif
         qCDebug(MonarkManagerLog)<<"EXIT:  MonarkManager::detect()";
     }
 
