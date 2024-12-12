@@ -28,9 +28,20 @@ void MonarkQRCodeProvider::setToolbox(QGCToolbox *p_toolbox)
 QImage MonarkQRCodeProvider::requestImage(QString const &id, QSize *p_size,  QSize const &requestedSize)
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkQRCodeProvider::requestImage("<<id<<")";
-    //"image://MONARKQRCodes/monarkId"
-    auto const qrCode=qrcodegen::QrCode::encodeText(id.toUtf8().constData(), qrcodegen::QrCode::Ecc::HIGH);
-    auto const svg = _createSvg(qrCode,1);
+    //"image://MONARKQRCodes/networkID,encryptionKey,power,freq,monarkID"
+    auto dashIndex=id.indexOf("-");
+    QString cleanId;
+    if(dashIndex>=0)
+    {
+        ++dashIndex;
+        cleanId = id.mid(dashIndex,id.length()-dashIndex);
+    }
+    else
+    {
+        cleanId=id;
+    }
+    auto const qrCode=qrcodegen::QrCode::encodeText(cleanId.toUtf8().constData(), qrcodegen::QrCode::Ecc::HIGH);
+    auto const svg = _createSvg(qrCode,3);
     QSvgRenderer render(svg.toUtf8());
     QImage image(requestedSize,QImage::Format_Mono);
     image.fill(Qt::white);

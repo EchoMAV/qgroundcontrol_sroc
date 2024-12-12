@@ -2,7 +2,7 @@
 #include "QGCApplication.h"
 #include "Settings/SettingsManager.h"
 #include "MonarkQRCodeProvider.h"
-
+#include "MonarkDrone.h"
 #include <libssh/libssh.h>
 
 #include <QQmlEngine>
@@ -228,9 +228,7 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , m_monarkState{(int)MonarkState::BeforeScan}
     , mp_monarkSettings{nullptr}
     , mp_monarkQRCodeProvider{nullptr}
-    , m_connectedDroneIDs{}
     , m_connectedDroneList{}
-    //, m_paired{false}
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::MonarkManager()()";
     mp_slotHandler->start();
@@ -299,7 +297,6 @@ void MonarkManager::startScanning()
             else if(pingPairedResponse==np_successStr)
             {
                 m_connectedDroneList.clear();
-                m_connectedDroneIDs.clear();
                 std::vector<std::future<std::string>> dronePingResponses;
                 for(auto i=0;i<255;++i)
                 {
@@ -317,8 +314,8 @@ void MonarkManager::startScanning()
                     auto responseStr = dronePingResponses[i].get();
                     if(np_successStr==responseStr)
                     {
-                        m_connectedDroneIDs.push_back(i);
-                        m_connectedDroneList.push_back(QString("MONARK ")+i);
+                        m_connectedDroneList.push_back(MonarkDrone (i, this));
+
                     }
                 }
                 emit connectedDroneListChanged(m_connectedDroneList);
@@ -353,10 +350,31 @@ void MonarkManager::_initializeNetworkId(bool paired)
             macAddress = returnStr.substr(macStart, macEnd-macStart);
             macAddress.erase(std::remove(std::begin(macAddress), std::end(macAddress),':'), std::end(macAddress));
         }
+        if(macAddress.length()>4)
+        {
+            macAddress=macAddress.substr(macAddress.length()-4,4);
+        }
     }
     if(!macAddress.empty())
     {
         this->mp_monarkSettings->networkID()->setCookedValue("MONARK-"+QString::fromStdString(macAddress));
+    }
+}
+
+
+void MonarkManager::gotoBeforePairNewDrone()
+{
+    if(mp_slotHandler->needDispatch())
+    {
+        mp_slotHandler->dispatch([this](){gotoBeforePairNewDrone();});
+    }
+    else
+    {
+        qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::gotoBeforePairNewDrone()";
+        assert(m_monarkState == (int)MonarkState::ScanSuccessAndPaired);
+        m_monarkState=(int)MonarkState::BeforePairNewDrone;
+        emit monarkStateChanged(m_monarkState);
+        qCDebug(MonarkManagerLog)<<"EXIT:  MonarkManager::gotoBeforePairNewDrone()";
     }
 }
 
@@ -450,25 +468,27 @@ void MonarkManager::detect()
     else
     {
         qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::detect()";
-#if 0
-        m_monarkState=(int)MonarkState::DetectionInProgress;
+#if 1
+        assert(m_monarkState == (int)MonarkState::BeforePairNewDrone
+               || m_monarkState == (int)MonarkState::DetectionFailed);
+        m_monarkState=(int)MonarkState::ShowQRCode;
         emit monarkStateChanged(m_monarkState);
         auto detectionResult=MonarkState::DetectionFailed;
         auto encryptionKey=mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
-        std::vector<std::string> commands;
-        //TODO populate commands
-        std::string ip = "172.20.2."+std::to_string(mp_monarkSettings->monarkID()->cookedValue().toUInt());
+        auto monarkID = mp_monarkSettings->monarkID()->cookedValue().toUInt();
+        std::string ip = "172.20.2."+std::to_string(monarkID);
         auto const startTime = std::chrono::system_clock::now();
         for(;;)
         {
-            if((std::chrono::system_clock::now()-startTime) > std::chrono::minutes(2))
+            if((std::chrono::system_clock::now()-startTime) > std::chrono::minutes(3))
             {
                 break;
             }
-            auto const& returnStr = connectToMicrohard(ip.c_str(),encryptionKey.c_str(), &commands);
+            auto const& returnStr = connectToMicrohard(ip.c_str(),encryptionKey.c_str(), nullptr);
             if(returnStr.find(np_successStr)!= std::string::npos)
             {
-                detectionResult=MonarkState::DetectionSuccess;
+                m_connectedDroneList.push_back(MonarkDrone (monarkID, this));
+                detectionResult=MonarkState::ScanSuccessAndPaired;
                 break;
             }
             std::this_thread::sleep_for(std::chrono::seconds(1));

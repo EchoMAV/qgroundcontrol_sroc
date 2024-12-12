@@ -431,6 +431,7 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 #
 
 HEADERS += \
+    src/Monark/MonarkDrone.h \
     src/Monark/MonarkManager.h \
     src/Monark/MonarkQRCodeProvider.h \
     src/Monark/qrcodegen.h \
@@ -451,6 +452,7 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 }
 
 SOURCES += \
+    src/Monark/MonarkDrone.cpp \
     src/Monark/MonarkManager.cc \
     src/Monark/MonarkQRCodeProvider.cc \
     src/Monark/qrcodegen.cc \

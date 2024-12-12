@@ -46,6 +46,7 @@ SetupPage {
                             : (
                                   QGroundControl.monarkManager.monarkState === 8  //BeforePairNewDrone
                                || QGroundControl.monarkManager.monarkState === 9  //ShowQRCode
+                               || QGroundControl.monarkManager.monarkState === 11 //DetectionFailed
                               )
                             ? qsTr("PAIR New Drone")
                             : QGroundControl.monarkManager.monarkState === 10 // ResetUnpairMonark
@@ -207,7 +208,7 @@ SetupPage {
                           Layout.alignment: Qt.AlignLeft
                           font.pointSize: ScreenTools.mediumFontPointSize
                           text:       qsTr("Encryption Key must be 8 to 16 characters, all ASCII except comma, quotes, and equals")
-                          textColor: "red"
+                          color: "red"
 
                      }
                      QGCLabel{
@@ -219,7 +220,7 @@ SetupPage {
                           Layout.alignment: Qt.AlignLeft
                           font.pointSize: ScreenTools.mediumFontPointSize
                           text:       qsTr("Ground Tx Power must be an integer between 1 and 10000")
-                          textColor: "red"
+                          color: "red"
 
                      }
                      QGCLabel{
@@ -231,7 +232,7 @@ SetupPage {
                           Layout.alignment: Qt.AlignLeft
                           font.pointSize: ScreenTools.mediumFontPointSize
                           text:       qsTr("Ground Frequency must be an integer between 1 and 10000")
-                          textColor: "red"
+                          color: "red"
                      }
                  }
 
@@ -244,16 +245,7 @@ SetupPage {
                          Layout.alignment:       Qt.AlignHCenter
                          columns: 2
 
-                         FactTextField{
-                             visible : QGroundControl.monarkManager.monarkState === 2 //ScanSuccessPairingRequired
-                                    || QGroundControl.monarkManager.monarkState === 4 //ScanSuccessAndPaired
-                                    || QGroundControl.monarkManager.monarkState === 7 //SaveSettingsFailed
-                             fact: QGroundControl.settingsManager.monarkSettings.networkID
-                             readOnly: true
-                             Layout.fillWidth: true
-                             textColor: acceptableInput ? "black" : "red"
-                             id: networkIdTextField
-                         }
+
                          QGCLabel{
                              Layout.alignment: Qt.AlignRight
                              text:  qsTr("Set Encryption Key")
@@ -290,7 +282,7 @@ SetupPage {
                           Layout.alignment: Qt.AlignLeft
                           font.pointSize: ScreenTools.mediumFontPointSize
                           text:       qsTr("Encryption Key must be 8 to 16 characters, all ASCII except comma, quotes, and equals")
-                          textColor: "red"
+                          color: "red"
 
                      }
                      //bad credentials message
@@ -299,7 +291,7 @@ SetupPage {
                           Layout.alignment: Qt.AlignLeft
                           font.pointSize: ScreenTools.mediumFontPointSize
                           text:       qsTr("Encryption key did not match. Enter a different one or perform a factory reset of the ground radio, close the app, then try again.")
-                          textColor: acceptableInput ? "black" : "red"
+                          color: acceptableInput ? "black" : "red"
 
                      }
                  }
@@ -308,7 +300,6 @@ SetupPage {
                  ColumnLayout{
                      visible : QGroundControl.monarkManager.monarkState === 4 //ScanSuccessAndPaired
                      //show connected drones here
-                     //TODO will likely need to create a monark drone object
                      ColumnLayout{
                          Layout.alignment:       Qt.AlignLeft
                          QGCLabel{
@@ -324,7 +315,7 @@ SetupPage {
                              model: QGroundControl.monarkManager.connectedDroneList
                              QGCLabel{
                                  font.pointSize: ScreenTools.smallFontPointSize
-                                 text:  modelData
+                                 text:  modelData.droneName
                              }
                          }
                      }
@@ -336,7 +327,7 @@ SetupPage {
                          QGCButton {
                              text: qsTr("PAIR NEW DRONE")
                              onClicked : {
-                                QGroundControl.monarkManager.monarkState = 8 //BeforePairNewDrone
+                                QGroundControl.monarkManager.gotoBeforePairNewDrone()
                              }
                          }
                          QGCButton {
@@ -364,6 +355,7 @@ SetupPage {
                  ColumnLayout{
                      visible : QGroundControl.monarkManager.monarkState === 8 //BeforePairNewDrone
                             || QGroundControl.monarkManager.monarkState === 9 //ShowQRCode
+                            || QGroundControl.monarkManager.monarkState === 11 //DetectionFailed
                      GridLayout{
                          Layout.alignment:       Qt.AlignHCenter
                          columns: 2
@@ -373,8 +365,9 @@ SetupPage {
 
                          }
                          FactTextField{
+                             readOnly: QGroundControl.monarkManager.monarkState === 9 //ShowQRCode
                              fact: QGroundControl.settingsManager.monarkSettings.monarkID
-                             validator: IntValidator {bottom: 1; top: 255} //TODO find acceptable range
+                             validator: IntValidator {bottom: 1; top: 255}
                              Layout.fillWidth: true
                              id: monarkIdTextField
                              textColor: acceptableInput ? "black" : "red"
@@ -382,9 +375,38 @@ SetupPage {
                      }
                      QGCLabel{
                          Layout.alignment: Qt.AlignLeft
-                         text: qsTr("Is the drone's microhard radio factory reset?")
+                         visible: QGroundControl.monarkManager.monarkState === 8 //BeforePairNewDrone
+                         || QGroundControl.monarkManager.monarkState === 11 //DetectionFailed
+                         text: QGroundControl.monarkManager.monarkState === 8
+                         ? qsTr("Is the drone's microhard radio factory reset?")
+                         : QGroundControl.monarkManager.monarkState === 11 //DetectionFailed
+                         ? qsTr("Drone not detected. Try again?")
+                         : qsTr("INVALID Application state. Restart application or contact support.")
                      }
+                     Image {
+                         visible: QGroundControl.monarkManager.monarkState === 9 //ShowQRCode
+                         source:         "image://MONARKQRCodes/"+
+                                         networkIdTextField.text+","+encryptionKeyTextField.text+","+groundTxPowerTextField.text+","+groundFrequencyTextField.text+","+monarkIdTextField.text
+                                         /*
+                                         "{"+
+                                             "\"e\":\""+encryptionKeyTextField.text+"\","+
+                                             "\"n\":\""+networkIdTextField.text+"\","+
+                                             "\"t\":\""+groundTxPowerTextField.text+"\","+
+                                             "\"f\":\""+groundFrequencyTextField.text+"\","+
+                                             "\"m\":\""+monarkIdTextField.text+"\""+
+                                         "}
+*/
+                         sourceSize.width: 500
+                         sourceSize.height: 500
+                         Layout.fillWidth: true
+                         height:         width
+                         cache:          false
+                         fillMode:       Image.PreserveAspectFit
+                     }
+
                      RowLayout{
+                         visible: QGroundControl.monarkManager.monarkState === 8 //BeforePairNewDrone
+                          || QGroundControl.monarkManager.monarkState === 11 //DetectionFailed
                          QGCButton {
                              text: qsTr("YES")
                              onClicked : {
@@ -395,10 +417,18 @@ SetupPage {
                          QGCButton {
                              text: qsTr("NO")
                              onClicked : {
-                                 QGroundControl.monarkManager.monarkState = 10 //ResetUnpairMonark
-                             }
+                                 if(QGroundControl.monarkManager.monarkState === 8)
+                                 {
+                                    QGroundControl.monarkManager.monarkState = 10 //ResetUnpairMonark
+                                 }
+                                 else
+                                 {
+                                     QGroundControl.monarkManager.monarkState = 4 //ScanSuccessAndPaired
+                                 }
+                                }
                          }
                          QGCButton {
+                             visible: QGroundControl.monarkManager.monarkState === 8 //BeforePairNewDrone
                              text: qsTr("I DON'T KNOW")
                              onClicked : {
                                  QGroundControl.monarkManager.monarkState = 10 //ResetUnpairMonark
