@@ -6,6 +6,7 @@
 #include <QWaitCondition>
 #include <QMutex>
 #include <QQueue>
+#include <mutex>
 #include "MonarkDrone.h"
 Q_DECLARE_LOGGING_CATEGORY(MonarkManagerLog)
 
@@ -46,36 +47,29 @@ public:
         ScanSuccessAndPaired=4,
         ScanFailedNotDetected=5,
         SaveSettingsInProgress=6,
-
-        //SaveSettingsSuccess=7,
         SaveSettingsFailed=7,
         BeforePairNewDrone=8,
         ShowQRCode=9,
         ResetUnpairMonark=10,
         DetectionFailed=11,
-        //DetectionInProgress=8,
-        //DetectionSuccess=9,
-        //DetectionFailed=10,
-
-
+        ChangeTxPower=12,
+        ChangeFrequencies=13,
+        ChangeEncryptionKey=14,
     };
 
     MonarkManager(QGCApplication* p_app, QGCToolbox* p_toolbox);
     ~MonarkManager();
 
-    //TODO Q_PROPERTYs go here
     Q_PROPERTY(int monarkState READ monarkState NOTIFY monarkStateChanged)
-
+    Q_PROPERTY(int groundRadioUpdateState READ groundRadioUpdateState NOTIFY groundRadioUpdateStateChanged)
     Q_PROPERTY(QList<MonarkDrone> connectedDroneList READ connectedDroneList NOTIFY connectedDroneListChanged)
 
 
-    //TODO public getters go here
     int monarkState() const { return m_monarkState;}
+    int groundRadioUpdateState() const { return m_groundRadioUpdateState;}
+
 
     QList<MonarkDrone> const& connectedDroneList() const { return m_connectedDroneList;}
-
-
-    //TODO public setters go here
 
     virtual void setToolbox(QGCToolbox* p_toolbox) override;
 
@@ -83,12 +77,24 @@ public:
 
     Q_INVOKABLE void saveFlutterManagementSettings();
 
+#if 0
     Q_INVOKABLE void saveEncryptionKey();
+#endif
 
 
     Q_INVOKABLE void detect();
 
     Q_INVOKABLE void gotoBeforePairNewDrone();
+    Q_INVOKABLE void gotoChangeEncryptionKey();
+    Q_INVOKABLE void gotoChangeFrequencies();
+    Q_INVOKABLE void gotoChangeTxPower();
+    Q_INVOKABLE void gotoResetUnpairMonark();
+    Q_INVOKABLE void gotoScanSuccessAndPaired();
+    Q_INVOKABLE void gotoDetectionFailed();
+
+    Q_INVOKABLE void changeTxPower(QString const& desiredTxPower);
+    Q_INVOKABLE void changeFrequencies(QString const& desiredFrequency);
+    Q_INVOKABLE void changeEncryptionKey(QString const& currentEncryptionKey, QString const& desiredEncryptionKey);
 
 
     static std::string connectToMicrohard(char const*const p_host, char const*const p_password, std::vector<std::string> const*const p_commands);
@@ -98,6 +104,7 @@ signals:
 
 
     void monarkStateChanged(int monarkState);
+    void groundRadioUpdateStateChanged(int updateState);
     void connectedDroneListChanged(QList<MonarkDrone> const& connectedDroneList);
 
 private:
@@ -105,12 +112,18 @@ private:
 
     void _pingAllDrones();
 
+    void _setMonarkState(MonarkState monarkState);
+
 protected:
     std::unique_ptr<MonarkManagerWorkerWorker> mp_slotHandler;
-    QAtomicInteger<int> m_monarkState;
     MonarkSettings*          mp_monarkSettings;
     MonarkQRCodeProvider*    mp_monarkQRCodeProvider;
     QList<MonarkDrone> m_connectedDroneList;
+    QAtomicInteger<int> m_groundRadioUpdateState;
+private:
+    QAtomicInteger<int> m_monarkState;
+    std::mutex m_monarkStateMut;
+    std::condition_variable m_monarkStateCondition;
     //bool m_paired;
 
 };
