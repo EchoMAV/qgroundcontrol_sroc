@@ -13,6 +13,8 @@ Q_DECLARE_LOGGING_CATEGORY(MonarkManagerLog)
 
 class MonarkDrone;
 
+Q_DECLARE_METATYPE(QList<MonarkDrone>)
+
 class MonarkManagerWorkerWorker : public QThread
 {
     Q_OBJECT
@@ -62,14 +64,14 @@ public:
 
     Q_PROPERTY(int monarkState READ monarkState NOTIFY monarkStateChanged)
     Q_PROPERTY(int groundRadioUpdateState READ groundRadioUpdateState NOTIFY groundRadioUpdateStateChanged)
-    Q_PROPERTY(QList<MonarkDrone> connectedDroneList READ connectedDroneList NOTIFY connectedDroneListChanged)
+    Q_PROPERTY(QVariant connectedDroneList READ connectedDroneList NOTIFY connectedDroneListChanged)
 
 
     int monarkState() const { return m_monarkState;}
     int groundRadioUpdateState() const { return m_groundRadioUpdateState;}
 
 
-    QList<MonarkDrone> const& connectedDroneList() const { return m_connectedDroneList;}
+    QVariant connectedDroneList() const { return QVariant::fromValue(m_connectedDroneList);}
 
     virtual void setToolbox(QGCToolbox* p_toolbox) override;
 
@@ -97,7 +99,7 @@ public:
     Q_INVOKABLE void changeEncryptionKey(QString const& currentEncryptionKey, QString const& desiredEncryptionKey);
 
 
-    static std::string connectToMicrohard(char const*const p_host, char const*const p_password, std::vector<std::string> const*const p_commands);
+    static std::string sendCommands(char const*const p_host, char const*const p_password, std::vector<std::string> const*const p_commands, bool toDrone);
 
 
 signals:
@@ -105,7 +107,11 @@ signals:
 
     void monarkStateChanged(int monarkState);
     void groundRadioUpdateStateChanged(int updateState);
-    void connectedDroneListChanged(QList<MonarkDrone> const& connectedDroneList);
+    void connectedDroneListChanged();
+    void _pingDroneSuccess(int monarkId);
+
+private slots:
+    void _onPingDroneSuccess(int monarkId);
 
 private:
     void _initializeNetworkId(bool paired);
@@ -113,6 +119,8 @@ private:
     void _pingAllDrones();
 
     void _setMonarkState(MonarkState monarkState);
+
+    void _sendCommandsToRadioAndDrones(std::string const& currentEncryptionKey, std::vector<std::string> const& groundRadioCommands, std::vector<std::string> const& droneCommands);
 
 protected:
     std::unique_ptr<MonarkManagerWorkerWorker> mp_slotHandler;

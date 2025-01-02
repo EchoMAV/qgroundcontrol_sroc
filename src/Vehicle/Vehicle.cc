@@ -4386,7 +4386,7 @@ void Vehicle::_getMicrohardRSSI()
 
         std::vector<std::string> commands;
         commands.emplace_back("AT+MWRSSI\n");
-        auto const& returnStr = MonarkManager::connectToMicrohard(microhardIP.toStdString().c_str(),microhardPassword.toStdString().c_str(), &commands);
+        auto const& returnStr = MonarkManager::sendCommands(microhardIP.toStdString().c_str(),microhardPassword.toStdString().c_str(), &commands, false);
 
         if (returnStr.find("OK") == std::string::npos) {
             qCDebug(VehicleLog) << "Error getting Microhard RSSI: " << returnStr.c_str();
