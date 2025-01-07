@@ -270,7 +270,7 @@ SetupPage {
                               || QGroundControl.monarkManager.monarkState === 7 //SaveSettingsFailed
                               )
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("Ground Frequency is out of band for an 8Mhz bandwidth (see documentation)")
+                    text: qsTr("Ground Frequency must be in band for an 8Mhz bandwidth (see documentation)")
                     color: groundFrequencyTextField.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
             }
@@ -333,27 +333,9 @@ SetupPage {
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: qsTr("Connected Drones")
                     }
-                    Repeater {
-                        model: ListModel {
-                            MonarkDrone {
-                                droneName: "MONARK 1"
-                                droneId: 1
-                            }
-                            MonarkDrone {
-                                droneName: "MONARK 2"
-                                droneId: 2
-                            }
-                            MonarkDrone {
-                                droneName: "MONARK 3"
-                                droneId: 3
-                            }
-                        }
-
-                        //model: QGroundControl.monarkManager.connectedDroneList
-                        delegate: QGCLabel {
-                            font.pointSize: ScreenTools.mediumFontPointSize
-                            text: modelData.droneName
-                        }
+                    QGCLabel {
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text: QGroundControl.monarkManager.allDrones
                     }
                 }
 
@@ -713,23 +695,50 @@ SetupPage {
                              || QGroundControl.monarkManager.groundRadioUpdateState
                              === 3 //UpdateFailed
                 }
-                Repeater {
-                    model: QGroundControl.monarkManager.connectedDroneList
-                    RowLayout {
-                        QGCLabel {
-                            text: modelData.droneName
-                            font.pointSize: ScreenTools.mediumFontPointSize
-                        }
-                        Image {
-                            visible: modelData.updateState === 2 //UpdateSuccessful
-                                     || modelData.updateState === 3 //UpdateFailed
-                            source: modelData.updateState === 2 //UpdateSuccessful
-                                    ? "/qmlimages/checkbox-check.svg" : "/res/XDelete.svg"
-                        }
-                        BusyIndicator {
-                            running: true
-                            visible: modelData.updateState === 1 //UpdateInProgress
-                        }
+                GridLayout {
+                    columns: 2
+                    QGCLabel {
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text: qsTr("Waiting:")
+                        //color: desiredEncryptionKey.acceptableInput ? qgcPal.text : qgcPal.warningText
+                    }
+                    QGCLabel {
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text: QGroundControl.monarkManager.beforeUpdateDrones
+                        //color: desiredEncryptionKey.acceptableInput ? qgcPal.text : qgcPal.warningText
+                    }
+
+                    QGCLabel {
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text: qsTr("In Progress:")
+                        //color: desiredEncryptionKey.acceptableInput ? qgcPal.text : qgcPal.warningText
+                    }
+                    QGCLabel {
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text: QGroundControl.monarkManager.updateInProgressDrones
+                        //color: desiredEncryptionKey.acceptableInput ? qgcPal.text : qgcPal.warningText
+                    }
+
+                    QGCLabel {
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text: qsTr("Successful:")
+                        color: qgcPal.colorGreen
+                    }
+                    QGCLabel {
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text: QGroundControl.monarkManager.updateSuccessfulDrones
+                        color: qgcPal.colorGreen
+                    }
+
+                    QGCLabel {
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text: qsTr("Failed:")
+                        color: qgcPal.warningText
+                    }
+                    QGCLabel {
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text: QGroundControl.monarkManager.updateFailedDrones
+                        color: qgcPal.warningText
                     }
                 }
                 RowLayout {
@@ -737,6 +746,23 @@ SetupPage {
                         text: qsTr("Ground Radio")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
+
+
+                    /*
+                    QGCColoredImage {
+
+                        visible: QGroundControl.monarkManager.groundRadioUpdateState
+                                 === 2 //UpdateSuccessful
+                                 || QGroundControl.monarkManager.groundRadioUpdateState
+                                 === 3 //UpdateFailed
+                        color: QGroundControl.monarkManager.groundRadioUpdateState
+                               === 2 //UpdateSuccessful
+                               ? qgcPal.colorGreen : qgcPal.colorRed
+                        source: QGroundControl.monarkManager.groundRadioUpdateState
+                                === 2 //UpdateSuccessful
+                                ? "/qmlimages/checkbox-check.svg" : "/res/XDelete.svg"
+                    }
+                    */
                     Image {
 
                         visible: QGroundControl.monarkManager.groundRadioUpdateState
@@ -747,6 +773,7 @@ SetupPage {
                                 === 2 //UpdateSuccessful
                                 ? "/qmlimages/checkbox-check.svg" : "/res/XDelete.svg"
                     }
+
                     BusyIndicator {
                         running: true
                         visible: QGroundControl.monarkManager.groundRadioUpdateState

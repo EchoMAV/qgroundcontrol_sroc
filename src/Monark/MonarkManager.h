@@ -7,13 +7,11 @@
 #include <QMutex>
 #include <QQueue>
 #include <mutex>
-#include "MonarkDrone.h"
+#include <set>
 Q_DECLARE_LOGGING_CATEGORY(MonarkManagerLog)
 
 
-class MonarkDrone;
 
-Q_DECLARE_METATYPE(QList<MonarkDrone>)
 
 class MonarkManagerWorkerWorker : public QThread
 {
@@ -59,19 +57,38 @@ public:
         ChangeEncryptionKey=14,
     };
 
+    enum class UpdateState : int{
+        BeforeUpdate=0,
+        UpdateInProgress=1,
+        UpdateSuccessful=2,
+        UpdateFailed=3,
+    };
+
     MonarkManager(QGCApplication* p_app, QGCToolbox* p_toolbox);
     ~MonarkManager();
 
     Q_PROPERTY(int monarkState READ monarkState NOTIFY monarkStateChanged)
     Q_PROPERTY(int groundRadioUpdateState READ groundRadioUpdateState NOTIFY groundRadioUpdateStateChanged)
-    Q_PROPERTY(QVariant connectedDroneList READ connectedDroneList NOTIFY connectedDroneListChanged)
+    Q_PROPERTY(QString allDrones READ allDrones NOTIFY allDronesChanged);
+    Q_PROPERTY(QString beforeUpdateDrones READ beforeUpdateDrones NOTIFY beforeUpdateDronesChanged);
+    Q_PROPERTY(QString updateInProgressDrones READ updateInProgressDrones NOTIFY updateInProgressDronesChanged);
+    Q_PROPERTY(QString updateSuccessfulDrones READ updateSuccessfulDrones NOTIFY updateSuccessfulDronesChanged);
+    Q_PROPERTY(QString updateFailedDrones READ updateFailedDrones NOTIFY updateFailedDronesChanged);
+
+    //Q_PROPERTY(QList<QString> connectedDroneListNames READ connectedDroneListNames NOTIFY connectedDroneListNamesChanged)
+    //Q_PROPERTY(QList<QString> connectedDroneListStatuses READ connectedDroneListStatuses NOTIFY connectedDroneListStatusesChanged)
+
 
 
     int monarkState() const { return m_monarkState;}
     int groundRadioUpdateState() const { return m_groundRadioUpdateState;}
 
+    QString allDrones() const;
+    QString beforeUpdateDrones() const;
+    QString updateInProgressDrones() const;
+    QString updateSuccessfulDrones() const;
+    QString updateFailedDrones() const;
 
-    QVariant connectedDroneList() const { return QVariant::fromValue(m_connectedDroneList);}
 
     virtual void setToolbox(QGCToolbox* p_toolbox) override;
 
@@ -99,7 +116,7 @@ public:
     Q_INVOKABLE void changeEncryptionKey(QString const& currentEncryptionKey, QString const& desiredEncryptionKey);
 
 
-    static std::string sendCommands(char const*const p_host, char const*const p_password, std::vector<std::string> const*const p_commands, bool toDrone);
+    static std::pair<bool,std::vector<std::string>> sendCommands(char const*const p_host, char const*const p_username, char const*const p_password, std::vector<std::string> const*const p_commands, bool toDrone);
 
 
 signals:
@@ -107,11 +124,13 @@ signals:
 
     void monarkStateChanged(int monarkState);
     void groundRadioUpdateStateChanged(int updateState);
-    void connectedDroneListChanged();
-    void _pingDroneSuccess(int monarkId);
+    void allDronesChanged();
+    void beforeUpdateDronesChanged();
+    void updateInProgressDronesChanged();
+    void updateSuccessfulDronesChanged();
+    void updateFailedDronesChanged();
 
-private slots:
-    void _onPingDroneSuccess(int monarkId);
+
 
 private:
     void _initializeNetworkId(bool paired);
@@ -122,16 +141,20 @@ private:
 
     void _sendCommandsToRadioAndDrones(std::string const& currentEncryptionKey, std::vector<std::string> const& groundRadioCommands, std::vector<std::string> const& droneCommands);
 
+    void _resetToBeforeUpdate();
+
 protected:
     std::unique_ptr<MonarkManagerWorkerWorker> mp_slotHandler;
     MonarkSettings*          mp_monarkSettings;
     MonarkQRCodeProvider*    mp_monarkQRCodeProvider;
-    QList<MonarkDrone> m_connectedDroneList;
+    std::set<int> m_beforeUpdateDrones;
+    std::set<int> m_updateInProgressDrones;
+    std::set<int> m_updateSuccessfulDrones;
+    std::set<int> m_updateFailedDrones;
     QAtomicInteger<int> m_groundRadioUpdateState;
 private:
     QAtomicInteger<int> m_monarkState;
     std::mutex m_monarkStateMut;
     std::condition_variable m_monarkStateCondition;
-    //bool m_paired;
 
 };

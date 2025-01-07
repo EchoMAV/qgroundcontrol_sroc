@@ -8,6 +8,7 @@ MonarkDrone::MonarkDrone(int droneId, QObject* p_parent)
 {
 }
 
+
 MonarkDrone::MonarkDrone(MonarkDrone const& that)
     : QObject{that.parent()}
     , m_droneName{that.m_droneName}

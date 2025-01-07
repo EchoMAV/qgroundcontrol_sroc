@@ -1,9 +1,11 @@
 #pragma once
+#include "qqml.h"
 #include <QObject>
 #include <QString>
 class MonarkDrone : public QObject
 {
      Q_OBJECT
+    QML_ELEMENT
 public:
 
      enum class UpdateState : int{
@@ -24,7 +26,7 @@ public:
         emit updateStateChanged(updateState);
     }
 
-    MonarkDrone(int droneId, QObject* p_parent=nullptr);
+    MonarkDrone(int droneId = -1, QObject* p_parent=nullptr);
     MonarkDrone(MonarkDrone const& that);
     QString const& droneName() const{return m_droneName;}
     int droneId() const{return m_droneId;}
