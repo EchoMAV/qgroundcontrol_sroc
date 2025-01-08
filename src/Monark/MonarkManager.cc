@@ -846,7 +846,7 @@ void MonarkManager::changeTxPower(QString const& desiredTxPower)
         groundRadioCommands.emplace_back("AT+MWTXPOWER="+desiredStdString+"\n");
         groundRadioCommands.emplace_back("AT&W\n");
         droneCommands.emplace_back("export ENCRYPTION_KEY="+currentEncryptionKey+"\n");
-        droneCommands.emplace_back("mircohard --action=update --tx_power="+desiredStdString);
+        droneCommands.emplace_back("microhard --action=update --tx_power="+desiredStdString);
         _sendCommandsToRadioAndDrones(currentEncryptionKey, groundRadioCommands,droneCommands);
         if(m_groundRadioUpdateState == (int)UpdateState::UpdateSuccessful)
         {
