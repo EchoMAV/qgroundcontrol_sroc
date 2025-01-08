@@ -212,8 +212,6 @@ Item {
                 baseSize = platformFontPointSize
                 _appFontPointSizeFact.value = baseSize
             }
-            //Default to 79% UI scaling
-            _appFontPointSizeFact.value = _appFontPointSizeFact.value * 0.79
             //-- Set size saved in settings
             _screenTools._setBasePointSize(baseSize)
         }
