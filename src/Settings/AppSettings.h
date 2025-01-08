@@ -67,9 +67,6 @@ public:
     DEFINE_SETTINGFACT(forwardMavlink)
     DEFINE_SETTINGFACT(forwardMavlinkHostName)
     DEFINE_SETTINGFACT(forwardMavlinkAPMSupportHostName)
-    DEFINE_SETTINGFACT(rssiRadioSelect)
-    DEFINE_SETTINGFACT(MicrohardPassword)
-    DEFINE_SETTINGFACT(MicrohardIP)
 
 
     // Although this is a global setting it only affects ArduPilot vehicle since PX4 automatically starts the stream from the vehicle side

@@ -172,10 +172,6 @@ DECLARE_SETTINGSFACT(AppSettings, firstRunPromptIdsShown)
 DECLARE_SETTINGSFACT(AppSettings, forwardMavlink)
 DECLARE_SETTINGSFACT(AppSettings, forwardMavlinkHostName)
 DECLARE_SETTINGSFACT(AppSettings, forwardMavlinkAPMSupportHostName)
-// TODO these might already exist from Thomas for the MONARK mgmt tab
-DECLARE_SETTINGSFACT(AppSettings, rssiRadioSelect)
-DECLARE_SETTINGSFACT(AppSettings, MicrohardPassword)
-DECLARE_SETTINGSFACT(AppSettings, MicrohardIP)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {

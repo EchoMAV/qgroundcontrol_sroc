@@ -127,16 +127,10 @@ std::pair<bool,std::vector<std::string>> MonarkManager::sendCommands(char const*
                     break;
                 }
                 qCDebug(MonarkManagerLog)<<"MonarkManager::sendCommands("<<p_host<<") : requested shell";
-                commandsSent=true;
-                size_t commandIndex=0;
-                for(;;)
+#if 0
+                if(toDrone)
                 {
-                    std::string responseStr;
-                    auto const& command=(*p_commands)[commandIndex];
-                    //command is sent
-                    ssh_channel_write(p_channel,command.c_str(), command.size());
-                    qCDebug(MonarkManagerLog)<<"MonarkManager::sendCommands("<<p_host<<") : wrote command '"<<command.c_str()<<"'";
-                    bool commandSuccess=false;
+                    //clear the garbage the shell sends us
                     char* p_bufferItr = &p_buffer[0];
                     auto const start = std::chrono::system_clock::now();
                     for(;;)
@@ -151,11 +145,11 @@ std::pair<bool,std::vector<std::string>> MonarkManager::sendCommands(char const*
                             p_bufferItr+=numBytesRead;
                             if(numBytesRead>0)
                             {
-                                responseStr=  std::string(p_buffer,p_bufferItr - (&p_buffer[0]));
+
+                                std::string responseStr=  std::string(p_buffer,p_bufferItr - (&p_buffer[0]));
                                 qCDebug(MonarkManagerLog)<<"MonarkManager::sendCommands("<<p_host<<") : responseStr="<<   responseStr.c_str();
-                                if(responseStr.find(toDrone?np_droneSuccessStr:np_groundRadioSuccessStr) != std::string::npos)
+                                if(responseStr.find("permitted by applicable law.") != std::string::npos)
                                 {
-                                    commandSuccess=true;
                                     break;
                                 }
 
@@ -168,6 +162,69 @@ std::pair<bool,std::vector<std::string>> MonarkManager::sendCommands(char const*
                         if(size_t(p_bufferItr - (&p_buffer[0])) >= sizeof(p_buffer))
                         {
                             break;
+                        }
+                    }
+                }
+#endif
+
+                commandsSent=true;
+
+                size_t commandIndex=0;
+                for(;;)
+                {
+                    std::string responseStr;
+                    auto const& command=(*p_commands)[commandIndex];
+                    //command is sent
+                    ssh_channel_write(p_channel,command.c_str(), command.size());
+                    qCDebug(MonarkManagerLog)<<"MonarkManager::sendCommands("<<p_host<<") : wrote command '"<<command.c_str()<<"'";
+                    bool commandSuccess=false;
+                    if(command.find("export")==0)
+                    {
+                        commandSuccess=true;
+                        responseStr=np_droneSuccessStr;
+                    }
+                    else
+                    {
+                        char* p_bufferItr = &p_buffer[0];
+                        auto const start = std::chrono::system_clock::now();
+                        for(;;)
+                        {
+                            if(!ssh_channel_is_open(p_channel))
+                            {
+                                break;
+                            }
+                            qCDebug(MonarkManagerLog)<<"MonarkManager::sendCommands("<<p_host<<") : ssh_channel_is_open=true";
+                            if(ssh_channel_poll_timeout(p_channel,2000,0)>0)
+                            {
+                                qCDebug(MonarkManagerLog)<<"MonarkManager::sendCommands("<<p_host<<") : ssh_channel_poll_timeout(p_channel,2000,0)>0=true";
+                                int numBytesRead = ssh_channel_read(p_channel, p_bufferItr, sizeof(p_buffer) - (p_bufferItr - (&p_buffer[0])),0);
+                                qCDebug(MonarkManagerLog)<<"MonarkManager::sendCommands("<<p_host<<") : numBytesRead="<<numBytesRead;
+                                p_bufferItr+=numBytesRead;
+                                if(numBytesRead>0)
+                                {
+                                    responseStr=  std::string(p_buffer,p_bufferItr - (&p_buffer[0]));
+                                    qCDebug(MonarkManagerLog)<<"MonarkManager::sendCommands("<<p_host<<") : responseStr="<<   responseStr.c_str();
+                                    if(responseStr.find(toDrone?np_droneSuccessStr:np_groundRadioSuccessStr) != std::string::npos)
+                                    {
+                                        commandSuccess=true;
+                                        break;
+                                    }
+
+                                }
+                            }
+                            else
+                            {
+                                qCDebug(MonarkManagerLog)<<"MonarkManager::sendCommands("<<p_host<<") : ssh_channel_poll_timeout(p_channel,2000,0)>0=false";
+
+                            }
+                            if(std::chrono::system_clock::now() - start > std::chrono::seconds(30))
+                            {
+                                break;
+                            }
+                            if(size_t(p_bufferItr - (&p_buffer[0])) >= sizeof(p_buffer))
+                            {
+                                break;
+                            }
                         }
                     }
                     commandResponses.push_back(responseStr);
@@ -789,7 +846,7 @@ void MonarkManager::changeTxPower(QString const& desiredTxPower)
         groundRadioCommands.emplace_back("AT+MWTXPOWER="+desiredStdString+"\n");
         groundRadioCommands.emplace_back("AT&W\n");
         droneCommands.emplace_back("export ENCRYPTION_KEY="+currentEncryptionKey+"\n");
-        droneCommands.emplace_back("micohard --action=update --tx_power="+desiredStdString);
+        droneCommands.emplace_back("mircohard --action=update --tx_power="+desiredStdString);
         _sendCommandsToRadioAndDrones(currentEncryptionKey, groundRadioCommands,droneCommands);
         if(m_groundRadioUpdateState == (int)UpdateState::UpdateSuccessful)
         {
@@ -816,7 +873,7 @@ void MonarkManager::changeFrequencies(QString const& desiredFrequency)
         groundRadioCommands.emplace_back("AT+MWFREQ="+desiredStdString+"\n");
         groundRadioCommands.emplace_back("AT&W\n");
         droneCommands.emplace_back("export ENCRYPTION_KEY="+currentEncryptionKey+"\n");
-        droneCommands.emplace_back("micohard --action=update --frequency="+desiredStdString);
+        droneCommands.emplace_back("microhard --action=update --frequency="+desiredStdString);
         _sendCommandsToRadioAndDrones(currentEncryptionKey, groundRadioCommands,droneCommands);
         if(m_groundRadioUpdateState == (int)UpdateState::UpdateSuccessful)
         {

@@ -80,19 +80,6 @@ class Autotune;
 class RemoteIDManager;
 class GimbalController;
 
-struct RSSIEntry_t {
-    Q_GADGET
-public:
-    QString     mac;
-    QString     ip;
-    int         signal;
-    int         percentage;
-    Q_PROPERTY(QString qmac MEMBER mac)
-    Q_PROPERTY(QString qip MEMBER ip)
-    Q_PROPERTY(int qsignal MEMBER signal)
-    Q_PROPERTY(int qpercentage MEMBER percentage)
-} ;
-
 namespace events {
 namespace parser {
 class ParsedEvent;
@@ -268,11 +255,6 @@ public:
     Q_PROPERTY(bool                 requiresGpsFix              READ requiresGpsFix                                                 NOTIFY requiresGpsFixChanged)
     Q_PROPERTY(double               loadProgress                READ loadProgress                                                   NOTIFY loadProgressChanged)
     Q_PROPERTY(bool                 initialConnectComplete      READ isInitialConnectComplete                                       NOTIFY initialConnectComplete)
-
-    // The following properties relate to RSSI
-    Q_PROPERTY(QVariantList         RadioRSSI                   READ RadioRSSI                                                      NOTIFY RSSIChanged)
-    Q_PROPERTY(int                  RadioRSSIMax                READ RadioRSSIMax                                                   NOTIFY RSSIChanged)
-    Q_PROPERTY(int                  RadioRSSIMin                READ RadioRSSIMin                                                   NOTIFY RSSIChanged)
 
     // The following properties relate to Orbit status
     Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
@@ -480,8 +462,6 @@ public:
     /// Trigger camera using MAV_CMD_DO_DIGICAM_CONTROL command
     Q_INVOKABLE void triggerSimpleCamera(void);
 
-    void _getMicrohardRSSI                 ();
-
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_INVOKABLE void flashBootloader();
 #endif
@@ -594,11 +574,6 @@ public:
     //-- Mavlink Logging
     void startMavlinkLog();
     void stopMavlinkLog();
-
-    // RSSI related
-    QVariantList RadioRSSI() const;
-    int RadioRSSIMax() const;
-    int RadioRSSIMin() const;
 
     /// Requests the specified data stream from the vehicle
     ///     @param stream Stream which is being requested
@@ -1057,8 +1032,6 @@ signals:
 
     void sensorsParametersResetAck      (bool success);
 
-    void RSSIChanged                    ();
-
 private slots:
     void _generateCotPacket();  // Function to generate and log CoT packet
     void _mavlinkMessageReceived            (LinkInterface* link, mavlink_message_t message);
@@ -1093,7 +1066,6 @@ private slots:
     void _doSetHomeTerrainReceived          (bool success, QList<double> heights);
     void _updateAltAboveTerrain             ();
     void _altitudeAboveTerrainReceived      (bool sucess, QList<double> heights);
-    void _rssiSourceChanged();
 
 private:
     void _loadJoystickSettings          ();
@@ -1171,7 +1143,6 @@ private:
     bool                _soloFirmware = false;
     QGCToolbox*         _toolbox = nullptr;
     SettingsManager*    _settingsManager = nullptr;
-    int                 _rssiSource = 0;
 
     QTimer              _csvLogTimer;
     QFile               _csvLogFile;
@@ -1228,8 +1199,6 @@ private:
     SysStatusSensorInfo _sysStatusSensorInfo;
 
     QGCCameraManager* _cameraManager = nullptr;
-
-    QList<RSSIEntry_t>        _RSSIList;
 
     QString             _prearmError;
     QTimer              _prearmErrorTimer;
@@ -1335,8 +1304,6 @@ private:
     } ChunkedStatusTextInfo_t;
     QMap<uint8_t /* compId */, ChunkedStatusTextInfo_t> _chunkedStatusTextInfoMap;
     QTimer _chunkedStatusTextTimer;
-
-    QTimer _MicrohardRssiTimer;
 
     /// Callback for waitForMavlinkMessage
     ///     @param resultHandleData     Opaque data passed in to waitForMavlinkMessage call

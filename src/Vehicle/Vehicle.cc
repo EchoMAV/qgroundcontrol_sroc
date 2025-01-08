@@ -69,7 +69,6 @@
 #endif
 #include "Autotune.h"
 #include "RemoteIDManager.h"
-#include "Monark/MonarkManager.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -254,11 +253,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     _chunkedStatusTextTimer.setInterval(1000);
     connect(&_chunkedStatusTextTimer, &QTimer::timeout, this, &Vehicle::_chunkedStatusTextTimeout);
 
-    // Microhard RSSI Fetch Timer
-    _MicrohardRssiTimer.setInterval(16000); // be careful not to flood AT SSH timeouts
-    _MicrohardRssiTimer.setSingleShot(false);
-    connect(&_MicrohardRssiTimer, &QTimer::timeout, this, &Vehicle::_getMicrohardRSSI);
-
     _mav = uas();
 
     // Listen for system messages
@@ -291,26 +285,6 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     // Start timer to limit altitude above terrain queries
     _altitudeAboveTerrQueryTimer.restart();
-
-    //get current RSSI source
-    _rssiSource = _settingsManager->appSettings()->rssiRadioSelect()->rawValue().toInt();
-
-    switch(_rssiSource) {
-    case 1:
-        //Persistent Systems MPU5 -> not currently supported
-        break;
-    case 2:
-        //Doodle Labs, start a timer that tries to do a periodic JSON-RPC call
-        qDebug() << "Doodle timer not supported";
-        break;
-    case 3:
-        qDebug() << "Starting microhard rssi timer";
-        _MicrohardRssiTimer.start();
-        break;
-    default:
-        //default packet loss based
-        break;
-    }
 }
 
 // Disconnected Vehicle for offline editing
@@ -715,42 +689,6 @@ void Vehicle::resetCounters()
     _messagesLost       = 0;
     _messageSeq         = 0;
     _heardFrom          = false;
-}
-
-void Vehicle::_rssiSourceChanged()
-{
-    int _currentRssiSource = _rssiSource;
-    _rssiSource = _settingsManager->appSettings()->rssiRadioSelect()->rawValue().toInt();
-
-    if (_rssiSource == _currentRssiSource)
-        return;
-
-    if (_rssiSource == 0)
-    {
-        qDebug() << "RSSI source changed to Disabled";
-        //changed to disabled
-        _MicrohardRssiTimer.stop();
-        return;
-    }
-    else if (_rssiSource == 1)  //currently not implemented
-    {
-        //going from disabled to mpu5
-        qDebug() << "RSSI source changed to MPU5 but this is not supported";
-        _MicrohardRssiTimer.stop();
-
-    }
-    else if (_rssiSource == 2)
-    {
-        //changing to Doodle
-        qDebug() << "RSSI source changed to Doodle but this is not supported";
-        _MicrohardRssiTimer.stop();
-    }
-    else if (_rssiSource == 3)
-    {
-        //changing to Microhard
-        qDebug() << "RSSI source changed to Microhard";
-        _MicrohardRssiTimer.start();
-    }
 }
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
@@ -2459,41 +2397,6 @@ QVariantList Vehicle::links() const {
     return ret;
 }
 #endif
-
-QVariantList Vehicle::RadioRSSI() const {
-    QVariantList ret;
-
-    for( const auto &item: _RSSIList )
-        ret << QVariant::fromValue(item);
-
-    return ret;
-}
-
-int Vehicle::RadioRSSIMax() const {
-    int ret = -255;
-
-    for( const RSSIEntry_t &item: _RSSIList )
-    {
-        //find the max value
-        if (item.percentage > ret)
-            ret = item.percentage;
-    }
-
-    return ret;
-}
-
-int Vehicle::RadioRSSIMin() const {
-    int ret = 255;
-
-    for( const RSSIEntry_t &item: _RSSIList )
-    {
-        //find the min value
-        if (item.percentage < ret)
-            ret = item.percentage;
-    }
-
-    return ret;
-}
 
 void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate, bool sendMultiple)
 {
@@ -4370,65 +4273,6 @@ void Vehicle::_writeCsvLine()
 
     stream << allFactValues.join(",") << "\n";
 }
-
-void Vehicle::_getMicrohardRSSI()
-{
-    try {
-
-        bool enabled = (_settingsManager->appSettings()->rssiRadioSelect()->rawValue().toInt() == 2);
-
-        if (!enabled)
-            return;
-
-        //pull info from settings
-        QString microhardIP = _settingsManager->appSettings()->MicrohardIP()->rawValue().toString();
-        QString microhardPassword= _settingsManager->appSettings()->MicrohardPassword()->rawValue().toString();
-
-        std::vector<std::string> commands;
-        commands.emplace_back("AT+MWRSSI\n");
-        auto const& response = MonarkManager::sendCommands(microhardIP.toStdString().c_str(),"admin", microhardPassword.toStdString().c_str(), &commands, false).second;
-        auto returnStr = response.empty()?"no response": response.back();
-        if (returnStr.find("OK") == std::string::npos) {
-            qCDebug(VehicleLog) << "Error getting Microhard RSSI: " << returnStr.c_str();
-            _RSSIList.clear();
-            emit RSSIChanged();
-        }
-        else {
-            // sample output is
-            // |    | 00:0f:92:fd:bd:67 -11
-            // |    | OK
-
-            // Extract MAC and signal
-            // TODO if there are more radios this will be a list
-            std::istringstream iss(returnStr);
-            std::string mac;
-            int signal;
-            iss >> mac >> signal;
-
-            const int rssi_limits[2] = {-85, -40};
-
-            RSSIEntry_t   rssi;
-            rssi.mac =      QString(mac.c_str());
-            rssi.signal =   signal;
-
-            //calculate the percentage
-            if (signal >= rssi_limits[1]) rssi.percentage = 100;
-            else if (signal <= rssi_limits[0]) rssi.percentage = 0;
-            else
-            {
-                rssi.percentage = ((100.0 / ((float)(rssi_limits[1] - rssi_limits[0]))) * (signal - rssi_limits[0] + 1));
-            }
-            _RSSIList.append(rssi);
-        }
-    }
-    catch (std::exception& e) {
-        qCDebug(VehicleLog) << "Error getting Microhard RSSI: " << e.what();
-        _RSSIList.clear();
-        emit RSSIChanged();
-        return;
-    }
-}
-
 
 #if !defined(NO_ARDUPILOT_DIALECT)
 void Vehicle::flashBootloader()
