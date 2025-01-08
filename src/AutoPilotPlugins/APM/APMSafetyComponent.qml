@@ -835,6 +835,7 @@ SetupPage {
             }
 
             Column {
+                visible: QGroundControl.corePlugin.showAdvancedUI
                 spacing: _margins / 2
 
                 QGCLabel {
