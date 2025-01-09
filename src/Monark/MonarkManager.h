@@ -116,7 +116,6 @@ public:
     Q_INVOKABLE void changeEncryptionKey(QString const& currentEncryptionKey, QString const& desiredEncryptionKey);
 
 
-    static std::pair<bool,std::vector<std::string>> sendCommands(char const*const p_host, char const*const p_username, char const*const p_password, std::vector<std::string> const*const p_commands, bool toDrone);
 
 
 signals:
@@ -133,13 +132,17 @@ signals:
 
 
 private:
+
     void _initializeNetworkId(bool paired);
 
     void _pingAllDrones();
 
     void _setMonarkState(MonarkState monarkState);
 
-    void _sendCommandsToRadioAndDrones(std::string const& currentEncryptionKey, std::vector<std::string> const& groundRadioCommands, std::vector<std::string> const& droneCommands);
+    bool _changeGroundRadioFrequency(std::string const& desiredFrequency, bool reversion);
+
+
+    //void _sendCommandsToRadioAndDrones(std::string const& currentEncryptionKey, std::vector<std::string> const& groundRadioCommands, std::vector<std::string> const& droneCommands);
 
     void _resetToBeforeUpdate();
 

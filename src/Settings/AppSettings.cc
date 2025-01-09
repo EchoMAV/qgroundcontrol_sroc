@@ -117,6 +117,7 @@ DECLARE_SETTINGGROUP(App, "")
         if (rootDirPath.isEmpty()) {
             rootDirPath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
         }
+        qDebug() << "rootDirPath = " << rootDirPath;
         savePathFact->setRawValue(QDir(rootDirPath).filePath(appName));
     #endif
     savePathFact->setVisible(false);
@@ -231,6 +232,7 @@ void AppSettings::_qLocaleLanguageChanged()
 void AppSettings::_checkSavePathDirectories(void)
 {
     QDir savePathDir(savePath()->rawValue().toString());
+
     if (!savePathDir.exists()) {
         QDir().mkpath(savePathDir.absolutePath());
     }

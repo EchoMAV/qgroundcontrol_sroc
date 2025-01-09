@@ -834,6 +834,46 @@ SetupPage {
                 sourceComponent: controller.vehicle.fixedWing ? planeRTL : undefined
             }
 
+            /*
+            Component{
+                id: fsLongTimeoutPanel
+                Column {
+                    property Fact _fsLongTimeout: controller.getParameterFact(
+                                                    -1, "FS_LONG_TIMEOUT")
+
+                    spacing: _margins / 2
+                    Rectangle {
+                        width: fsLongTimeoutLayout.width + (_margins * 2)
+                        height: fsLongTimeoutLayout.height + (_margins * 2)
+                        color: ggcPal.windowShade
+
+                        ColumnLayout {
+                            id: fsLongTimeoutLayout
+                            x: _margins
+                            y: _margins
+                            spacing: ScreenTools.defaultFontPixellHeight / 2
+
+
+
+
+                            GridLayout {
+                                columns: 2
+
+
+                                QGCLabel {
+                                    text: qsTr("Failsafe Long Timeout")
+                                }
+
+                                FactTextField {
+                                    fact: _fsLongTimeout
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            */
+
             Column {
                 visible: QGroundControl.corePlugin.showAdvancedUI
                 spacing: _margins / 2

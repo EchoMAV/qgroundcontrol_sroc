@@ -356,9 +356,9 @@ CustomBuild {
         RESOURCES += $$PWD/resources/InstrumentValueIcons/InstrumentValueIcons.qrc
     }
 } else {
-    DEFINES += QGC_APPLICATION_NAME=\"\\\"QGroundControl\\\"\"
-    DEFINES += QGC_ORG_NAME=\"\\\"QGroundControl.org\\\"\"
-    DEFINES += QGC_ORG_DOMAIN=\"\\\"org.qgroundcontrol\\\"\"
+    DEFINES += QGC_APPLICATION_NAME='"\\\"MONARK GCS\\\""'
+    DEFINES += QGC_ORG_NAME=\"\\\"echomav.com\\\"\"
+    DEFINES += QGC_ORG_DOMAIN=\"\\\"com.echomav\\\"\"
     RESOURCES += \
         $$PWD/qgroundcontrol.qrc \
         $$PWD/qgcresources.qrc \
