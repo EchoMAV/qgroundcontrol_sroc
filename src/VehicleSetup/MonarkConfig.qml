@@ -17,6 +17,21 @@ SetupPage {
     pageComponent: pageComponent
     pageName: qsTr("MONARK")
     pageDescription: ""
+
+    MessageDialog {
+        id: newDroneAddedConfirmation
+        title: qsTr("New MONARK ID Added")
+        text: "MONARK-" + QGroundControl.monarkManager.newDroneId + " has been added"
+        standardButtons: StandardButton.Ok
+    }
+
+    Connections {
+        target: QGroundControl.monarkManager
+        onNewDroneIdChanged: {
+            newDroneAddedConfirmation.open()
+        }
+    }
+
     Component {
         id: pageComponent
         ColumnLayout {
@@ -449,34 +464,52 @@ SetupPage {
                 visible: QGroundControl.monarkManager.monarkState === 9 //ShowQRCode
 
                 ColumnLayout {
+                    id: pairingInstructions
+                    Layout.maximumWidth: 40 * ScreenTools.defaultFontPixelWidth
+
                     QGCLabel {
                         font.pointSize: ScreenTools.largeFontPointSize
                         text: qsTr("Pair New Drone")
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
                     }
                     QGCLabel {
                         text: qsTr("MONARK ID: ")
                               + QGroundControl.settingsManager.monarkSettings.monarkID.rawValue
                         font.pointSize: ScreenTools.mediumFontPointSize
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("If the MONARK is in pairing state, you\nshould hear a single beep heartbeat. If\nnot, reattempt a factory reset. Otherwise,\nproceed as follows:")
+                        text: qsTr("If the MONARK is in pairing state, you should hear a single beep heartbeat. If not, reattempt a factory reset. Otherwise, proceed as follows:")
                         font.pointSize: ScreenTools.mediumFontPointSize
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("1. Aim the drone’s camera\ncentered at the QR code about\n4 inches away.")
+                        text: qsTr("1. Aim the drone’s camera centered at the QR code about 4 inches away.")
                         font.pointSize: ScreenTools.mediumFontPointSize
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("2. Slowly move the drone\nbackwards until you hear three\nquick beeps. It will not scan\nbeyond 3 feet away.")
+                        text: qsTr("2. Slowly move the drone backwards until you hear three quick beeps. It will not scan beyond 3 feet away.")
                         font.pointSize: ScreenTools.mediumFontPointSize
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("3. You will hear a double beep\nheartbeat as the pairing\nprocess begins.")
+                        text: qsTr("3. You will hear a double beep heartbeat as the pairing process begins.")
                         font.pointSize: ScreenTools.mediumFontPointSize
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("4. Once beeping stops you should\nbe paired.")
+                        text: qsTr(
+                                  "4. Once beeping stops you should be paired.")
                         font.pointSize: ScreenTools.mediumFontPointSize
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
                     }
                     QGCButton {
                         text: qsTr("Cancel")
@@ -485,13 +518,41 @@ SetupPage {
                             QGroundControl.monarkManager.gotoDetectionFailed()
                         }
                     }
+                    Timer {
+                        property var timeLeft: 180
+                        id: paringCountdownTimer
+                        interval: 1000
+                        running: timerText.visible
+                        repeat: true
+                        triggeredOnStart: true
+                        onTriggered: {
+
+                            timerText.text = timeLeft + " seconds remaining"
+                            if (timeLeft > 0) {
+                                --timeLeft
+                            }
+                        }
+                    }
+                    QGCLabel {
+                        id: timerText
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
+                        onVisibleChanged: {
+                            if (visible) {
+                                paringCountdownTimer.timeLeft = 180
+                                paringCountdownTimer.restart()
+                            }
+                        }
+                    }
                 }
+
                 Image {
                     source: "image://MONARKQRCodes/" + networkIdTextField.text + ","
                             + encryptionKeyTextField.text + "," + groundTxPowerTextField.text + ","
                             + groundFrequencyTextField.text + "," + monarkIdTextField.text
                     sourceSize.width: 500
-                    sourceSize.height: 500
+                    sourceSize.height: 500 //TODO is there a way to un-hard-code these
                     cache: false
                     fillMode: Image.PreserveAspectFit
                 }
@@ -638,71 +699,76 @@ SetupPage {
                     text: qsTr("Once the update begins, DO NOT CLOSE THIS APP.\nIf any of the radios fail to update, you may need to factory reset them and start over.")
                     font.pointSize: ScreenTools.mediumFontPointSize
                 }
-                QGCButton {
-                    id: understandButton
-                    text: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
-                          ? qsTr("I Understand, Change Tx Power") : QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
-                            ? qsTr("I Understand, Change Frequencies") : QGroundControl.monarkManager.monarkState === 14 //ChangeEncryptionKey
-                              ? qsTr("I Understand, Change Encryption Keys") : qsTr(
-                                    "INVALID Application state. Restart application or contact support.")
-                    font.pointSize: ScreenTools.mediumFontPointSize
-                    onClicked: {
-                        if (QGroundControl.monarkManager.monarkState === 12) //ChangeTxPower
-                        {
-                            QGroundControl.monarkManager.changeTxPower(
-                                        desiredTxPower.text)
-                        } else if (QGroundControl.monarkManager.monarkState
-                                   === 13) //ChangeFrequencies
-                        {
-                            QGroundControl.monarkManager.changeFrequencies(
-                                        desiredFrequency.text)
-                        } else if (QGroundControl.monarkManager.monarkState
-                                   === 14) //ChangeEncryptionKey
-                        {
-                            QGroundControl.monarkManager.changeEncryptionKey(
-                                        currentEncryptionKey.text,
-                                        desiredEncryptionKey.text)
+                RowLayout {
+                    QGCButton {
+                        id: understandButton
+                        text: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
+                              ? qsTr("I Understand, Change Tx Power") : QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
+                                ? qsTr("I Understand, Change Frequencies") : QGroundControl.monarkManager.monarkState === 14 //ChangeEncryptionKey
+                                  ? qsTr("I Understand, Change Encryption Keys") : qsTr(
+                                        "INVALID Application state. Restart application or contact support.")
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        onClicked: {
+                            if (QGroundControl.monarkManager.monarkState === 12) //ChangeTxPower
+                            {
+                                QGroundControl.monarkManager.changeTxPower(
+                                            desiredTxPower.text)
+                            } else if (QGroundControl.monarkManager.monarkState
+                                       === 13) //ChangeFrequencies
+                            {
+                                QGroundControl.monarkManager.changeFrequencies(
+                                            desiredFrequency.text)
+                            } else if (QGroundControl.monarkManager.monarkState
+                                       === 14) //ChangeEncryptionKey
+                            {
+                                QGroundControl.monarkManager.changeEncryptionKey(
+                                            currentEncryptionKey.text,
+                                            desiredEncryptionKey.text)
+                            }
                         }
+                        enabled: (QGroundControl.monarkManager.groundRadioUpdateState
+                                  === 0 //BeforeUpdate
+                                  || QGroundControl.monarkManager.groundRadioUpdateState
+                                  === 2 //UpdateSuccessful
+                                  || QGroundControl.monarkManager.groundRadioUpdateState
+                                  === 3) //UpdateFailed
+                                 && (inProgressDronesText.text.length === 0)
+                                 && ((desiredTxPower.acceptableInput
+                                      && QGroundControl.monarkManager.monarkState
+                                      === 12) //ChangeTxPower
+                                     || (desiredFrequency.acceptableInput
+                                         && QGroundControl.monarkManager.monarkState
+                                         === 13) //ChangeFrequencies
+                                     || (desiredEncryptionKey.acceptableInput
+                                         && QGroundControl.monarkManager.monarkState
+                                         === 14 //ChangeEncryptionKey
+                                         && desiredEncryptionKey.text
+                                         === confirmEncryptionKey.text))
                     }
-                    enabled: (QGroundControl.monarkManager.groundRadioUpdateState
-                              === 0 //BeforeUpdate
-                              || QGroundControl.monarkManager.groundRadioUpdateState
-                              === 2 //UpdateSuccessful
-                              || QGroundControl.monarkManager.groundRadioUpdateState
-                              === 3) //UpdateFailed
-                             && ((desiredTxPower.acceptableInput
-                                  && QGroundControl.monarkManager.monarkState
-                                  === 12) //ChangeTxPower
-                                 || (desiredFrequency.acceptableInput
-                                     && QGroundControl.monarkManager.monarkState
-                                     === 13) //ChangeFrequencies
-                                 || (desiredEncryptionKey.acceptableInput
-                                     && QGroundControl.monarkManager.monarkState === 14
-                                     && desiredEncryptionKey.text
-                                     === confirmEncryptionKey.text)) //ChangeEncryptionKey
-                }
-                QGCButton {
-                    Layout.preferredWidth: understandButton.width
-                    text: qsTr("< Previous Screen")
-                    font.pointSize: ScreenTools.mediumFontPointSize
-                    onClicked: {
-                        QGroundControl.monarkManager.gotoScanSuccessAndPaired()
+                    QGCButton {
+                        Layout.preferredWidth: understandButton.width
+                        text: qsTr("< Previous Screen")
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        onClicked: {
+                            QGroundControl.monarkManager.gotoScanSuccessAndPaired()
+                        }
+                        enabled: QGroundControl.monarkManager.groundRadioUpdateState
+                                 === 0 //BeforeUpdate
+                                 || QGroundControl.monarkManager.groundRadioUpdateState
+                                 === 2 //UpdateSuccessful
+                                 || QGroundControl.monarkManager.groundRadioUpdateState
+                                 === 3 //UpdateFailed
                     }
-                    enabled: QGroundControl.monarkManager.groundRadioUpdateState
-                             === 0 //BeforeUpdate
-                             || QGroundControl.monarkManager.groundRadioUpdateState
-                             === 2 //UpdateSuccessful
-                             || QGroundControl.monarkManager.groundRadioUpdateState
-                             === 3 //UpdateFailed
                 }
                 GridLayout {
                     columns: 2
                     QGCLabel {
                         font.pointSize: ScreenTools.mediumFontPointSize
-                        text: qsTr("Waiting:")
+                        text: qsTr("Pending:")
                         //color: desiredEncryptionKey.acceptableInput ? qgcPal.text : qgcPal.warningText
                     }
                     QGCLabel {
+                        id: pendingDronesText
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: QGroundControl.monarkManager.beforeUpdateDrones
                         //color: desiredEncryptionKey.acceptableInput ? qgcPal.text : qgcPal.warningText
@@ -714,6 +780,7 @@ SetupPage {
                         //color: desiredEncryptionKey.acceptableInput ? qgcPal.text : qgcPal.warningText
                     }
                     QGCLabel {
+                        id: inProgressDronesText
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: QGroundControl.monarkManager.updateInProgressDrones
                         //color: desiredEncryptionKey.acceptableInput ? qgcPal.text : qgcPal.warningText
@@ -739,45 +806,6 @@ SetupPage {
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: QGroundControl.monarkManager.updateFailedDrones
                         color: qgcPal.warningText
-                    }
-                }
-                RowLayout {
-                    QGCLabel {
-                        text: qsTr("Ground Radio")
-                        font.pointSize: ScreenTools.mediumFontPointSize
-                    }
-
-
-                    /*
-                    QGCColoredImage {
-
-                        visible: QGroundControl.monarkManager.groundRadioUpdateState
-                                 === 2 //UpdateSuccessful
-                                 || QGroundControl.monarkManager.groundRadioUpdateState
-                                 === 3 //UpdateFailed
-                        color: QGroundControl.monarkManager.groundRadioUpdateState
-                               === 2 //UpdateSuccessful
-                               ? qgcPal.colorGreen : qgcPal.colorRed
-                        source: QGroundControl.monarkManager.groundRadioUpdateState
-                                === 2 //UpdateSuccessful
-                                ? "/qmlimages/checkbox-check.svg" : "/res/XDelete.svg"
-                    }
-                    */
-                    Image {
-
-                        visible: QGroundControl.monarkManager.groundRadioUpdateState
-                                 === 2 //UpdateSuccessful
-                                 || QGroundControl.monarkManager.groundRadioUpdateState
-                                 === 3 //UpdateFailed
-                        source: QGroundControl.monarkManager.groundRadioUpdateState
-                                === 2 //UpdateSuccessful
-                                ? "/qmlimages/checkbox-check.svg" : "/res/XDelete.svg"
-                    }
-
-                    BusyIndicator {
-                        running: true
-                        visible: QGroundControl.monarkManager.groundRadioUpdateState
-                                 === 1 //UpdateInProgress
                     }
                 }
             }

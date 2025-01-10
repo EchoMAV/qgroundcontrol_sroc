@@ -8,6 +8,7 @@
 #include <QQueue>
 #include <mutex>
 #include <set>
+#include <future>
 Q_DECLARE_LOGGING_CATEGORY(MonarkManagerLog)
 
 
@@ -74,6 +75,7 @@ public:
     Q_PROPERTY(QString updateInProgressDrones READ updateInProgressDrones NOTIFY updateInProgressDronesChanged);
     Q_PROPERTY(QString updateSuccessfulDrones READ updateSuccessfulDrones NOTIFY updateSuccessfulDronesChanged);
     Q_PROPERTY(QString updateFailedDrones READ updateFailedDrones NOTIFY updateFailedDronesChanged);
+    Q_PROPERTY(int newDroneId READ newDroneId NOTIFY newDroneIdChanged);
 
     //Q_PROPERTY(QList<QString> connectedDroneListNames READ connectedDroneListNames NOTIFY connectedDroneListNamesChanged)
     //Q_PROPERTY(QList<QString> connectedDroneListStatuses READ connectedDroneListStatuses NOTIFY connectedDroneListStatusesChanged)
@@ -88,6 +90,8 @@ public:
     QString updateInProgressDrones() const;
     QString updateSuccessfulDrones() const;
     QString updateFailedDrones() const;
+
+    int newDroneId() const{return m_newDroneId;}
 
 
     virtual void setToolbox(QGCToolbox* p_toolbox) override;
@@ -128,6 +132,7 @@ signals:
     void updateInProgressDronesChanged();
     void updateSuccessfulDronesChanged();
     void updateFailedDronesChanged();
+    void newDroneIdChanged();
 
 
 
@@ -141,10 +146,13 @@ private:
 
     bool _changeGroundRadioFrequency(std::string const& desiredFrequency, bool reversion);
 
+    bool _changeGroundRadioEncryptionKey(std::string const& desiredKey);
 
-    //void _sendCommandsToRadioAndDrones(std::string const& currentEncryptionKey, std::vector<std::string> const& groundRadioCommands, std::vector<std::string> const& droneCommands);
+    bool _changeGroundRadioTxPower(std::string const& desiredPower);
 
     void _resetToBeforeUpdate();
+
+    void _waitForPingResponses(std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>>& pingDroneResponses, std::function<void(int)> const& responseGoodFunc, std::function<void(int)> const& responseBadFunc);
 
 protected:
     std::unique_ptr<MonarkManagerWorkerWorker> mp_slotHandler;
@@ -159,5 +167,6 @@ private:
     QAtomicInteger<int> m_monarkState;
     std::mutex m_monarkStateMut;
     std::condition_variable m_monarkStateCondition;
+    int m_newDroneId;
 
 };
