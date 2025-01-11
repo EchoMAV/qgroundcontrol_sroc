@@ -93,12 +93,12 @@ public:
 
     int newDroneId() const{return m_newDroneId;}
 
-
     virtual void setToolbox(QGCToolbox* p_toolbox) override;
 
     Q_INVOKABLE void startScanning();
-
     Q_INVOKABLE void saveFlutterManagementSettings();
+    Q_INVOKABLE QString getActiveSerialPort();
+    Q_INVOKABLE void sendEncryptionKeyToGcsRadio();
 
 #if 0
     Q_INVOKABLE void saveEncryptionKey();
