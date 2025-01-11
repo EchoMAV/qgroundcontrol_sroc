@@ -3,7 +3,7 @@
 #include "Settings/SettingsManager.h"
 #include "MonarkQRCodeProvider.h"
 #include <libssh/libssh.h>
-
+#include <QSerialPort>
 #include <QQmlEngine>
 #include <sstream>
 #include <future>
@@ -48,6 +48,45 @@ QString _convertSetToString(std::set<int> const& set, bool const includeGroundRa
         ss<<"Ground Radio";
     }
     return QString::fromStdString(ss.str());
+}
+
+QString MonarkManager::_detectActiveSerialPort() {
+    QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
+    for (const QSerialPortInfo &port : ports) {
+        QSerialPort serial;
+        serial.setPort(port);
+
+        if (serial.open(QIODevice::ReadWrite)) {
+            qDebug() << "Active Port:" << port.portName();
+            serial.close(); // Close after detection
+            return port.portName(); // Return the first active port name
+        } else {
+            qDebug() << "Port" << port.portName() << "is not active.";
+        }
+    }
+    return QString();
+}
+
+void MonarkManager::send_encryption_key_to_gcs_radio(char const*const p_username)
+{
+    // Initialize serial port
+    serialPort = new QSerialPort(this);
+    // Configure the serial port
+    QString activePort = _detectActiveSerialPort();
+    if (activePort.isEmpty()) {
+        qDebug() << "Warning! No active serial port found!";
+        return;
+    }
+    serialPort->setPortName(activePort);
+    serialPort->setBaudRate(QSerialPort::Baud9600);
+    serialPort->setDataBits(QSerialPort::Data8);
+    serialPort->setParity(QSerialPort::NoParity);
+    serialPort->setStopBits(QSerialPort::OneStop);
+    serialPort->setFlowControl(QSerialPort::NoFlowControl);
+    QString command = QString("set encryption_key %1").arg(p_username);
+    QByteArray data = command.toUtf8();
+    serialPort->write(data);
+    serialPort->write("\n"); // Optional: send newline character
 }
 
 std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, char const*const p_username, char const*const p_password, std::vector<std::string> const*const p_commands, bool toDrone)
@@ -765,6 +804,8 @@ void MonarkManager::saveFlutterManagementSettings()
         {
             saveResult=MonarkState::ScanSuccessAndPaired;
             mp_monarkSettings->onSaveSettings();
+            // also send the encryption key to the radio microcontroller over serial so it can reset the microhard natively. 
+            send_encryption_key_to_gcs_radio(encryptionKey);
         }
         _setMonarkState(saveResult);
         qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::saveFlutterManagementSettings()";
