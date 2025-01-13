@@ -2,6 +2,7 @@ import QtQuick 2.11
 import QtQuick.Controls 2.4
 import QtQuick.Dialogs 1.3
 import QtQuick.Layouts 1.11
+import QtQuick.Window 2.2
 
 import QGroundControl 1.0
 import QGroundControl.Palette 1.0
@@ -36,9 +37,11 @@ SetupPage {
         id: pageComponent
         ColumnLayout {
             spacing: ScreenTools.defaultFontPixelHeight
-
+            Layout.maximumWidth: 100 * ScreenTools.defaultFontPixelWidth
             //Main header
             QGCLabel {
+                wrapMode: Text.Wrap
+                //Layout.fillWidth: true
                 visible: !(QGroundControl.monarkManager.monarkState === 9) //Not ShowQRCode
                 font.pointSize: ScreenTools.largeFontPointSize
                 text: (QGroundControl.monarkManager.monarkState === 0 //BeforeScan
@@ -64,6 +67,8 @@ SetupPage {
 
             //Sub header
             QGCLabel {
+                wrapMode: Text.Wrap
+                //Layout.fillWidth: true
                 visible: QGroundControl.monarkManager.monarkState === 0 //BeforeScan
                          || QGroundControl.monarkManager.monarkState
                          === 2 //ScanSuccessPairingRequired
@@ -77,12 +82,12 @@ SetupPage {
 
                 font.pointSize: ScreenTools.mediumFontPointSize
                 text: QGroundControl.monarkManager.monarkState === 0 //BeforeScan
-                      ? qsTr("Press to connect to ground radio.") : QGroundControl.monarkManager.monarkState
+                      ? qsTr("Press to connect to EchoLink.") : QGroundControl.monarkManager.monarkState
                         === 2 //ScanSuccessPairingRequired
-                        ? qsTr("Please enter ground radio settings to begin configuration.") : QGroundControl.monarkManager.monarkState
+                        ? qsTr("Please enter EchoLink settings to begin configuration.") : QGroundControl.monarkManager.monarkState
                           === 3 //ScanSuccessBadCredentials
-                          ? qsTr("A ground radio is detected Please enter its encryption key and click NEXT.") : QGroundControl.monarkManager.monarkState === 5 //ScanFailedNotDetected
-                            ? qsTr("Could not find ground radio. Try again?") : QGroundControl.monarkManager.monarkState === 7 //SaveSettingsFailed
+                          ? qsTr("An EchoLink is detected Please enter its encryption key and click NEXT.") : QGroundControl.monarkManager.monarkState === 5 //ScanFailedNotDetected
+                            ? qsTr("Could not find EchoLink. Try again?") : QGroundControl.monarkManager.monarkState === 7 //SaveSettingsFailed
                               ? qsTr("Could not save settings. Try again?") : QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
                                 ? qsTr("Change Tx Power (7-33 dBm)") : QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
                                   ? qsTr("Change Frequency") : QGroundControl.monarkManager.monarkState === 14 //ChangeEncryptionKey
@@ -90,11 +95,11 @@ SetupPage {
                                           "INVALID Application state. Restart application or contact support.")
             }
 
-            //Connect to ground radio button (states 0 and 5)
+            //Connect to EchoLink button (states 0 and 5)
             QGCButton {
                 visible: QGroundControl.monarkManager.monarkState === 0 //BeforeScan
                          || QGroundControl.monarkManager.monarkState === 5 //ScanFailedNotDetected
-                text: qsTr("Connect to ground radio")
+                text: qsTr("Connect to EchoLink")
                 font.pointSize: ScreenTools.mediumFontPointSize
                 onClicked: {
                     // assumed start state is
@@ -119,9 +124,11 @@ SetupPage {
                     running: true
                 }
                 QGCLabel {
+                    wrapMode: Text.Wrap
+                    //Layout.fillWidth: true
                     font.pointSize: ScreenTools.mediumFontPointSize
                     text: QGroundControl.monarkManager.monarkState === 1 //ScanInProgress
-                          ? qsTr("Waiting for ground radio to connect...") : QGroundControl.monarkManager.monarkState === 6 //SaveSettingsInProgress
+                          ? qsTr("Waiting for EchoLink to connect...") : QGroundControl.monarkManager.monarkState === 6 //SaveSettingsInProgress
                             ? qsTr("Saving settings...") : qsTr(
                                   "INVALID Application state. Restart application or contact support")
                 }
@@ -135,16 +142,22 @@ SetupPage {
                 GridLayout {
                     columns: 2
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         text: qsTr("Network ID:")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
                         text: QGroundControl.settingsManager.monarkSettings.networkID.rawValue
                         id: networkIdTextField
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         text: qsTr("Encryption Key:")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
@@ -162,6 +175,8 @@ SetupPage {
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         visible: QGroundControl.monarkManager.monarkState
                                  === 4 //ScanSuccessAndPaired
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
@@ -170,6 +185,8 @@ SetupPage {
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         visible: QGroundControl.monarkManager.monarkState
                                  === 2 //ScanSuccessPairingRequired
                                  || QGroundControl.monarkManager.monarkState
@@ -191,6 +208,8 @@ SetupPage {
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         text: qsTr("Ground Tx Power (dBm):")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
@@ -207,6 +226,8 @@ SetupPage {
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         visible: QGroundControl.monarkManager.monarkState
                                  === 4 //ScanSuccessAndPaired
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
@@ -214,6 +235,8 @@ SetupPage {
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         text: qsTr("Ground Frequency (MHz):")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
@@ -230,6 +253,8 @@ SetupPage {
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         visible: QGroundControl.monarkManager.monarkState
                                  === 4 //ScanSuccessAndPaired
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
@@ -262,6 +287,8 @@ SetupPage {
                 }
                 //acceptable input error messages
                 QGCLabel {
+                    wrapMode: Text.Wrap
+                    //Layout.fillWidth: true
                     visible: (QGroundControl.monarkManager.monarkState
                               === 2 //ScanSuccessPairingRequired
                               || QGroundControl.monarkManager.monarkState === 7 //SaveSettingsFailed
@@ -271,6 +298,8 @@ SetupPage {
                     color: encryptionKeyTextField.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
+                    wrapMode: Text.Wrap
+                    //Layout.fillWidth: true
                     visible: (QGroundControl.monarkManager.monarkState
                               === 2 //ScanSuccessPairingRequired
                               || QGroundControl.monarkManager.monarkState === 7 //SaveSettingsFailed
@@ -280,6 +309,8 @@ SetupPage {
                     color: groundTxPowerTextField.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
+                    wrapMode: Text.Wrap
+                    //Layout.fillWidth: true
                     visible: (QGroundControl.monarkManager.monarkState
                               === 2 //ScanSuccessPairingRequired
                               || QGroundControl.monarkManager.monarkState === 7 //SaveSettingsFailed
@@ -297,6 +328,8 @@ SetupPage {
                     columns: 2
 
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         text: qsTr("Encryption Key")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
@@ -327,14 +360,18 @@ SetupPage {
                 }
                 //acceptable input error messages
                 QGCLabel {
+                    wrapMode: Text.Wrap
+                    //Layout.fillWidth: true
                     font.pointSize: ScreenTools.mediumFontPointSize
                     text: qsTr("Encryption Key must be 8 to 16 characters, all ASCII except comma, quotes, and equals.")
                     color: encryptionKeyTextFieldBadCredentials.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 //bad credentials message
                 QGCLabel {
+                    wrapMode: Text.Wrap
+                    //Layout.fillWidth: true
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("Encryption key did not match. Enter a different one or perform a factory reset of the ground radio, close the app, then try again.")
+                    text: qsTr("Encryption key did not match. Enter a different one or perform a factory reset of the EchoLink, close the app, then try again.")
                     color: qgcPal.warningText
                 }
             }
@@ -345,10 +382,14 @@ SetupPage {
                 //show connected drones here
                 ColumnLayout {
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: qsTr("Connected Drones")
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: QGroundControl.monarkManager.allDrones
                     }
@@ -403,6 +444,8 @@ SetupPage {
                 GridLayout {
                     columns: 2
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         text: qsTr("MONARK ID")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
@@ -417,6 +460,8 @@ SetupPage {
                     }
                 }
                 QGCLabel {
+                    wrapMode: Text.Wrap
+                    //Layout.fillWidth: true
                     visible: QGroundControl.monarkManager.monarkState === 8 //BeforePairNewDrone
                              || QGroundControl.monarkManager.monarkState === 11 //DetectionFailed
                     font.pointSize: ScreenTools.mediumFontPointSize
@@ -537,7 +582,7 @@ SetupPage {
                         id: timerText
                         font.pointSize: ScreenTools.mediumFontPointSize
                         wrapMode: Text.Wrap
-                        Layout.fillWidth: true
+                        //Layout.fillWidth: true
                         onVisibleChanged: {
                             if (visible) {
                                 paringCountdownTimer.timeLeft = 180
@@ -561,13 +606,18 @@ SetupPage {
             //Reset/Unpair Monark (state 10)
             ColumnLayout {
                 visible: QGroundControl.monarkManager.monarkState === 10 //ResetUnpairMonark
+                Layout.maximumWidth: 100 * ScreenTools.defaultFontPixelWidth
                 QGCLabel {
+                    wrapMode: Text.Wrap
+                    //Layout.fillWidth: true
                     font.pointSize: ScreenTools.largeFontPointSize
                     text: qsTr("Reset/Unpair MONARK")
                 }
                 QGCLabel {
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("To reset the microhard radio in the MONARK, ensure the drone has been running for 30 or more seconds on battery.\nThen, press and hold the factory reset button using a SIM extractor tool on the radio module for 10+ seconds.\nYou should perceive a small click. Then release. Wait 30 or more seconds before powering down the drone.")
+                    text: qsTr("To reset the microhard radio in the MONARK, ensure the drone has been running for 30 or more seconds on battery. Then, press and hold the factory reset button using a SIM extractor tool on the radio module for 10+ seconds. You should perceive a small click. Then release. Wait 30 or more seconds before powering down the drone.")
                 }
                 QGCButton {
                     text: qsTr("OK")
@@ -581,6 +631,7 @@ SetupPage {
             //Changing settings (states 12, 13, and 14)
             ColumnLayout {
                 spacing: ScreenTools.defaultFontPixelHeight
+                Layout.maximumWidth: 100 * ScreenTools.defaultFontPixelWidth
 
                 visible: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
                          || QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
@@ -588,26 +639,34 @@ SetupPage {
                 GridLayout {
                     columns: 2
                     QGCLabel {
+                        visible: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
+                            || QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         text: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
                               ? qsTr("Current Tx Power") : QGroundControl.monarkManager.monarkState
                                 === 13 //ChangeFrequencies
-                                ? qsTr("Current Frequency") : QGroundControl.monarkManager.monarkState === 14 //ChangeEncryptionKey
-                                  ? qsTr("Current Encryption Key") : qsTr(
+                                ? qsTr("Current Frequency")  : qsTr(
                                         "INVALID Application state. Restart application or contact support.")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         visible: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
                         text: QGroundControl.settingsManager.monarkSettings.groundTxPower.rawValue
                         font.pointSize: ScreenTools.mediumFontPointSize
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         visible: QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
                         text: QGroundControl.settingsManager.monarkSettings.groundFrequency.rawValue
                         font.pointSize: ScreenTools.mediumFontPointSize
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
                     }
+                    /*
                     QGCTextField {
                         id: currentEncryptionKey
                         visible: QGroundControl.monarkManager.monarkState
@@ -618,8 +677,10 @@ SetupPage {
                         textColor: acceptableInput ? qgcPal.textFieldText : qgcPal.warningText
                         font.pointSize: ScreenTools.mediumFontPointSize
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
-                    }
+                    }*/
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         text: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
                               ? qsTr("Desired Tx Power") : QGroundControl.monarkManager.monarkState
                                 === 13 //ChangeFrequencies
@@ -659,6 +720,8 @@ SetupPage {
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         visible: QGroundControl.monarkManager.monarkState
                                  === 14 //ChangeEncryptionKey
                         text: qsTr("Confirm Encryption Key")
@@ -678,25 +741,33 @@ SetupPage {
                 }
 
                 QGCLabel {
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
                     visible: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("Ground Tx Power must be an integer between 7 and 33")
+                    text: qsTr("EchoLink Tx Power must be an integer between 7 and 33")
                     color: desiredTxPower.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
                     visible: QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
                     font.pointSize: ScreenTools.mediumFontPointSize
                     text: qsTr("Ground Frequency is out of band for an 8Mhz bandwidth (see documentation)")
                     color: desiredFrequency.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
                     visible: QGroundControl.monarkManager.monarkState === 14 //ChangeEncryptionKey
                     font.pointSize: ScreenTools.mediumFontPointSize
                     text: qsTr("Encryption Key must be 8 to 16 characters, all ASCII except comma, quotes, and equals.")
                     color: desiredEncryptionKey.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
-                    text: qsTr("Once the update begins, DO NOT CLOSE THIS APP.\nIf any of the radios fail to update, you may need to factory reset them and start over.")
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                    text: qsTr("Once the update begins, DO NOT CLOSE THIS APP or power down/unplug any devices. If any of the radios fail to update, you may need to factory reset them and start over.")
                     font.pointSize: ScreenTools.mediumFontPointSize
                 }
                 RowLayout {
@@ -722,7 +793,6 @@ SetupPage {
                                        === 14) //ChangeEncryptionKey
                             {
                                 QGroundControl.monarkManager.changeEncryptionKey(
-                                            currentEncryptionKey.text,
                                             desiredEncryptionKey.text)
                             }
                         }
@@ -763,11 +833,15 @@ SetupPage {
                 GridLayout {
                     columns: 2
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: qsTr("Pending:")
                         //color: desiredEncryptionKey.acceptableInput ? qgcPal.text : qgcPal.warningText
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         id: pendingDronesText
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: QGroundControl.monarkManager.beforeUpdateDrones
@@ -775,11 +849,15 @@ SetupPage {
                     }
 
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: qsTr("In Progress:")
                         //color: desiredEncryptionKey.acceptableInput ? qgcPal.text : qgcPal.warningText
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         id: inProgressDronesText
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: QGroundControl.monarkManager.updateInProgressDrones
@@ -787,27 +865,37 @@ SetupPage {
                     }
 
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: qsTr("Successful:")
                         color: qgcPal.colorGreen
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: QGroundControl.monarkManager.updateSuccessfulDrones
                         color: qgcPal.colorGreen
                     }
 
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
+                        visible: QGroundControl.monarkManager.updateFailedDrones.length != 0
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: qsTr("Failed:")
                         color: qgcPal.warningText
                     }
                     QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: QGroundControl.monarkManager.updateFailedDrones
                         color: qgcPal.warningText
                     }
                 }
+
             }
 
             //Validators

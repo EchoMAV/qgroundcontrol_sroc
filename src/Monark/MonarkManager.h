@@ -97,8 +97,6 @@ public:
 
     Q_INVOKABLE void startScanning();
     Q_INVOKABLE void saveFlutterManagementSettings();
-    Q_INVOKABLE QString getActiveSerialPort();
-    Q_INVOKABLE void sendEncryptionKeyToGcsRadio();
 
 #if 0
     Q_INVOKABLE void saveEncryptionKey();
@@ -117,7 +115,7 @@ public:
 
     Q_INVOKABLE void changeTxPower(QString const& desiredTxPower);
     Q_INVOKABLE void changeFrequencies(QString const& desiredFrequency);
-    Q_INVOKABLE void changeEncryptionKey(QString const& currentEncryptionKey, QString const& desiredEncryptionKey);
+    Q_INVOKABLE void changeEncryptionKey(QString const& desiredEncryptionKey);
 
 
 
@@ -146,13 +144,13 @@ private:
 
     bool _changeGroundRadioFrequency(std::string const& desiredFrequency, bool reversion);
 
-    bool _changeGroundRadioEncryptionKey(std::string const& desiredKey);
+    bool _changeGroundRadioEncryptionKey(std::string const& currentEncryptionKey, std::string const& desiredKey, bool reversion);
 
     bool _changeGroundRadioTxPower(std::string const& desiredPower);
 
     void _resetToBeforeUpdate();
 
-    void _waitForPingResponses(std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>>& pingDroneResponses, std::function<void(int)> const& responseGoodFunc, std::function<void(int)> const& responseBadFunc);
+    void _waitForPingResponses(std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>>& pingDroneResponses, char const*const p_successStr, std::function<void(int)> const& responseGoodFunc, std::function<void(int)> const& responseBadFunc);
 
 protected:
     std::unique_ptr<MonarkManagerWorkerWorker> mp_slotHandler;
