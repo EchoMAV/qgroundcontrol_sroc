@@ -299,7 +299,17 @@ public class QGCActivity extends QtActivity
     /// Incrementally updates the list of drivers connected to the device
     private static void updateCurrentDrivers()
     {
+        qgcLogDebug("ENTER updateCurrentDrivers");
         List<UsbSerialDriver> currentDrivers = UsbSerialProber.findAllDevices(_usbManager);
+
+        qgcLogDebug("num currentDrivers="+currentDrivers.size());
+
+        for(UsbSerialDriver currentDriver: currentDrivers)
+        {
+            qgcLogDebug("currentDriver.getDevice().getDeviceId()="+currentDriver.getDevice().getDeviceId());
+            qgcLogDebug("currentDriver.getDevice().getDeviceName()="+currentDriver.getDevice().getDeviceName());
+            qgcLogDebug("");
+        }
 
         // Remove stale drivers
         for (int i=_drivers.size()-1; i>=0; i--) {
@@ -346,6 +356,8 @@ public class QGCActivity extends QtActivity
                 }
             }
         }
+        qgcLogDebug("EXIT  updateCurrentDrivers");
+
     }
 
     /// Returns array of device info for each unopened device.

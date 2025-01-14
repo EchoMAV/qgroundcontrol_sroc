@@ -81,6 +81,9 @@ public final class UsbId {
     public static final int VENDOR_DRAGONLINK = 0x1FC9;
     public static final int DEVICE_DRAGONLINK = 0x0083;
 
+    public static final int VENDOR_ECHOLINK = 0xF232;
+    public static final int DEVICE_ECHOLINK = 0x04B4;
+
     private UsbId() {
         throw new IllegalAccessError("Non-instantiable class.");
     }

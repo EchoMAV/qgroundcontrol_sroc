@@ -53,7 +53,7 @@ QString _convertSetToString(std::set<int> const& set, bool const includeGroundRa
 
 std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, char const*const p_username, char const*const p_password, std::vector<std::string> const*const p_commands, bool toDrone)
 {
-    qCDebug(MonarkManagerLog)<<"ENTER: _sendCommands(p_host="<<p_host<<", p_username="<<p_username<<", toDrone="<<toDrone<<")";
+    //qCDebug(MonarkManagerLog)<<"ENTER: _sendCommands(p_host="<<p_host<<", p_username="<<p_username<<", toDrone="<<toDrone<<")";
     int returnCode=0;
     ssh_session p_session = nullptr;
     bool isConnected=false;
@@ -85,7 +85,7 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
             break;
         }
         isConnected=true;
-        qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : successfully connected";
+        //qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : successfully connected";
         if(p_password)
         {
             returnCode = ssh_userauth_password(p_session, p_username, p_password);
@@ -95,7 +95,7 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
                 commandResponses.push_back("ssh_userauth_password failed");
                 break;
             }
-            qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : authenticated";
+            //qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : authenticated";
             if(p_commands && !p_commands->empty())
             {
                 p_channel=ssh_channel_new(p_session);
@@ -105,7 +105,7 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
                     commandResponses.push_back("ssh_channel_new failed");
                     break;
                 }
-                qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : created channel";
+                //qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : created channel";
                 returnCode = ssh_channel_open_session(p_channel);
                 if(returnCode)
                 {
@@ -113,7 +113,7 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
                     commandResponses.push_back("ssh_channel_open_session failed");
                     break;
                 }
-                qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : opened session";
+                //qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : opened session";
                 returnCode = ssh_channel_request_shell(p_channel);
                 if(returnCode)
                 {
@@ -121,7 +121,7 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
                     commandResponses.push_back("ssh_channel_request_shell failed");
                     break;
                 }
-                qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : requested shell";
+                //qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : requested shell";
                 commandsSent=true;
                 size_t commandIndex=0;
                 for(;;)
@@ -149,12 +149,12 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
                             {
                                 break;
                             }
-                            qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_channel_is_open=true";
+                            //qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_channel_is_open=true";
                             if(ssh_channel_poll_timeout(p_channel,2000,0)>0)
                             {
-                                qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_channel_poll_timeout(p_channel,2000,0)>0=true";
+                                //qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_channel_poll_timeout(p_channel,2000,0)>0=true";
                                 int numBytesRead = ssh_channel_read(p_channel, p_bufferItr, sizeof(p_buffer) - (p_bufferItr - (&p_buffer[0])),0);
-                                qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : numBytesRead="<<numBytesRead;
+                                //qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : numBytesRead="<<numBytesRead;
                                 p_bufferItr+=numBytesRead;
                                 if(numBytesRead>0)
                                 {
@@ -170,7 +170,7 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
                             }
                             else
                             {
-                                qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_channel_poll_timeout(p_channel,2000,0)>0=false";
+                                //qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_channel_poll_timeout(p_channel,2000,0)>0=false";
                             }
                             if(std::chrono::system_clock::now() - start > std::chrono::seconds(30))
                             {
@@ -186,7 +186,7 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
                     if(toDrone?(command.find("export NEWEK=") == std::string::npos):(command.find("AT+MWVENCRYPT") == std::string::npos && command.find("AT+MSPWD") == std::string::npos))
                     {
                         //don't put passwords in the logs
-                        qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") command="<<command.c_str()<<", commandSuccess="<<commandSuccess<<" returnStr="<<commandResponses.back().c_str();
+                        //qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") command="<<command.c_str()<<", commandSuccess="<<commandSuccess<<" returnStr="<<commandResponses.back().c_str();
                     }
                     if(++commandIndex==p_commands->size() || !commandSuccess)
                     {
@@ -218,7 +218,7 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
         p_session=nullptr;
     }
     ssh_finalize();
-    qCDebug(MonarkManagerLog)<<"EXIT : _sendCommands(p_host="<<p_host<<", p_username="<<p_username<<", toDrone="<<toDrone<<")";
+    //qCDebug(MonarkManagerLog)<<"EXIT : _sendCommands(p_host="<<p_host<<", p_username="<<p_username<<", toDrone="<<toDrone<<")";
     return std::make_pair(commandsSent,commandResponses);
 }
 
@@ -498,7 +498,7 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
 
 void MonarkManager::_setMonarkState(MonarkState monarkState)
 {
-#if 0
+#if 1
     if(m_monarkState==0)
     {
         _sendEncryptionKeyToGcsRadio("asdflkasndf;");
