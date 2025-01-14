@@ -3,10 +3,19 @@
 #include "Settings/SettingsManager.h"
 #include "MonarkQRCodeProvider.h"
 #include <libssh/libssh.h>
-#include <QSerialPort>
+// #include <QSerialPort>
 #include <QQmlEngine>
 #include <sstream>
 #include <future>
+
+#include <thread>      // For std::this_thread::sleep_for
+#include <chrono>      // For std::chrono::seconds
+
+// Core Qt includes
+#include <QObject>         // For QObject inheritance
+#include <QString>         // For QString usage
+#include <QDebug>         // For debug logging
+
 
 QGC_LOGGING_CATEGORY(MonarkManagerLog, "MonarkManagerLog")
 
@@ -454,19 +463,19 @@ void MonarkManager::setToolbox(QGCToolbox *const p_toolbox)
 }
 
 QString MonarkManager::getActiveSerialPort() {
-    QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
-    for (const QSerialPortInfo &port : ports) {
-        QSerialPort serial;
-        serial.setPort(port);
+    // QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
+    // for (const QSerialPortInfo &port : ports) {
+    //     QSerialPort serial;
+    //     serial.setPort(port);
 
-        if (serial.open(QIODevice::ReadWrite)) {
-            qDebug() << "Active Port:" << port.portName();
-            serial.close(); // Close after detection
-            return port.portName(); // Return the first active port name
-        } else {
-            qDebug() << "Port" << port.portName() << "is not active.";
-        }
-    }
+    //     if (serial.open(QIODevice::ReadWrite)) {
+    //         qDebug() << "Active Port:" << port.portName();
+    //         serial.close(); // Close after detection
+    //         return port.portName(); // Return the first active port name
+    //     } else {
+    //         qDebug() << "Port" << port.portName() << "is not active.";
+    //     }
+    // }
     return QString();
 }
 
@@ -474,22 +483,22 @@ QString MonarkManager::getActiveSerialPort() {
 void MonarkManager::sendEncryptionKeyToGcsRadio(char const*const p_username)
 {
     // Initialize serial port
-    serialPort = new QSerialPort(this);
-    // Configure the serial port
-    QString activePort = getActiveSerialPort();
-    if (activePort.isEmpty()) {
-        qDebug() << "Warning! No active serial port found!";
-        return;
-    }
-    serialPort->setPortName(activePort);
-    serialPort->setBaudRate(QSerialPort::Baud115200);
-    serialPort->setDataBits(QSerialPort::Data8);
-    serialPort->setParity(QSerialPort::NoParity);
-    serialPort->setStopBits(QSerialPort::OneStop);
-    serialPort->setFlowControl(QSerialPort::NoFlowControl);
-    QString command = QString("AT+SETADMIN=%1\r\n").arg(p_username);
-    QByteArray data = command.toUtf8();
-    serialPort->write(data);
+    // serialPort = new QSerialPort(this);
+    // // Configure the serial port
+    // QString activePort = getActiveSerialPort();
+    // if (activePort.isEmpty()) {
+    //     qDebug() << "Warning! No active serial port found!";
+    //     return;
+    // }
+    // serialPort->setPortName(activePort);
+    // serialPort->setBaudRate(QSerialPort::Baud115200);
+    // serialPort->setDataBits(QSerialPort::Data8);
+    // serialPort->setParity(QSerialPort::NoParity);
+    // serialPort->setStopBits(QSerialPort::OneStop);
+    // serialPort->setFlowControl(QSerialPort::NoFlowControl);
+    // QString command = QString("AT+SETADMIN=%1\r\n").arg(p_username);
+    // QByteArray data = command.toUtf8();
+    // serialPort->write(data);
 }
 
 QString MonarkManager::allDrones() const
@@ -805,7 +814,7 @@ void MonarkManager::saveFlutterManagementSettings()
             saveResult=MonarkState::ScanSuccessAndPaired;
             mp_monarkSettings->onSaveSettings();
             // also send the encryption key to the radio microcontroller over serial so it can reset the microhard natively. 
-            sendEncryptionKeyToGcsRadio(encryptionKey.c_str());
+            // sendEncryptionKeyToGcsRadio(encryptionKey.c_str());
         }
         _setMonarkState(saveResult);
         qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::saveFlutterManagementSettings()";

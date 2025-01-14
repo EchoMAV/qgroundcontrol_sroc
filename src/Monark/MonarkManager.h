@@ -11,8 +11,7 @@
 #include <future>
 Q_DECLARE_LOGGING_CATEGORY(MonarkManagerLog)
 
-
-
+// #include <QSerialPort>
 
 class MonarkManagerWorkerWorker : public QThread
 {
@@ -98,7 +97,7 @@ public:
     Q_INVOKABLE void startScanning();
     Q_INVOKABLE void saveFlutterManagementSettings();
     Q_INVOKABLE QString getActiveSerialPort();
-    Q_INVOKABLE void sendEncryptionKeyToGcsRadio();
+    Q_INVOKABLE void sendEncryptionKeyToGcsRadio(char const*const p_username);
 
 #if 0
     Q_INVOKABLE void saveEncryptionKey();
@@ -168,5 +167,7 @@ private:
     std::mutex m_monarkStateMut;
     std::condition_variable m_monarkStateCondition;
     int m_newDroneId;
+
+    // QSerialPort* serialPort;
 
 };

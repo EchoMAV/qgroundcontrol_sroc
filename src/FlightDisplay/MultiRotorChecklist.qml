@@ -44,6 +44,19 @@ Item {
 
             PreFlightRCCheck {
             }
+
+            PreFlightChausCheck {
+            }
+        }
+
+
+        PreFlightCheckGroup {
+            name: qsTr("Charles needs to check the vehicle")
+
+            PreFlightCheckButton {
+                name:            qsTr("Charles checked the Monark")
+                manualText:      qsTr("Check the vehicle for One Minute")
+            }
         }
 
         PreFlightCheckGroup {
