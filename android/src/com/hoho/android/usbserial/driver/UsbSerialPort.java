@@ -11,7 +11,7 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbManager;
 
-import androidx.annotation.IntDef;
+//import androidx.annotation.IntDef;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -37,7 +37,7 @@ public interface UsbSerialPort extends Closeable {
 
     /** Values for setParameters(..., parity) */
     @Retention(RetentionPolicy.SOURCE)
-    @IntDef({PARITY_NONE, PARITY_ODD, PARITY_EVEN, PARITY_MARK, PARITY_SPACE})
+    //@IntDef({PARITY_NONE, PARITY_ODD, PARITY_EVEN, PARITY_MARK, PARITY_SPACE})
     @interface Parity {}
     /** No parity. */
     int PARITY_NONE = 0;

@@ -264,12 +264,15 @@ QT += \
         multimedia
 }
 
-AndroidBuild || iOSBuild {
-    # Android and iOS don't unclude these
-} else {
-    QT += \
+#AndroidBuild || iOSBuild {
+#    # Android and iOS don't unclude these
+#} else {
+#    QT += \
+#        serialport \
+#}
+
+QT += \
         serialport \
-}
 
 contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
 QT += \
@@ -1403,7 +1406,16 @@ AndroidBuild {
     } else {
         include(android.pri)
     }
+
+# Pass properties for AndroidX to Gradle
+ANDROID_EXTRA_PROPERTIES += \
+    "android.useAndroidX=true" \
+    "android.enableJetifier=true"
 }
+
+#ANDROID_EXTRA_LIBS += $$PWD/android/libs/annotation-1.6.0.jar
+
+
 
 #-------------------------------------------------------------------------------------
 #
