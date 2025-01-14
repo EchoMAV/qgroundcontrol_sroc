@@ -77,14 +77,19 @@ exists($$PWD/custom/android/AndroidManifest.xml) {
 OTHER_FILES += \
     $$PWD/android/res/xml/device_filter.xml \
     $$PWD/android/src/com/hoho/android/usbserial/driver/CdcAcmSerialDriver.java \
-    $$PWD/android/src/com/hoho/android/usbserial/driver/CommonUsbSerialDriver.java \
-    $$PWD/android/src/com/hoho/android/usbserial/driver/Cp2102SerialDriver.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/Ch34xSerialDriver.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/ChromeCcdSerialDriver.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/CommonUsbSerialPort.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/Cp21xxSerialDriver.java \
     $$PWD/android/src/com/hoho/android/usbserial/driver/FtdiSerialDriver.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/GsmModemSerialDriver.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/ProbeTable.java \
     $$PWD/android/src/com/hoho/android/usbserial/driver/ProlificSerialDriver.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/SerialTimeoutException.java \
     $$PWD/android/src/com/hoho/android/usbserial/driver/UsbId.java \
     $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialDriver.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialPort.java \
     $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialProber.java \
-    $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialRuntimeException.java \
     $$PWD/android/src/org/mavlink/qgroundcontrol/QGCActivity.java \
     $$PWD/android/src/org/mavlink/qgroundcontrol/UsbIoManager.java \
     $$PWD/android/src/org/mavlink/qgroundcontrol/TaiSync.java \
