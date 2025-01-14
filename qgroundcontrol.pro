@@ -1394,7 +1394,9 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
 
 #-------------------------------------------------------------------------------------
 # Android
-
+android {
+    ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+}
 AndroidBuild {
     contains (CONFIG, DISABLE_BUILTIN_ANDROID) {
         message("Skipping builtin support for Android")
