@@ -323,6 +323,7 @@ SetupPage {
 
             //Bad credentials stuff (state 3)
             ColumnLayout {
+                Layout.maximumWidth: 100 * ScreenTools.defaultFontPixelWidth
                 visible: QGroundControl.monarkManager.monarkState === 3 //ScanSuccessBadCredentials
                 GridLayout {
                     columns: 2
@@ -369,7 +370,7 @@ SetupPage {
                 //bad credentials message
                 QGCLabel {
                     wrapMode: Text.Wrap
-                    //Layout.fillWidth: true
+                    Layout.fillWidth: true
                     font.pointSize: ScreenTools.mediumFontPointSize
                     text: qsTr("Encryption key did not match. Enter a different one or perform a factory reset of the EchoLink, close the app, then try again.")
                     color: qgcPal.warningText

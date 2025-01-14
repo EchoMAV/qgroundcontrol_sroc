@@ -498,6 +498,13 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
 
 void MonarkManager::_setMonarkState(MonarkState monarkState)
 {
+#if 0
+    if(m_monarkState==0)
+    {
+        _sendEncryptionKeyToGcsRadio("asdflkasndf;");
+
+    }
+#endif
     {
         std::lock_guard<std::mutex> lock(m_monarkStateMut);
         m_monarkState=(int)monarkState;
@@ -831,7 +838,9 @@ void MonarkManager::saveFlutterManagementSettings()
             commands.emplace_back("AT&W\n");
         }
         auto saveResult=paired ? MonarkState::ScanSuccessBadCredentials: MonarkState::SaveSettingsFailed;
-        auto const& response = _sendCommands(paired?np_srmPairedIp:np_srmDefaultIp,"admin", paired?mp_monarkSettings->getOldEncryptionKey().toStdString().c_str():np_sshUsername, &commands, false).second;
+        //auto const& response = _sendCommands(paired?np_srmPairedIp:np_srmDefaultIp,"admin", paired?mp_monarkSettings->getOldEncryptionKey().toStdString().c_str():np_sshUsername, &commands, false).second;
+        auto const& response = _sendCommands(paired?np_srmPairedIp:np_srmDefaultIp,"admin", paired?encryptionKey.c_str():np_sshUsername, &commands, false).second;
+
         if(!response.empty() && response.back().find(np_groundRadioSuccessStr)!= std::string::npos)
         {
             saveResult=MonarkState::ScanSuccessAndPaired;
