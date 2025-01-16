@@ -382,7 +382,7 @@ void Vehicle::_generateCotPacket()
                             .arg(currentAltitude, 0, 'f', 1);
 
     // Print to console
-    qDebug() << "Generated CoT Packet:\n" << cotPacket;
+    // qDebug() << "Generated CoT Packet:\n" << cotPacket;
 
     // Define file path on desktop
     QString desktopPath = QDir::homePath() + "/Desktop/cot_packets.txt";
@@ -406,7 +406,7 @@ void Vehicle::_generateCotPacket()
     quint16 targetPort = 6969; // Replace with the appropriate port number
 
     udpSocket.writeDatagram(datagram, targetAddress, targetPort);
-    qDebug() << "CoT packet sent to" << targetAddress.toString() << "on port" << targetPort;
+    // qDebug() << "CoT packet sent to" << targetAddress.toString() << "on port" << targetPort;
 }
 
 void Vehicle::trackFirmwareVehicleTypeChanges(void)

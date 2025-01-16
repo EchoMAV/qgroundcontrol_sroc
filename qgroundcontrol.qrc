@@ -234,6 +234,7 @@
         <file alias="QGroundControl/FlightDisplay/PreFlightGPSCheck.qml">src/FlightDisplay/PreFlightGPSCheck.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightRCCheck.qml">src/FlightDisplay/PreFlightRCCheck.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightSensorsHealthCheck.qml">src/FlightDisplay/PreFlightSensorsHealthCheck.qml</file>
+        <file alias="QGroundControl/FlightDisplay/PreFlightMultiRotorHealthCheck.qml">src/FlightDisplay/PreFlightMultiRotorHealthCheck.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightSoundCheck.qml">src/FlightDisplay/PreFlightSoundCheck.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightCheckListShowAction.qml">src/FlightDisplay/PreFlightCheckListShowAction.qml</file>
         <file alias="QGroundControl/FlightDisplay/ProximityRadarValues.qml">src/FlightDisplay/ProximityRadarValues.qml</file>

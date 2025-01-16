@@ -85,8 +85,8 @@ Item {
                 manualText:     qsTr("Launch area and path free of obstacles/people?")
             }
 
-            // PreFlightMultiRotorHealthCheck {
-            // }
+            PreFlightMultiRotorHealthCheck {
+            }
         }
     }
 }
