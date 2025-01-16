@@ -112,7 +112,7 @@ public enum UsbSerialProber {
      * @return zero or more {@link UsbSerialDriver}, depending on compatibility
      *         (never {@code null}).
      */
-    protected abstract List<UsbSerialDriver> probe(final UsbManager manager, final UsbDevice usbDevice);
+    public abstract List<UsbSerialDriver> probe(final UsbManager manager, final UsbDevice usbDevice);
 
     /**
      * Creates and returns a new {@link UsbSerialDriver} instance for the first

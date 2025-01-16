@@ -319,6 +319,7 @@ public class CdcAcmSerialDriver extends CommonUsbSerialDriver {
         supportedDevices.put(Integer.valueOf(UsbId.VENDOR_ECHOLINK),
                 new int[] {
                     UsbId.DEVICE_ECHOLINK,
+                    UsbId.DEVICE_ECHOLINK_2,
                 });
         return supportedDevices;
     }

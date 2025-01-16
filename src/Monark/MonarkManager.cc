@@ -358,24 +358,19 @@ std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>
     return pingDroneResponses;
 }
 
-QString _getActiveSerialPort() {
-    qCDebug(MonarkManagerLog)<<"ENTER: _getActiveSerialPort()";
-    QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
 
-    for(auto const& port : ports)
-    {
-         qDebug(MonarkManagerLog) << "Found Port:" << port.portName();
-    }
-    QString returnValue;
+
+void _sendEncryptionKeyToGcsRadio(char const*const p_password)
+{
+    qCDebug(MonarkManagerLog)<<"ENTER: _sendEncryptionKeyToGcsRadio()";
+    QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
+    QSerialPort serialPort;
     for (const QSerialPortInfo &port : ports)
     {
-        QSerialPort serial;
-        serial.setPort(port);
-        if (serial.open(QIODevice::ReadWrite))
+        serialPort.setPort(port);
+        if (serialPort.open(QIODevice::ReadWrite))
         {
             qDebug(MonarkManagerLog) << "Active Port:" << port.portName();
-            serial.close(); // Close after detection
-            returnValue= port.portName(); // Return the first active port name
             break;
         }
         else
@@ -383,46 +378,38 @@ QString _getActiveSerialPort() {
             qDebug(MonarkManagerLog) << "Port" << port.portName() << "is not active.";
         }
     }
-    qCDebug(MonarkManagerLog)<<"EXIT : _getActiveSerialPort()";
-    return returnValue;
-}
-
-
-void _sendEncryptionKeyToGcsRadio(char const*const p_password)
-{
-    qCDebug(MonarkManagerLog)<<"ENTER: _sendEncryptionKeyToGcsRadio()";
-    // Initialize serial port
-    QSerialPort serialPort {};
-    // Configure the serial port
-    QString activePort = _getActiveSerialPort();
-    //QString activePort = "/dev/ttyUSB0";
-    if (activePort.isEmpty())
+    if (serialPort.isOpen())
     {
-        qDebug(MonarkManagerLog) << "No active serial ports found.";
+        if(!serialPort.setBaudRate(QSerialPort::Baud115200))
+        {
+            qCWarning(MonarkManagerLog) << "Failed to set baud rate";
+        }
+        if(!serialPort.setDataBits(QSerialPort::Data8))
+        {
+            qCWarning(MonarkManagerLog) << "Failed to set data bits";
+        }
+        if(!serialPort.setParity(QSerialPort::NoParity))
+        {
+            qCWarning(MonarkManagerLog) << "Failed to set parity";
+        }
+        if(!serialPort.setStopBits(QSerialPort::OneStop))
+        {
+            qCWarning(MonarkManagerLog) << "Failed to set stop bits";
+        }
+        if(!serialPort.setFlowControl(QSerialPort::NoFlowControl))
+        {
+            qCWarning(MonarkManagerLog) << "Failed to set flow control";
+        }
+        std::string command="AT+SETADMIN="+std::string{p_password}+"\r\n";
+        qCDebug(MonarkManagerLog)<<"command="<<command.c_str();
+        auto const numBytesWritten=serialPort.write(command.c_str(),command.size());
+        qDebug(MonarkManagerLog) << "Wrote "<<numBytesWritten<<" bytes";
     }
     else
     {
-        serialPort.setPortName(activePort);
-        if (serialPort.open(QIODevice::ReadWrite))
-        {
-            qDebug(MonarkManagerLog) << "Port opened successfully.";
-        }
-        else
-        {
-            qDebug(MonarkManagerLog) << "Failed to open the port:" << serialPort.errorString();
-        }
-    }
-    serialPort.setPortName(activePort);
-    serialPort.setBaudRate(QSerialPort::Baud115200);
-    serialPort.setDataBits(QSerialPort::Data8);
-    serialPort.setParity(QSerialPort::NoParity);
-    serialPort.setStopBits(QSerialPort::OneStop);
-    serialPort.setFlowControl(QSerialPort::NoFlowControl);
-    QString command = QString("AT+SETADMIN=%1\n").arg(p_password);
-    qCDebug(MonarkManagerLog)<<"command="<<command.toStdString().c_str();
+        qDebug(MonarkManagerLog) << "No active serial ports found.";
 
-    QByteArray data = command.toUtf8();
-    serialPort.write(data);
+    }
     qCDebug(MonarkManagerLog)<<"EXIT : _sendEncryptionKeyToGcsRadio()";
 }
 
@@ -498,11 +485,10 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
 
 void MonarkManager::_setMonarkState(MonarkState monarkState)
 {
-#if 1
+#if 0
     if(m_monarkState==0)
     {
-        _sendEncryptionKeyToGcsRadio("asdflkasndf;");
-
+        _sendEncryptionKeyToGcsRadio("echomav5");
     }
 #endif
     {
@@ -596,6 +582,8 @@ void MonarkManager::startScanning()
             this->mp_monarkSettings->groundFrequency()->setCookedValue(n_defaultGroundFrequency);
             this->mp_monarkSettings->groundTxPower()->setCookedValue(n_defaultGroundTxPower);
             _initializeNetworkId(false);
+            _initializeTxPower(false);
+            _initializeFrequency(false);
         }
         else
         {
@@ -609,6 +597,8 @@ void MonarkManager::startScanning()
                 qCDebug(MonarkManagerLog)<<"ScanSuccessBadCredentials";
                 scanningResult = MonarkState::ScanSuccessBadCredentials;
                 _initializeNetworkId(true);
+                _initializeTxPower(true);
+                _initializeFrequency(true);
             }
             else if(!pingPairedResponse.empty() && pingPairedResponse.back() ==np_groundRadioSuccessStr)
             {
@@ -629,6 +619,8 @@ void MonarkManager::startScanning()
                 scanningResult=MonarkState::ScanSuccessAndPaired;
 
                 _initializeNetworkId(true);
+                _initializeTxPower(true);
+                _initializeFrequency(true);
                 for(auto i=0;i<255;++i)
                 {
                     auto response = dronePingResponses[i].get();
@@ -681,6 +673,80 @@ void MonarkManager::_initializeNetworkId(bool paired)
         this->mp_monarkSettings->networkID()->setCookedValue("MONARK-"+QString::fromStdString(macAddress));
     }
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_initializeNetworkId(paired="<<paired<<")";
+}
+
+void MonarkManager::_initializeFrequency(bool paired)
+{
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_initializeFrequency(paired="<<paired<<")";
+    std::string frequency="";
+    std::vector<std::string> commands;
+    commands.emplace_back("AT+MWFREQ\n");
+    auto encryptionKey=paired?mp_monarkSettings->getOldEncryptionKey().toStdString():np_sshUsername;
+    auto const& response = _sendCommands(paired?np_srmPairedIp:np_srmDefaultIp,"admin", encryptionKey.c_str(), &commands, false).second;
+    for(auto const& responseStr: response)
+    {
+        qCDebug(MonarkManagerLog)<<"Got response "<<responseStr.c_str();
+    }
+    if(!response.empty() && response.back().find(np_groundRadioSuccessStr) != std::string::npos)
+    {
+        auto freqStart = response.back().find_last_of(':');
+        if(freqStart != std::string::npos)
+        {
+            freqStart=response.back().find_first_of(' ',freqStart);
+            if(freqStart != std::string::npos)
+            {
+                auto const freqEnd = response.back().find_first_of(' ', freqStart+1);
+                if(freqEnd!=std::string::npos)
+                {
+                    ++freqStart;
+                    frequency = response.back().substr(freqStart, freqEnd-freqStart);
+                    qCDebug(MonarkManagerLog)<<"frequency= "<<frequency.c_str();
+                }
+            }
+        }
+    }
+    if(!frequency.empty())
+    {
+        this->mp_monarkSettings->groundFrequency()->setCookedValue(QString::fromStdString(frequency));
+    }
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_initializeFrequency(paired="<<paired<<")";
+}
+
+void MonarkManager::_initializeTxPower(bool paired)
+{
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_initializeTxPower(paired="<<paired<<")";
+    std::string txPower="";
+    std::vector<std::string> commands;
+    commands.emplace_back("AT+MWTXPOWER\n");
+    auto encryptionKey=paired?mp_monarkSettings->getOldEncryptionKey().toStdString():np_sshUsername;
+    auto const& response = _sendCommands(paired?np_srmPairedIp:np_srmDefaultIp,"admin", encryptionKey.c_str(), &commands, false).second;
+    for(auto const& responseStr: response)
+    {
+        qCDebug(MonarkManagerLog)<<"Got response "<<responseStr.c_str();
+    }
+    if(!response.empty() && response.back().find(np_groundRadioSuccessStr) != std::string::npos)
+    {
+        auto freqStart = response.back().find_last_of(':');
+        if(freqStart != std::string::npos)
+        {
+            freqStart=response.back().find_first_of(' ',freqStart);
+            if(freqStart != std::string::npos)
+            {
+                auto const freqEnd = response.back().find_first_of(' ', freqStart+1);
+                if(freqEnd!=std::string::npos)
+                {
+                    ++freqStart;
+                    txPower = response.back().substr(freqStart, freqEnd-freqStart);
+                    qCDebug(MonarkManagerLog)<<"txPower= "<<txPower.c_str();
+                }
+            }
+        }
+    }
+    if(!txPower.empty())
+    {
+        this->mp_monarkSettings->groundTxPower()->setCookedValue(QString::fromStdString(txPower));
+    }
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_initializeTxPower(paired="<<paired<<")";
 }
 
 void MonarkManager::gotoBeforePairNewDrone()
@@ -900,6 +966,9 @@ void MonarkManager::detect()
                 emit allDronesChanged();
                 detectionResult=MonarkState::ScanSuccessAndPaired;
                 m_newDroneId=monarkID;
+
+                //TODO set SYSID_THISMAV to monark id number (see parameters tab)
+
                 emit newDroneIdChanged();
                 break;
             }
@@ -913,6 +982,8 @@ void MonarkManager::detect()
                 break;
             }
         }
+
+
         _setMonarkState(detectionResult);
         qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::detect()";
     }
@@ -1056,9 +1127,9 @@ void MonarkManager::changeTxPower(QString const& desiredTxPower)
                               ("'is_success': True, 'message': {tx_power': '"+desiredTxPower.toStdString()+"'").c_str(),
                               [this](int id){
 
-            m_updateSuccessfulDrones.insert(id);
-            emit updateSuccessfulDronesChanged();
-        },
+                                  m_updateSuccessfulDrones.insert(id);
+                                  emit updateSuccessfulDronesChanged();
+                              },
                               [this](int id){
                                   m_updateFailedDrones.insert(id);
                                   emit updateFailedDronesChanged();
@@ -1110,7 +1181,7 @@ void MonarkManager::changeFrequencies(QString const& desiredFrequency)
 
                 if(m_updateFailedDrones.empty())
                 {
-                     qCDebug(MonarkManagerLog)<<"All drones successfully pinged";
+                    qCDebug(MonarkManagerLog)<<"All drones successfully pinged";
                 }
                 else
                 {
@@ -1343,7 +1414,7 @@ void MonarkManager::changeEncryptionKey(QString const& desiredEncryptionKey)
             }
             else
             {
-                 qCDebug(MonarkManagerLog)<<"Commands successfully sent to drones, but EchoLink failed to change key";
+                qCDebug(MonarkManagerLog)<<"Commands successfully sent to drones, but EchoLink failed to change key";
                 //we can't change the EchoLink's frequency
                 //therefore, we can't ping the drones to determine success
                 //Assume success in those drones, but set the EchoLink to failure

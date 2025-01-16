@@ -2,7 +2,7 @@
 <resources>
     <!-- Allow anything connected -->
     <usb-device />
-    <usb-device vendor-id="62002" product-id="1204" />
+    <usb-device vendor-id="1204" product-id="62002" />
     <usb-accessory model="android.usbaoa" manufacturer="taisync" version="1.0"/>
 </resources>
 

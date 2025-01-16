@@ -511,49 +511,43 @@ SetupPage {
 
                 ColumnLayout {
                     id: pairingInstructions
-                    Layout.maximumWidth: 40 * ScreenTools.defaultFontPixelWidth
+                    Layout.maximumWidth: 45 * ScreenTools.defaultFontPixelWidth
 
                     QGCLabel {
-                        font.pointSize: ScreenTools.largeFontPointSize
-                        text: qsTr("Pair New Drone")
-                        wrapMode: Text.Wrap
-                        Layout.fillWidth: true
-                    }
-                    QGCLabel {
-                        text: qsTr("MONARK ID: ")
+                        font.pointSize: ScreenTools.defaultFontPointSize
+                        text: qsTr("Pair New Drone (MONARK-")
                               + QGroundControl.settingsManager.monarkSettings.monarkID.rawValue
-                        font.pointSize: ScreenTools.mediumFontPointSize
+                              + ")"
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("If the MONARK is in pairing state, you should hear a single beep heartbeat. If not, reattempt a factory reset. Otherwise, proceed as follows:")
-                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text: qsTr("Wait for a single beep heartbeat. If not, re-attempt a factory reset.")
+                        font.pointSize: ScreenTools.defaultFontPointSize
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("1. Aim the drone’s camera centered at the QR code about 4 inches away.")
-                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text: qsTr("1. Aim camera 4 inches away from phone.")
+                        font.pointSize: ScreenTools.defaultFontPointSize
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("2. Slowly move the drone backwards until you hear three quick beeps. It will not scan beyond 3 feet away.")
-                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text: qsTr("2. Slowly move the drone backwards until success beep.")
+                        font.pointSize: ScreenTools.defaultFontPointSize
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
                     }
                     QGCLabel {
                         text: qsTr("3. You will hear a double beep heartbeat as the pairing process begins.")
-                        font.pointSize: ScreenTools.mediumFontPointSize
+                        font.pointSize: ScreenTools.defaultFontPointSize
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr(
-                                  "4. Once beeping stops you should be paired.")
-                        font.pointSize: ScreenTools.mediumFontPointSize
+                        text: qsTr("4. Once the beeping stops, wait for the GCS to finalize connection.")
+                        font.pointSize: ScreenTools.defaultFontPointSize
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
                     }
@@ -581,7 +575,7 @@ SetupPage {
                     }
                     QGCLabel {
                         id: timerText
-                        font.pointSize: ScreenTools.mediumFontPointSize
+                        font.pointSize: ScreenTools.defaultFontPointSize
                         wrapMode: Text.Wrap
                         //Layout.fillWidth: true
                         onVisibleChanged: {
@@ -594,11 +588,12 @@ SetupPage {
                 }
 
                 Image {
+                    Layout.alignment: Qt.AlignTop
                     source: "image://MONARKQRCodes/" + networkIdTextField.text + ","
                             + encryptionKeyTextField.text + "," + groundTxPowerTextField.text + ","
                             + groundFrequencyTextField.text + "," + monarkIdTextField.text
-                    sourceSize.width: 500
-                    sourceSize.height: 500 //TODO is there a way to un-hard-code these
+                    sourceSize.width: 875
+                    sourceSize.height: 875 //TODO is there a way to un-hard-code these
                     cache: false
                     fillMode: Image.PreserveAspectFit
                 }
@@ -641,14 +636,15 @@ SetupPage {
                     columns: 2
                     QGCLabel {
                         visible: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
-                            || QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
+                                 || QGroundControl.monarkManager.monarkState
+                                 === 13 //ChangeFrequencies
                         wrapMode: Text.Wrap
                         //Layout.fillWidth: true
                         text: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
                               ? qsTr("Current Tx Power") : QGroundControl.monarkManager.monarkState
                                 === 13 //ChangeFrequencies
-                                ? qsTr("Current Frequency")  : qsTr(
-                                        "INVALID Application state. Restart application or contact support.")
+                                ? qsTr("Current Frequency") : qsTr(
+                                      "INVALID Application state. Restart application or contact support.")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     QGCLabel {
@@ -667,6 +663,8 @@ SetupPage {
                         font.pointSize: ScreenTools.mediumFontPointSize
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
                     }
+
+
                     /*
                     QGCTextField {
                         id: currentEncryptionKey
@@ -764,6 +762,16 @@ SetupPage {
                     font.pointSize: ScreenTools.mediumFontPointSize
                     text: qsTr("Encryption Key must be 8 to 16 characters, all ASCII except comma, quotes, and equals.")
                     color: desiredEncryptionKey.acceptableInput ? qgcPal.text : qgcPal.warningText
+                }
+                QGCLabel {
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                    visible: QGroundControl.monarkManager.monarkState === 14 //ChangeEncryptionKey
+                    font.pointSize: ScreenTools.mediumFontPointSize
+                    text: qsTr(
+                              "Encryption keys must match in both text fields.")
+                    color: desiredEncryptionKey.text
+                           === confirmEncryptionKey.text ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
                     wrapMode: Text.Wrap
@@ -896,7 +904,6 @@ SetupPage {
                         color: qgcPal.warningText
                     }
                 }
-
             }
 
             //Validators

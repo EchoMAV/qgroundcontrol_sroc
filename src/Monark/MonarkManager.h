@@ -137,6 +137,9 @@ signals:
 private:
 
     void _initializeNetworkId(bool paired);
+    void _initializeFrequency(bool paired);
+    void _initializeTxPower(bool paired);
+
 
     void _pingAllDrones();
 
