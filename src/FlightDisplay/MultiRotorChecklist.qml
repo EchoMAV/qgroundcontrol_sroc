@@ -25,6 +25,9 @@ Item {
         PreFlightCheckGroup {
             name: qsTr("Multirotor Initial Checks")
 
+            PreFlightMultiRotorHealthCheck {
+            }
+
             PreFlightCheckButton {
                 name:           qsTr("Hardware")
                 manualText:     qsTr("Props mounted and secured?")
@@ -83,9 +86,6 @@ Item {
             PreFlightCheckButton {
                 name:           qsTr("Flight area")
                 manualText:     qsTr("Launch area and path free of obstacles/people?")
-            }
-
-            PreFlightMultiRotorHealthCheck {
             }
         }
     }
