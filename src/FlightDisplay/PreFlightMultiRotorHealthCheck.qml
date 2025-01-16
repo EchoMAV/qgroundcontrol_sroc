@@ -23,7 +23,7 @@ PreFlightCheckButton {
     name:               qsTr("Quad Motor Run Up")
     manualText:         qsTr("A run up of the electric quadrotor motors is recommend to ensure proper operation prior to flight.")
 
-    specifiedBottomPadding: Math.round(ScreenTools.defaultFontPixelHeight / 2) + motorTestButton.height + Math.round(ScreenTools.defaultFontPixelHeight / 2)
+    bottomPadding: Math.round(ScreenTools.defaultFontPixelHeight / 2) + motorTestButton.height + Math.round(ScreenTools.defaultFontPixelHeight / 2)
     property bool   allowFailurePercentOverride:    false
     property string   _buttonLabel:   qsTr("Quad Motor Run Up")
     property int    _motorTestThrottle: 20  //percent throttle to use for motor runup
