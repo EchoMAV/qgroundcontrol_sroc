@@ -8,8 +8,10 @@
  ****************************************************************************/
 
 import QtQuick                  2.3
-import QtQuick.Controls         1.2
+import QtQuick.Controls         2.5
 import QtQuick.Controls.Styles  1.4
+import QtQuick.Layouts              1.12
+
 
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0
@@ -33,6 +35,7 @@ QGCButton {
     property bool   allowTelemetryFailureOverride:  false   ///< true: user can click past telemetry failure
     property bool   passed:                         _manualState === _statePassed && _telemetryState === _statePassed
     property bool   failed:                         _manualState === _stateFailed || _telemetryState === _stateFailed
+    property bool reference_pic_visible: false
 
     property int _manualState:          manualText === "" ? _statePassed : _statePending
     property int _telemetryState:       _statePassed
@@ -66,6 +69,29 @@ QGCButton {
     leftPadding:    (_horizontalPadding * 2) + _stateFlagWidth
     rightPadding:   _horizontalPadding
 
+    Dialog {
+        id: referenceImageDialog
+        title: qsTr("Reference Image")
+        modal: true
+        standardButtons: Dialog.Ok
+
+        contentItem: Column {
+            spacing: 10
+            anchors.margins: 10
+
+            Image {
+                source: "/qmlimages/folding_arms.png"
+                // Helps keep the aspect ratio
+                fillMode: Image.PreserveAspectFit
+                // Example size; adjust as needed
+                width: 300
+                height: 300
+            }
+        }
+    }
+
+
+
     background: Rectangle {
         color:          qgcPal.button
         border.color:   qgcPal.button;
@@ -76,8 +102,41 @@ QGCButton {
             anchors.top:    parent.top
             anchors.bottom: parent.bottom
             width:          _stateFlagWidth
+
+            Text {
+                anchors.centerIn: parent
+                text: "?"
+                font.pixelSize: 32
+                color: "white"
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    console.log("I got clicked")
+                    // if (reference_pic_visible == true)
+                    //     reference_pic_visible = false
+                    // else
+                    //     reference_pic_visible = true
+                    referenceImageDialog.open()
+                }
+            }
         }
+        // Image {
+        //     id: reference_pic
+        //     source: "/qmlimages/folding_arms.png"
+        //     visible: reference_pic_visible
+
+        //     anchors.right: parent.right
+        //     // Optionally center it vertically within the parent
+        //     anchors.verticalCenter: parent.verticalCenter
+        //     // You can also add some right margin if you want a gap
+        //     anchors.rightMargin: 10
+        // }
     }
+
+
+
 
     contentItem: QGCLabel {
         wrapMode:               Text.WordWrap

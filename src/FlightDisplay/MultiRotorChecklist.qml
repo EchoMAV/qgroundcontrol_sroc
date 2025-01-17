@@ -10,6 +10,8 @@
 import QtQuick                      2.11
 import QtQuick.Controls             2.4
 import QtQml.Models                 2.1
+import QtQuick.Layouts              1.12
+
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -24,13 +26,16 @@ Item {
         id:     listModel
         PreFlightCheckGroup {
             name: qsTr("Multirotor Initial Checks")
+            PreFlightJoystickCheck {
+                allowTelemetryFailureOverride:    !QGroundControl.settingsManager.appSettings.enforceJoystickRequired.value
+            }
 
             PreFlightMultiRotorHealthCheck {
             }
 
             PreFlightCheckButton {
                 name:           qsTr("Hardware")
-                manualText:     qsTr("Props mounted and secured?")
+                manualText:     qsTr("Unfold Arms")
             }
 
             PreFlightBatteryCheck {
@@ -48,8 +53,6 @@ Item {
 
             PreFlightRCCheck {
             }
-
-            //joystick stuff
         }
 
         PreFlightCheckGroup {
