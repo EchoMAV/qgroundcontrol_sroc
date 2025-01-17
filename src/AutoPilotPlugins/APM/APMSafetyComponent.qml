@@ -433,6 +433,8 @@ SetupPage {
                                                           -1, "FS_THR_ENABLE")
                     property Fact _failsafeThrValue: controller.getParameterFact(
                                                          -1, "FS_THR_VALUE")
+                    property Fact _gcsFailsafeTimeout: controller.getParameterFact(
+                                                           -1, "FS_GCS_TIMEOUT")
 
                     QGCLabel {
                         text: qsTr("General Failsafe Triggers")
@@ -462,6 +464,15 @@ SetupPage {
                                 FactComboBox {
                                     fact: _failsafeGCSEnable
                                     indexModel: false
+                                    Layout.fillWidth: true
+                                }
+
+                                QGCLabel {
+                                    text: qsTr("GCS failsafe timeout:")
+                                }
+                                FactTextField {
+                                    fact: _gcsFailsafeTimeout
+                                    showUnits: true
                                     Layout.fillWidth: true
                                 }
 
@@ -834,6 +845,7 @@ SetupPage {
                 sourceComponent: controller.vehicle.fixedWing ? planeRTL : undefined
             }
 
+
             /*
             Component{
                 id: fsLongTimeoutPanel
@@ -873,7 +885,6 @@ SetupPage {
                 }
             }
             */
-
             Column {
                 visible: QGroundControl.corePlugin.showAdvancedUI
                 spacing: _margins / 2
