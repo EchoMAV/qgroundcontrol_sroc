@@ -71,25 +71,16 @@ bool MonarkSettings::groundFreqencyDirty(){return m_oldGroundFrequency != ground
 
 void MonarkSettings::_networkIdChanged(QVariant newVal)
 {
-//TODO
-
 }
 void MonarkSettings::_encryptionKeyChanged(QVariant newVal)
 {
-//TODO
-
-
 }
 void MonarkSettings::_groundTxPowerChanged(QVariant newVal)
 {
-//TODO
-
 }
 void MonarkSettings::_groundFrequencyChanged(QVariant newVal)
 {
-//TODO
 }
 void MonarkSettings::_monarkIDChanged(QVariant newVal)
 {
-    //TODO
 }

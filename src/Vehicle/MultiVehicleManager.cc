@@ -189,7 +189,6 @@ void MultiVehicleManager::_requestProtocolVersion(unsigned version)
 void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
 {
     qCDebug(MultiVehicleManagerLog) << "_deleteVehiclePhase1" << vehicle;
-
     _vehiclesBeingDeleted << vehicle;
 
     // Remove from map

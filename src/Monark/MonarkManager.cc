@@ -468,6 +468,7 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , mp_slotHandler{std::make_unique<MonarkManagerWorkerWorker>()}
     , mp_monarkSettings{nullptr}
     , mp_monarkQRCodeProvider{nullptr}
+    , m_allDrones{}
     , m_beforeUpdateDrones{}
     , m_updateInProgressDrones{}
     , m_updateSuccessfulDrones{}
@@ -476,7 +477,8 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , m_monarkState{(int)MonarkState::BeforeScan}
     , m_monarkStateMut{}
     , m_monarkStateCondition{}
-    , m_newDroneId{-1}
+    , m_newDroneId{0}
+    , m_newSysId{0}
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::MonarkManager()()";
     mp_slotHandler->start();
@@ -485,18 +487,20 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
 
 void MonarkManager::_setMonarkState(MonarkState monarkState)
 {
-#if 0
-    if(m_monarkState==0)
-    {
-        _sendEncryptionKeyToGcsRadio("echomav5");
-    }
-#endif
+    bool changed=false;
     {
         std::lock_guard<std::mutex> lock(m_monarkStateMut);
-        m_monarkState=(int)monarkState;
+        if((int)monarkState!=m_monarkState)
+        {
+            changed=true;
+            m_monarkState=(int)monarkState;
+        }
     }
-    m_monarkStateCondition.notify_all();
-    emit monarkStateChanged(m_monarkState);
+    if(changed)
+    {
+        m_monarkStateCondition.notify_all();
+        emit monarkStateChanged(m_monarkState);
+    }
 }
 
 MonarkManager::~MonarkManager() {
@@ -519,18 +523,13 @@ void MonarkManager::setToolbox(QGCToolbox *const p_toolbox)
 
 QString MonarkManager::allDrones() const
 {
-    std::set<int> allDrones;
-    allDrones.insert(std::begin(m_beforeUpdateDrones),std::end(m_beforeUpdateDrones));
-    allDrones.insert(std::begin(m_updateInProgressDrones),std::end(m_updateInProgressDrones));
-    allDrones.insert(std::begin(m_updateSuccessfulDrones),std::end(m_updateSuccessfulDrones));
-    allDrones.insert(std::begin(m_updateFailedDrones),std::end(m_updateFailedDrones));
-    if(allDrones.empty())
+    if(m_allDrones.empty())
     {
         return "None";
     }
     else
     {
-        return _convertSetToString(allDrones,false);
+        return _convertSetToString(m_allDrones,false);
     }
 }
 
@@ -602,6 +601,13 @@ void MonarkManager::startScanning()
             }
             else if(!pingPairedResponse.empty() && pingPairedResponse.back() ==np_groundRadioSuccessStr)
             {
+                auto oldAllDrones=m_allDrones;
+                auto oldBeforeUpdateDrones=m_beforeUpdateDrones;
+                auto updateInProgressChanged=!m_updateInProgressDrones.empty();
+                auto updateSuccessfulChanged=!m_updateSuccessfulDrones.empty();
+                auto updateFailedChanged=!m_updateFailedDrones.empty();
+
+                m_allDrones.clear();
                 m_beforeUpdateDrones.clear();
                 m_updateInProgressDrones.clear();
                 m_updateSuccessfulDrones.clear();
@@ -621,19 +627,45 @@ void MonarkManager::startScanning()
                 _initializeNetworkId(true);
                 _initializeTxPower(true);
                 _initializeFrequency(true);
+                bool beforeChanged=false;
+                bool allChanged=false;
                 for(auto i=0;i<255;++i)
                 {
                     auto response = dronePingResponses[i].get();
                     if(!response.empty() && response.back() == np_droneSuccessStr)
                     {
                         m_beforeUpdateDrones.insert(i);
+                        if(!oldBeforeUpdateDrones.count(i))
+                        {
+                            beforeChanged=true;
+                        }
+                        m_allDrones.insert(i);
+                        if(!oldAllDrones.count(i))
+                        {
+                            allChanged=true;
+                        }
                     }
                 }
-                emit allDronesChanged();
-                emit beforeUpdateDronesChanged();
-                emit updateInProgressDronesChanged();
-                emit updateSuccessfulDronesChanged();
-                emit updateFailedDronesChanged();
+                if(allChanged || m_allDrones.size()!=oldAllDrones.size())
+                {
+                    emit allDronesChanged();
+                }
+                if(beforeChanged || m_beforeUpdateDrones.size()!=oldBeforeUpdateDrones.size())
+                {
+                    emit beforeUpdateDronesChanged();
+                }
+                if(updateInProgressChanged)
+                {
+                    emit updateInProgressDronesChanged();
+                }
+                if(updateSuccessfulChanged)
+                {
+                    emit updateSuccessfulDronesChanged();
+                }
+                if(updateFailedChanged)
+                {
+                    emit updateFailedDronesChanged();
+                }
             }
             else
             {
@@ -642,6 +674,88 @@ void MonarkManager::startScanning()
         }
         _setMonarkState(scanningResult);
         qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::startScanning()";
+    }
+}
+
+void MonarkManager::refreshDroneList()
+{
+    if(mp_slotHandler->needDispatch())
+    {
+        mp_slotHandler->dispatch([this](){refreshDroneList();});
+    }
+    else
+    {
+        qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::refreshDroneList()";
+        auto oldAllDrones=m_allDrones;
+        m_allDrones.clear();
+        std::vector<std::future<std::vector<std::string>>> dronePingResponses;
+        for(auto i=0;i<255;++i)
+        {
+            dronePingResponses.push_back(std::async(std::launch::async,[i](){
+                auto const ip = "172.20.2."+std::to_string(i);
+                return _sendCommands(ip.c_str(), "admin", nullptr, nullptr, true).second;
+            }));
+        }
+        bool allChanged=false;
+        for(auto i=0;i<255;++i)
+        {
+            auto response = dronePingResponses[i].get();
+            if(!response.empty() && response.back() == np_droneSuccessStr)
+            {
+                m_allDrones.insert(i);
+                if(!oldAllDrones.count(i))
+                {
+                    allChanged=true;
+                }
+            }
+        }
+        if(allChanged || m_allDrones.size()!=oldAllDrones.size())
+        {
+            emit allDronesChanged();
+        }
+        qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::refreshDroneList()";
+    }
+}
+void MonarkManager::removeDrone(int monarkID)
+{
+    if(mp_slotHandler->needDispatch())
+    {
+        mp_slotHandler->dispatch([this,monarkID](){removeDrone(monarkID);});
+    }
+    else
+    {
+        qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::removeDrone(monarkID="<<monarkID<<")";
+        if(m_allDrones.erase(monarkID))
+        {
+            emit allDronesChanged();
+        }
+        if(m_beforeUpdateDrones.erase(monarkID))
+        {
+            emit beforeUpdateDronesChanged();
+        }
+        if(m_updateInProgressDrones.erase(monarkID))
+        {
+            emit updateInProgressDronesChanged();
+        }
+        if(m_updateSuccessfulDrones.erase(monarkID))
+        {
+            emit updateSuccessfulDronesChanged();
+        }
+        if(m_updateFailedDrones.erase(monarkID))
+        {
+            emit updateFailedDronesChanged();
+        }
+        if(monarkID==m_newDroneId)
+        {
+            m_newDroneId=0;
+            emit newDroneIdChanged();
+        }
+        if(monarkID==m_newSysId)
+        {
+            m_newSysId=0;
+            emit newSysIdChanged();
+        }
+        qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::removeDrone(monarkID="<<monarkID<<")";
     }
 }
 
@@ -766,27 +880,38 @@ void MonarkManager::gotoBeforePairNewDrone()
 void MonarkManager::_resetToBeforeUpdate()
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_resetToBeforeUpdate()";
-    for(auto id:(m_updateInProgressDrones))
+    bool beforeChanged=false;
+    for(auto id:m_allDrones)
     {
-        m_beforeUpdateDrones.insert(id);
+        if(m_beforeUpdateDrones.insert(id).second)
+        {
+                beforeChanged=true;
+        }
     }
-    m_updateInProgressDrones.clear();
-    for(auto id:(m_updateSuccessfulDrones))
+    if(beforeChanged)
     {
-        m_beforeUpdateDrones.insert(id);
+        emit beforeUpdateDronesChanged();
     }
-    m_updateSuccessfulDrones.clear();
-    for(auto id:(m_updateFailedDrones))
+    if(!m_updateInProgressDrones.empty())
     {
-        m_beforeUpdateDrones.insert(id);
+        m_updateInProgressDrones.clear();
+        emit updateInProgressDronesChanged();
     }
-    m_updateFailedDrones.clear();
-    m_groundRadioUpdateState=(int)UpdateState::BeforeUpdate;
-    emit beforeUpdateDronesChanged();
-    emit updateInProgressDronesChanged();
-    emit updateSuccessfulDronesChanged();
-    emit updateFailedDronesChanged();
-    emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+    if(!m_updateSuccessfulDrones.empty())
+    {
+        m_updateSuccessfulDrones.clear();
+        emit updateSuccessfulDronesChanged();
+    }
+    if(!m_updateFailedDrones.empty())
+    {
+        m_updateFailedDrones.clear();
+        emit updateFailedDronesChanged();
+    }
+    if(m_groundRadioUpdateState!=(int)UpdateState::BeforeUpdate)
+    {
+        m_groundRadioUpdateState=(int)UpdateState::BeforeUpdate;
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+    }
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_resetToBeforeUpdate()";
 }
 
@@ -872,6 +997,16 @@ void MonarkManager::gotoDetectionFailed()
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::gotoDetectionFailed()";
 }
 
+void MonarkManager::invalidateNewSysId()
+{
+    if(m_newSysId>0)
+    {
+        m_newSysId=0;
+        emit newSysIdChanged();
+    }
+}
+
+
 void MonarkManager::saveFlutterManagementSettings()
 {
     if(mp_slotHandler->needDispatch())
@@ -928,16 +1063,16 @@ void MonarkManager::detect()
     else
     {
         qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::detect()";
+        auto monarkID = mp_monarkSettings->monarkID()->cookedValue().toUInt();
+        m_newSysId=monarkID;
+        emit newSysIdChanged();
         _setMonarkState(MonarkState::ShowQRCode);
         auto detectionResult=MonarkState::DetectionFailed;
         auto encryptionKey=mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
-        auto monarkID = mp_monarkSettings->monarkID()->cookedValue().toUInt();
         std::string ip = _getDroneIPAddress(monarkID);
         auto const startTime = std::chrono::system_clock::now();
         std::vector<std::string> commands;
         commands.push_back("microhard --action=info --monark_id="+std::to_string(monarkID)+"\n");
-        //int attemptCount=0;
-        //TODO upon success, bring up a message box that indicates success
         for(;;)
         {
             if((std::chrono::system_clock::now()-startTime) > std::chrono::minutes(3))
@@ -949,26 +1084,31 @@ void MonarkManager::detect()
             {
                 qCDebug(MonarkManagerLog)<<"returnStr = '"<<responseStr.c_str()<<"'";
             }
-            if(!response.empty() && response.back().find(np_droneSuccessStr)!= std::string::npos
-
-                //|| (++attemptCount==3)//TODO remove this
-                )
+            if(!response.empty() && response.back().find(np_droneSuccessStr)!= std::string::npos)
             {
                 qCDebug(MonarkManagerLog)<<"found drone";
-                m_beforeUpdateDrones.insert(monarkID);
-                m_updateInProgressDrones.erase(monarkID);
-                m_updateSuccessfulDrones.erase(monarkID);
-                m_updateFailedDrones.erase(monarkID);
-                emit beforeUpdateDronesChanged();
-                emit updateInProgressDronesChanged();
-                emit updateSuccessfulDronesChanged();
-                emit updateFailedDronesChanged();
-                emit allDronesChanged();
+                if(m_allDrones.insert(monarkID).second)
+                {
+                    emit allDronesChanged();
+                }
+                if(m_beforeUpdateDrones.insert(monarkID).second)
+                {
+                    emit beforeUpdateDronesChanged();
+                }
+                if(m_updateInProgressDrones.insert(monarkID).second)
+                {
+                    emit updateInProgressDronesChanged();
+                }
+                if(m_updateSuccessfulDrones.insert(monarkID).second)
+                {
+                    emit updateSuccessfulDronesChanged();
+                }
+                if(m_updateFailedDrones.insert(monarkID).second)
+                {
+                    emit updateFailedDronesChanged();
+                }
                 detectionResult=MonarkState::ScanSuccessAndPaired;
                 m_newDroneId=monarkID;
-
-                //TODO set SYSID_THISMAV to monark id number (see parameters tab)
-
                 emit newDroneIdChanged();
                 break;
             }
@@ -993,12 +1133,28 @@ void MonarkManager::detect()
 bool MonarkManager::_changeGroundRadioFrequency(std::string const& desiredFrequency, bool reversion)
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_changeGroundRadioFrequency(desiredFrequency="<<desiredFrequency.c_str()<<", reversion="<<reversion<<")";
+    auto const oldState=m_groundRadioUpdateState;
     m_groundRadioUpdateState=(int) UpdateState::UpdateInProgress;
-    emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
-    emit beforeUpdateDronesChanged();
-    emit updateInProgressDronesChanged();
-    emit updateSuccessfulDronesChanged();
-    emit updateFailedDronesChanged();
+    switch(oldState)
+    {
+    case (int)UpdateState::BeforeUpdate:
+        emit beforeUpdateDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    case (int)UpdateState::UpdateFailed:
+        emit updateFailedDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    case (int)UpdateState::UpdateSuccessful:
+        emit updateSuccessfulDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    default:
+        break;
+    }
     auto const currentEncryptionKey= mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
     std::vector<std::string> groundRadioCommands;
     groundRadioCommands.emplace_back("AT+MWFREQ="+desiredFrequency+"\n");
@@ -1013,10 +1169,15 @@ bool MonarkManager::_changeGroundRadioFrequency(std::string const& desiredFreque
         m_groundRadioUpdateState=reversion?(int)UpdateState::UpdateFailed:(int) UpdateState::UpdateSuccessful;
     }
     emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
-    emit beforeUpdateDronesChanged();
+    if(m_groundRadioUpdateState==(int)UpdateState::UpdateFailed)
+    {
+        emit updateFailedDronesChanged();
+    }
+    else
+    {
+        emit updateSuccessfulDronesChanged();
+    }
     emit updateInProgressDronesChanged();
-    emit updateSuccessfulDronesChanged();
-    emit updateFailedDronesChanged();
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_changeGroundRadioFrequency(desiredFrequency="<<desiredFrequency.c_str()<<", reversion="<<reversion<<")";
     return response.first;
 }
@@ -1024,12 +1185,28 @@ bool MonarkManager::_changeGroundRadioFrequency(std::string const& desiredFreque
 bool MonarkManager::_changeGroundRadioEncryptionKey(std::string const& currentEncryptionKey, std::string const& desiredKey, bool reversion)
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_changeGroundRadioEncryptionKey(reversion="<<reversion<<")";
+    auto const oldState=m_groundRadioUpdateState;
     m_groundRadioUpdateState=(int) UpdateState::UpdateInProgress;
-    emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
-    emit beforeUpdateDronesChanged();
-    emit updateInProgressDronesChanged();
-    emit updateSuccessfulDronesChanged();
-    emit updateFailedDronesChanged();
+    switch(oldState)
+    {
+    case (int)UpdateState::BeforeUpdate:
+        emit beforeUpdateDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    case (int)UpdateState::UpdateFailed:
+        emit updateFailedDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    case (int)UpdateState::UpdateSuccessful:
+        emit updateSuccessfulDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    default:
+        break;
+    }
     auto const oldKey=reversion?desiredKey:currentEncryptionKey;
     auto const newKey=reversion?currentEncryptionKey:desiredKey;
 
@@ -1047,10 +1224,15 @@ bool MonarkManager::_changeGroundRadioEncryptionKey(std::string const& currentEn
         m_groundRadioUpdateState=reversion?(int)UpdateState::UpdateFailed:(int) UpdateState::UpdateSuccessful;
     }
     emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
-    emit beforeUpdateDronesChanged();
+    if(m_groundRadioUpdateState==(int)UpdateState::UpdateFailed)
+    {
+        emit updateFailedDronesChanged();
+    }
+    else
+    {
+        emit updateSuccessfulDronesChanged();
+    }
     emit updateInProgressDronesChanged();
-    emit updateSuccessfulDronesChanged();
-    emit updateFailedDronesChanged();
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_changeGroundRadioEncryptionKey(reversion="<<reversion<<")";
     return response.first;
 }
@@ -1058,12 +1240,28 @@ bool MonarkManager::_changeGroundRadioEncryptionKey(std::string const& currentEn
 bool MonarkManager::_changeGroundRadioTxPower(std::string const& desiredPower)
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_changeGroundRadioTxPower(desiredPower="<<desiredPower.c_str()<<")";
+    auto const oldState=m_groundRadioUpdateState;
     m_groundRadioUpdateState=(int) UpdateState::UpdateInProgress;
-    emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
-    emit beforeUpdateDronesChanged();
-    emit updateInProgressDronesChanged();
-    emit updateSuccessfulDronesChanged();
-    emit updateFailedDronesChanged();
+    switch(oldState)
+    {
+    case (int)UpdateState::BeforeUpdate:
+        emit beforeUpdateDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    case (int)UpdateState::UpdateFailed:
+        emit updateFailedDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    case (int)UpdateState::UpdateSuccessful:
+        emit updateSuccessfulDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    default:
+        break;
+    }
     auto const currentEncryptionKey= mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
     std::vector<std::string> groundRadioCommands;
     groundRadioCommands.emplace_back("AT+MWTXPOWER="+desiredPower+"\n");
@@ -1072,16 +1270,16 @@ bool MonarkManager::_changeGroundRadioTxPower(std::string const& desiredPower)
     if(response.second.empty() || response.second.back().find(np_groundRadioSuccessStr)== std::string::npos)
     {
         m_groundRadioUpdateState=(int) UpdateState::UpdateFailed;
+        emit updateFailedDronesChanged();
+
     }
     else
     {
         m_groundRadioUpdateState=(int) UpdateState::UpdateSuccessful;
+        emit updateSuccessfulDronesChanged();
     }
     emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
-    emit beforeUpdateDronesChanged();
     emit updateInProgressDronesChanged();
-    emit updateSuccessfulDronesChanged();
-    emit updateFailedDronesChanged();
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_changeGroundRadioTxPower(desiredPower="<<desiredPower.c_str()<<")";
     return response.first;
 }

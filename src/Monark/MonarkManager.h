@@ -76,6 +76,7 @@ public:
     Q_PROPERTY(QString updateSuccessfulDrones READ updateSuccessfulDrones NOTIFY updateSuccessfulDronesChanged);
     Q_PROPERTY(QString updateFailedDrones READ updateFailedDrones NOTIFY updateFailedDronesChanged);
     Q_PROPERTY(int newDroneId READ newDroneId NOTIFY newDroneIdChanged);
+    Q_PROPERTY(int newSysId READ newSysId NOTIFY newSysIdChanged);
 
     //Q_PROPERTY(QList<QString> connectedDroneListNames READ connectedDroneListNames NOTIFY connectedDroneListNamesChanged)
     //Q_PROPERTY(QList<QString> connectedDroneListStatuses READ connectedDroneListStatuses NOTIFY connectedDroneListStatusesChanged)
@@ -92,10 +93,15 @@ public:
     QString updateFailedDrones() const;
 
     int newDroneId() const{return m_newDroneId;}
+    int newSysId() const{return m_newSysId;}
+
+    void invalidateNewSysId();
 
     virtual void setToolbox(QGCToolbox* p_toolbox) override;
 
     Q_INVOKABLE void startScanning();
+    Q_INVOKABLE void refreshDroneList();
+    Q_INVOKABLE void removeDrone(int monarkID);
     Q_INVOKABLE void saveFlutterManagementSettings();
 
 #if 0
@@ -131,6 +137,7 @@ signals:
     void updateSuccessfulDronesChanged();
     void updateFailedDronesChanged();
     void newDroneIdChanged();
+    void newSysIdChanged();
 
 
 
@@ -159,6 +166,7 @@ protected:
     std::unique_ptr<MonarkManagerWorkerWorker> mp_slotHandler;
     MonarkSettings*          mp_monarkSettings;
     MonarkQRCodeProvider*    mp_monarkQRCodeProvider;
+    std::set<int> m_allDrones;
     std::set<int> m_beforeUpdateDrones;
     std::set<int> m_updateInProgressDrones;
     std::set<int> m_updateSuccessfulDrones;
@@ -169,5 +177,6 @@ private:
     std::mutex m_monarkStateMut;
     std::condition_variable m_monarkStateCondition;
     int m_newDroneId;
+    int m_newSysId;
 
 };

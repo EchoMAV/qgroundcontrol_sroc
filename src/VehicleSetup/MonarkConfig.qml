@@ -372,7 +372,7 @@ SetupPage {
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("Encryption key did not match. Enter a different one or perform a factory reset of the EchoLink, close the app, then try again.")
+                    text: qsTr("Encryption key did not match.\nEnter a different one or perform a factory reset of the EchoLink, close the app, then try again.")
                     color: qgcPal.warningText
                 }
             }
@@ -403,6 +403,7 @@ SetupPage {
                         Layout.fillWidth: true
                         text: qsTr("PAIR NEW DRONE")
                         font.pointSize: ScreenTools.mediumFontPointSize
+                        enabled: !QGroundControl.multiVehicleManager.activeVehicle
                         onClicked: {
                             QGroundControl.monarkManager.gotoBeforePairNewDrone(
                                         )
@@ -438,16 +439,13 @@ SetupPage {
             //Before and after drone pairing (states 8 and 11)
             ColumnLayout {
                 spacing: ScreenTools.defaultFontPixelHeight
-
                 visible: QGroundControl.monarkManager.monarkState === 8 //BeforePairNewDrone
-                //|| QGroundControl.monarkManager.monarkState === 9 //ShowQRCode
                          || QGroundControl.monarkManager.monarkState === 11 //DetectionFailed
                 GridLayout {
                     columns: 2
                     QGCLabel {
                         wrapMode: Text.Wrap
-                        //Layout.fillWidth: true
-                        text: qsTr("MONARK ID")
+                        text: qsTr("MONARK ID (1-255)")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     FactTextField {
@@ -459,6 +457,12 @@ SetupPage {
                         font.pointSize: ScreenTools.mediumFontPointSize
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
                     }
+                }
+                QGCLabel {
+                    wrapMode: Text.Wrap
+                    //Layout.fillWidth: true
+                    text: qsTr("Wait for single beep heartbeat before proceeding.")
+                    font.pointSize: ScreenTools.mediumFontPointSize
                 }
                 QGCLabel {
                     wrapMode: Text.Wrap
@@ -522,7 +526,7 @@ SetupPage {
                         Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("Wait for a single beep heartbeat. If not, re-attempt a factory reset.")
+                        text: qsTr("You should hear a single beep heartbeat. If not, re-attempt a factory reset.")
                         font.pointSize: ScreenTools.defaultFontPointSize
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
@@ -613,7 +617,7 @@ SetupPage {
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("To reset the microhard radio in the MONARK, ensure the drone has been running for 30 or more seconds on battery. Then, press and hold the factory reset button using a SIM extractor tool on the radio module for 10+ seconds. You should perceive a small click. Then release. Wait 30 or more seconds before powering down the drone.")
+                    text: qsTr("To reset the microhard radio in the MONARK, ensure the drone has been running for 30 or more seconds on battery. Then, press and hold the factory reset button using a SIM extractor tool on the radio module for 30+ seconds. You should perceive a small click as the button is pressed. Then release. Wait 30 or more seconds before powering down the drone.")
                 }
                 QGCButton {
                     text: qsTr("OK")
