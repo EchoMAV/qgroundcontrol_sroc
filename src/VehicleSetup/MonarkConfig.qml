@@ -37,7 +37,7 @@ SetupPage {
         id: pageComponent
         ColumnLayout {
             spacing: ScreenTools.defaultFontPixelHeight
-            Layout.maximumWidth: 100 * ScreenTools.defaultFontPixelWidth
+            Layout.maximumWidth: 97 * ScreenTools.defaultFontPixelWidth
             //Main header
             QGCLabel {
                 wrapMode: Text.Wrap
@@ -323,7 +323,7 @@ SetupPage {
 
             //Bad credentials stuff (state 3)
             ColumnLayout {
-                Layout.maximumWidth: 100 * ScreenTools.defaultFontPixelWidth
+                Layout.maximumWidth: 97 * ScreenTools.defaultFontPixelWidth
                 visible: QGroundControl.monarkManager.monarkState === 3 //ScanSuccessBadCredentials
                 GridLayout {
                     columns: 2
@@ -606,7 +606,7 @@ SetupPage {
             //Reset/Unpair Monark (state 10)
             ColumnLayout {
                 visible: QGroundControl.monarkManager.monarkState === 10 //ResetUnpairMonark
-                Layout.maximumWidth: 100 * ScreenTools.defaultFontPixelWidth
+                Layout.maximumWidth: 97 * ScreenTools.defaultFontPixelWidth
                 QGCLabel {
                     wrapMode: Text.Wrap
                     //Layout.fillWidth: true
@@ -631,7 +631,7 @@ SetupPage {
             //Changing settings (states 12, 13, and 14)
             ColumnLayout {
                 spacing: ScreenTools.defaultFontPixelHeight
-                Layout.maximumWidth: 100 * ScreenTools.defaultFontPixelWidth
+                Layout.maximumWidth: 97 * ScreenTools.defaultFontPixelWidth
 
                 visible: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
                          || QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
