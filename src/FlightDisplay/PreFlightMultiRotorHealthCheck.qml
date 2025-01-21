@@ -21,7 +21,7 @@ import QGroundControl.SettingsManager 1.0
 
 PreFlightCheckButton {
     name:               qsTr("Quad Motor Run Up")
-    manualText:         qsTr("A run up of the electric quadrotor motors is recommend to ensure proper operation prior to flight.")
+    manualText:         qsTr("A run up of the motors is recommend to ensure proper operation prior to flight.")
 
     bottomPadding: Math.round(ScreenTools.defaultFontPixelHeight / 2) + motorTestButton.height + Math.round(ScreenTools.defaultFontPixelHeight / 2)
     property bool   allowFailurePercentOverride:    false

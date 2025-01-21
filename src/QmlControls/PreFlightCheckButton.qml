@@ -18,6 +18,8 @@ import QGroundControl               1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
+import QGroundControl.FlightDisplay 1.0
+
 /// The PreFlightCheckButton supports creating a button which the user then has to verify/click to confirm a check.
 /// It also supports failing the check based on values from within the system: telemetry or QGC app values. These
 /// controls are normally placed within a PreFlightCheckGroup.
@@ -78,21 +80,15 @@ QGCButton {
         id: referenceImageDialog
         modal: true
         // standardButtons: Dialog.Ok
+        width: Screen.width * 0.5
+        height: Screen.height * 0.5
 
-        contentItem: Column {
-            // spacing: 10
-            // anchors.margins: 10
+        Image {
+            source: pic_name
+            fillMode: Image.PreserveAspectFit
 
-            Image {
-                source: pic_name
-                // Helps keep the aspect ratio
-                fillMode: Image.PreserveAspectFit
-                // Example size; adjust as needed
-                // width: 300
-                // height: 300
-                width: Screen.width * 0.1
-                height: Screen.height * 0.1
-            }
+            width: parent.width
+            height: parent.height
         }
     }
 
@@ -109,12 +105,13 @@ QGCButton {
             anchors.bottom: parent.bottom
             width:          _stateFlagWidth
 
-            Text {
+            Image  {
                 visible: need_pic
+
+                width: parent.width * 0.8
+                height: parent.height * 0.8
                 anchors.centerIn: parent
-                text: "?"
-                font.pixelSize: 32
-                color: "white"
+                source: "/qmlimages/picture.svg"
             }
 
             MouseArea {
@@ -127,6 +124,7 @@ QGCButton {
                     //     reference_pic_visible = true
                     if (need_pic) {
                         referenceImageDialog.open()
+                        ScreenTools.printScreenStats()
                     }
                 }
             }

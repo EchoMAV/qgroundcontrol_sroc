@@ -30,12 +30,11 @@ Item {
                 allowTelemetryFailureOverride:    !QGroundControl.settingsManager.appSettings.enforceJoystickRequired.value
             }
 
-            PreFlightMultiRotorHealthCheck {
-            }
+
 
             PreFlightCheckButton {
-                name:           qsTr("Hardware")
-                manualText:     qsTr("Unfold Arms")
+                name:           qsTr("Folding Arms")
+                manualText:     qsTr("Open Arms until fully locked.")
 
                 need_pic:       true
                 pic_name:       "/qmlimages/folding_arms.png"
@@ -49,6 +48,14 @@ Item {
                 pic_name: "/qmlimages/battery_latch.png"
             }
 
+            PreFlightCheckButton {
+                name:           qsTr("Antenna Orientation")
+                manualText:     qsTr("Both antennas are angled down 45deg.")
+
+                need_pic: true
+                pic_name: "/qmlimages/antenna_orientation"
+            }
+
             PreFlightSensorsHealthCheck {
             }
 
@@ -57,7 +64,15 @@ Item {
                 allowOverrideSatCount:  true
             }
 
-            PreFlightRCCheck {
+            PreFlightCheckButton {
+                name:           qsTr("Propellers")
+                manualText:     qsTr("Propellers are unfolded")
+
+                need_pic: true
+                pic_name: "/qmlimages/folding_props.png"
+            }
+
+            PreFlightMultiRotorHealthCheck {
             }
         }
 
@@ -84,12 +99,12 @@ Item {
             // Check list item group 2 - Final checks before launch
             PreFlightCheckButton {
                 name:           qsTr("Payload")
-                manualText:     qsTr("Configured and started? Payload lid closed?")
+                manualText:     qsTr("Is Video Feed Operational?")
             }
 
             PreFlightCheckButton {
                 name:           qsTr("Wind & weather")
-                manualText:     qsTr("OK for your platform?")
+                manualText:     qsTr("Under 30mph winds? Raining?")
             }
 
             PreFlightCheckButton {

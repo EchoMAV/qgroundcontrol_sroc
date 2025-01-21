@@ -211,6 +211,9 @@
         <file alias="echomav_outdoor.png">src/FirmwarePlugin/APM/echomav_outdoor.png</file>
         <file alias="folding_arms.png">resources/folding_arms.png</file>
         <file alias="battery_latch.png">resources/battery_latch.png</file>
+        <file alias="picture.svg">resources/picture.svg</file>
+        <file alias="folding_props.png">resources/folding_props.png</file>
+        <file alias="antenna_orientation.png">resources/antenna_orientation.png</file>
         <file alias="Monark_logo_no_text.svg">src/ui/toolbar/Images/Monark logo_no_text.svg</file>
     </qresource>
 </RCC>
