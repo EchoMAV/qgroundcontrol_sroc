@@ -617,7 +617,7 @@ SetupPage {
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("To reset the microhard radio in the MONARK, ensure the drone has been running for 30 or more seconds on battery. Then, press and hold the factory reset button using a SIM extractor tool on the radio module for 30+ seconds. You should perceive a small click as the button is pressed. Then release. Wait 30 or more seconds before powering down the drone.")
+                    text: qsTr("To reset the microhard radio in the MONARK, ensure the drone has been running for 30 or more seconds on battery. Then, press and hold the factory reset button using a reset tool on the radio module for 30+ seconds. You should perceive a small click as the button is pressed. Then release. Wait 30 or more seconds before powering down the drone.")
                 }
                 QGCButton {
                     text: qsTr("OK")

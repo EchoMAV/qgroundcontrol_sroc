@@ -2559,7 +2559,7 @@ void Vehicle::_parametersReady(bool parametersReady)
         _initialConnectStateMachine->advance();
         auto *const p_monarkManager = qgcApp()->toolbox()->monarkManager();
         auto const newSysId=p_monarkManager->newSysId();
-        if(newSysId==-1)
+        if(newSysId<=0)
         {
             qCDebug(VehicleLog)<<"Parameters were ready, but there was no valid MONARK ID to set SYSID_THISMAV";
         }
