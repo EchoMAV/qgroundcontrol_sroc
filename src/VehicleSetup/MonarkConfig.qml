@@ -532,7 +532,7 @@ SetupPage {
                         Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("1. Aim camera 4 inches away from phone.")
+                        text: qsTr("1. Aim drone camera 4 inches away from phone.")
                         font.pointSize: ScreenTools.defaultFontPointSize
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
