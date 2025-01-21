@@ -756,7 +756,7 @@ SetupPage {
                     Layout.fillWidth: true
                     visible: QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("Ground Frequency is out of band for an 8Mhz bandwidth (see documentation)")
+                    text: qsTr("Ground Frequency must be in band for an 8Mhz bandwidth (see documentation)")
                     color: desiredFrequency.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
