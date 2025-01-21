@@ -20,6 +20,7 @@
 #include "MissionCommandTree.h"
 #include "MultiVehicleManager.h"
 #include "QGCImageProvider.h"
+#include "Monark/MonarkQRCodeProvider.h"
 #include "UASMessageHandler.h"
 #include "QGCMapEngineManager.h"
 #include "FollowMe.h"
@@ -40,6 +41,7 @@
 #if defined(QGC_GST_MICROHARD_ENABLED)
 #include "MicrohardManager.h"
 #endif
+#include "Monark/MonarkManager.h"
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
@@ -58,6 +60,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _gpsManager             = new GPSManager                (app, this);
 #endif
     _imageProvider          = new QGCImageProvider          (app, this);
+    _monarkQRCodeProvider   = new MonarkQRCodeProvider      (app, this);
     _joystickManager        = new JoystickManager           (app, this);
     _linkManager            = new LinkManager               (app, this);
     _mavlinkProtocol        = new MAVLinkProtocol           (app, this);
@@ -79,6 +82,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 #if defined(QGC_GST_MICROHARD_ENABLED)
     _microhardManager       = new MicrohardManager          (app, this);
 #endif
+    _monarkManager          = new MonarkManager             (app, this);
 }
 
 void QGCToolbox::setChildToolboxes(void)
@@ -94,6 +98,7 @@ void QGCToolbox::setChildToolboxes(void)
     _gpsManager->setToolbox(this);
 #endif
     _imageProvider->setToolbox(this);
+    _monarkQRCodeProvider->setToolbox(this);
     _joystickManager->setToolbox(this);
     _linkManager->setToolbox(this);
     _mavlinkProtocol->setToolbox(this);
@@ -115,6 +120,7 @@ void QGCToolbox::setChildToolboxes(void)
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager->setToolbox(this);
 #endif
+    _monarkManager->setToolbox(this);
 }
 
 void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)

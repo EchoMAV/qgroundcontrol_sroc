@@ -32,18 +32,18 @@ message(Custom QGC Version: $${CUSTOM_QGC_VERSION})
 DEFINES += CUSTOMHEADER=\"\\\"HerelinkCorePlugin.h\\\"\"
 DEFINES += CUSTOMCLASS=HerelinkCorePlugin
 
-TARGET   = EchoMAV-GCS
-DEFINES += QGC_APPLICATION_NAME='"\\\"EchoMAV GCS\\\""'
+TARGET   = MONARK-GCS
+DEFINES += QGC_APPLICATION_NAME='"\\\"MONARK GCS\\\""'
 
 DEFINES += QGC_ORG_NAME=\"\\\"echomav.com\\\"\"
 DEFINES += QGC_ORG_DOMAIN=\"\\\"org.echomav\\\"\"
 
-QGC_APP_NAME        = "EchoMAV GCS"
-QGC_BINARY_NAME     = "EchoMAV-GCS"
+QGC_APP_NAME        = "MONARK GCS"
+QGC_BINARY_NAME     = "MONARK-GCS"
 QGC_ORG_NAME        = "EchoMAV"
 QGC_ORG_DOMAIN      = "org.echomav"
-QGC_ANDROID_PACKAGE = "org.echomav.echomavgcs"
-QGC_APP_DESCRIPTION = "EchoMAV GCS"
+QGC_ANDROID_PACKAGE = "org.echomav.monarkgcs"
+QGC_APP_DESCRIPTION = "MONARK GCS"
 QGC_APP_COPYRIGHT   = "Copyright (C) 2024 EchoMAV, LLC. All rights reserved."
 
 # Remove code which the Herelink doesn't need

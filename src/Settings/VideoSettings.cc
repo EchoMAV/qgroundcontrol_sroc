@@ -128,6 +128,8 @@ DECLARE_SETTINGSFACT(VideoSettings, rtspTimeout)
 DECLARE_SETTINGSFACT(VideoSettings, streamEnabled)
 DECLARE_SETTINGSFACT(VideoSettings, disableWhenDisarmed)
 DECLARE_SETTINGSFACT(VideoSettings, lowLatencyMode)
+DECLARE_SETTINGSFACT(VideoSettings, recordOnFlying)
+
 // Herelink HDMI source switching
 DECLARE_SETTINGSFACT(VideoSettings, cameraId)
 

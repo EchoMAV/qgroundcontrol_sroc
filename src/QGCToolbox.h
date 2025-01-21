@@ -26,6 +26,7 @@ class MultiVehicleManager;
 class QGCMapEngineManager;
 class QGCApplication;
 class QGCImageProvider;
+class MonarkQRCodeProvider;
 class UASMessageHandler;
 class QGCPositionManager;
 class VideoManager;
@@ -42,6 +43,7 @@ class TaisyncManager;
 #if defined(QGC_GST_MICROHARD_ENABLED)
 class MicrohardManager;
 #endif
+class MonarkManager;
 
 /// This is used to manage all of our top level services/tools
 class QGCToolbox : public QObject {
@@ -59,6 +61,7 @@ public:
     MultiVehicleManager*        multiVehicleManager     () { return _multiVehicleManager; }
     QGCMapEngineManager*        mapEngineManager        () { return _mapEngineManager; }
     QGCImageProvider*           imageProvider           () { return _imageProvider; }
+    MonarkQRCodeProvider*       monarkQRCodeProvider    () { return _monarkQRCodeProvider; }
     UASMessageHandler*          uasMessageHandler       () { return _uasMessageHandler; }
     FollowMe*                   followMe                () { return _followMe; }
     QGCPositionManager*         qgcPositionManager      () { return _qgcPositionManager; }
@@ -79,6 +82,7 @@ public:
 #if defined(QGC_GST_MICROHARD_ENABLED)
     MicrohardManager*           microhardManager        () { return _microhardManager; }
 #endif
+    MonarkManager*              monarkManager           () { return _monarkManager; }
 
 private:
     void setChildToolboxes(void);
@@ -92,6 +96,7 @@ private:
     GPSManager*                 _gpsManager             = nullptr;
 #endif
     QGCImageProvider*           _imageProvider          = nullptr;
+    MonarkQRCodeProvider*       _monarkQRCodeProvider   = nullptr;
     JoystickManager*            _joystickManager        = nullptr;
     LinkManager*                _linkManager            = nullptr;
     MAVLinkProtocol*            _mavlinkProtocol        = nullptr;
@@ -115,6 +120,7 @@ private:
 #if defined(QGC_GST_MICROHARD_ENABLED)
     MicrohardManager*           _microhardManager       = nullptr;
 #endif
+    MonarkManager*              _monarkManager          = nullptr;
     friend class QGCApplication;
 };
 

@@ -140,6 +140,13 @@
     "qgcRebootRequired": true
 },
 {
+    "name":             "recordOnFlying",
+    "shortDesc":        "Start recording automatically on takeoff",
+    "longDesc":         "Specify if recording should start automatically upon takeoff",
+    "type":             "bool",
+    "default":     true
+},
+{
     "name":             "cameraId",
     "shortDesc":        "Camera ID",
     "longDesc":         "Camera ID used for video streaming.",

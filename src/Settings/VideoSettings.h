@@ -36,6 +36,7 @@ public:
     DEFINE_SETTINGFACT(disableWhenDisarmed)
     DEFINE_SETTINGFACT(lowLatencyMode)
     DEFINE_SETTINGFACT(forceVideoDecoder)
+    DEFINE_SETTINGFACT(recordOnFlying)
     // Herelink HDMI source switching
     DEFINE_SETTINGFACT(cameraId)
 

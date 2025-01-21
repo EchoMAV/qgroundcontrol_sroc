@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<manifest package="com.echomav.qgroundcontrol" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="-- %%INSERT_VERSION_NAME%% --" android:versionCode="-- %%INSERT_VERSION_CODE%% --" android:installLocation="auto">
+<manifest package="com.echomav.monarkgcs" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="-- %%INSERT_VERSION_NAME%% --" android:versionCode="-- %%INSERT_VERSION_CODE%% --" android:installLocation="auto">
     <!-- The following comment will be replaced upon deployment with default permissions based on the dependencies of the application.
          Remove the comment if you do not require these default permissions. -->
     <!-- %%INSERT_PERMISSIONS -->
@@ -9,12 +9,12 @@
     <!-- %%INSERT_FEATURES -->
 
     <supports-screens android:largeScreens="true" android:normalScreens="true" android:anyDensity="true" android:smallScreens="true"/>
-    <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="EchoMAV GCS" android:extractNativeLibs="true" android:icon="@drawable/icon">
-        <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:name="org.mavlink.qgroundcontrol.QGCActivity" android:label="EchoMAV GCS" android:screenOrientation="landscape" android:launchMode="singleTask" android:keepScreenOn="true">
+    <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="MONARK GCS" android:extractNativeLibs="true" android:icon="@drawable/icon">
+        <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:name="org.mavlink.qgroundcontrol.QGCActivity" android:label="MONARK  GCS" android:screenOrientation="landscape" android:launchMode="singleTask" android:keepScreenOn="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
-
+                <action android:name="android.hardware.usb.action.  "/>
                 <!-- %%QGC_INSERT_ACTIVITY_INTENT_FILTER -->
             </intent-filter>
             <!-- %%QGC_INSERT_ACTIVITY_META_DATA -->
@@ -84,7 +84,9 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
 
     <!-- Support devices without USB host mode since there are other connection types -->
-    <uses-feature android:name="android.hardware.usb.host" android:required="false"/>
+    <uses-feature android:name="android.hardware.usb.host"/>
+    <uses-permission android:name="android.permission.ACCESS_USB"/>
+    <uses-permission android:name="android.permission.USB_PERMISSION"/>
 
     <!-- Support devices without Bluetooth since there are other connection types -->
     <uses-feature android:name="android.hardware.bluetooth" android:required="false"/>
@@ -99,4 +101,6 @@
     <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+<uses-permission android:name="android.permission.SERIAL_PORT"/>
 </manifest>

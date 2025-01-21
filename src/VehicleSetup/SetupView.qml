@@ -272,6 +272,19 @@ Rectangle {
                 property bool   _forcedToButtonsOnly:   !QGroundControl.corePlugin.options.allowJoystickSelection && _buttonsOnly
             }
 
+            SubMenuButton {
+                id: monarkButton
+                imageResource:    "/qmlimages/Monark_logo_no_text.svg"
+                imageColor:       qgcPal.button
+                setupIndicator:   false //TODO what does this mean?
+                setupComplete:    false //TODO what does this mean?
+                exclusiveGroup:   setupButtonGroup //TODO what does this mean?
+                visible:          true  //TODO determine under what circumstances this should be visible?
+                text:             qsTr("MONARK")
+                Layout.fillWidth: true
+                onClicked:        showPanel(this, "MonarkConfig.qml")
+            }
+
             Repeater {
                 id:     componentRepeater
                 model:  _fullParameterVehicleAvailable ? QGroundControl.multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0
@@ -321,9 +334,11 @@ Rectangle {
         anchors.leftMargin:     _horizontalMargin
         anchors.rightMargin:    _horizontalMargin
         anchors.left:           divider.right
-        anchors.right:          parent.right
+        //anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
+        width: parent.width - divider.width - buttonScroll.width
+
 
         function setSource(source, vehicleComponent) {
             panelLoader.source = ""

@@ -98,6 +98,7 @@
 #include "TrajectoryPoints.h"
 #include "RCToParamDialogController.h"
 #include "QGCImageProvider.h"
+#include "Monark/MonarkQRCodeProvider.h"
 #include "TerrainProfile.h"
 #include "ToolStripAction.h"
 #include "ToolStripActionList.h"
@@ -459,7 +460,6 @@ void QGCApplication::_initCommon()
 
     qmlRegisterType<QGCPalette>     ("QGroundControl.Palette", 1, 0, "QGCPalette");
     qmlRegisterType<QGCMapPalette>  ("QGroundControl.Palette", 1, 0, "QGCMapPalette");
-
     qmlRegisterUncreatableType<Vehicle>                 (kQGCVehicle,                       1, 0, "Vehicle",                    kRefOnly);
     qmlRegisterUncreatableType<MissionManager>          (kQGCVehicle,                       1, 0, "MissionManager",             kRefOnly);
     qmlRegisterUncreatableType<ParameterManager>        (kQGCVehicle,                       1, 0, "ParameterManager",           kRefOnly);
@@ -563,6 +563,10 @@ bool QGCApplication::_initForNormalAppBoot()
     // Image provider for PX4 Flow
     QQuickImageProvider* pImgProvider = dynamic_cast<QQuickImageProvider*>(qgcApp()->toolbox()->imageProvider());
     _qmlAppEngine->addImageProvider(QStringLiteral("QGCImages"), pImgProvider);
+
+    // Image provider for monark QR code
+    QQuickImageProvider* p_monarkQRCodeProvider = dynamic_cast<QQuickImageProvider*>(qgcApp()->toolbox()->monarkQRCodeProvider());
+    _qmlAppEngine->addImageProvider(QStringLiteral("MONARKQRCodes"), p_monarkQRCodeProvider);
 
     QQuickWindow* rootWindow = qgcApp()->mainRootWindow();
 

@@ -11,7 +11,6 @@
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED"/>
                 <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"/>
             </intent-filter>
-
             <!-- Rest of Standard Manifest -->
             <meta-data android:name="android.app.lib_name" android:value="-- %%INSERT_APP_LIB_NAME%% --"/>
             <meta-data android:name="android.app.qt_sources_resource_id" android:resource="@array/qt_sources"/>
@@ -33,13 +32,11 @@
             <meta-data android:value="@string/ministro_needed_msg" android:name="android.app.ministro_needed_msg"/>
             <meta-data android:value="@string/fatal_error_msg" android:name="android.app.fatal_error_msg"/>
             <!--  Messages maps -->
-
             <!-- Splash screen -->
             <!--
             <meta-data android:name="android.app.splash_screen_drawable" android:resource="@drawable/logo"/>
             -->
             <!-- Splash screen -->
-
             <!-- Background running -->
             <!-- Warning: changing this value to true may cause unexpected crashes if the
                           application still try to draw after
@@ -59,7 +56,7 @@
     <!-- %%INSERT_PERMISSIONS -->
 
     <!-- Support devices without USB host mode since there are other connection types -->
-    <uses-feature android:name="android.hardware.usb.host" android:required="false"/>
+    <uses-feature android:name="android.hardware.usb.host" android:required="true"/>
 
     <!-- Support devices without Bluetooth since there are other connection types -->
     <uses-feature android:name="android.hardware.bluetooth" android:required="false"/>

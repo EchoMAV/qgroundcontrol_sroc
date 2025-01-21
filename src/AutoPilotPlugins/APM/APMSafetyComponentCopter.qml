@@ -13,6 +13,7 @@ import QtQuick.Controls     1.2
 import QtGraphicalEffects   1.0
 import QtQuick.Layouts      1.2
 
+import QGroundControl               1.0
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
@@ -249,8 +250,12 @@ SetupPage {
                                 Layout.fillWidth:   true
                             }
 
-                            QGCLabel { text: qsTr("Throttle failsafe:") }
+                            QGCLabel {
+                                visible: QGroundControl.corePlugin.showAdvancedUI
+                                text: qsTr("Throttle failsafe:")
+                            }
                             QGCComboBox {
+                                visible: QGroundControl.corePlugin.showAdvancedUI
                                 model:              [qsTr("Disabled"), qsTr("Always RTL"),
                                     qsTr("Continue with Mission in Auto Mode"), qsTr("Always Land")]
                                 currentIndex:       _failsafeThrEnable.value
@@ -259,8 +264,12 @@ SetupPage {
                                 onActivated: _failsafeThrEnable.value = index
                             }
 
-                            QGCLabel { text: qsTr("PWM threshold:") }
+                            QGCLabel {
+                                visible: QGroundControl.corePlugin.showAdvancedUI
+                                text: qsTr("PWM threshold:")
+                            }
                             FactTextField {
+                                visible: QGroundControl.corePlugin.showAdvancedUI
                                 fact:               _failsafeThrValue
                                 showUnits:          true
                                 Layout.fillWidth:   true
