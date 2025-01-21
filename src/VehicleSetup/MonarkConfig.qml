@@ -532,7 +532,7 @@ SetupPage {
                         Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("1. Aim camera 4 inches away from phone.")
+                        text: qsTr("1. Aim drone camera 4 inches away from phone.")
                         font.pointSize: ScreenTools.defaultFontPointSize
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
@@ -756,7 +756,7 @@ SetupPage {
                     Layout.fillWidth: true
                     visible: QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("Ground Frequency is out of band for an 8Mhz bandwidth (see documentation)")
+                    text: qsTr("Ground Frequency must be in band for an 8Mhz bandwidth (see documentation)")
                     color: desiredFrequency.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
