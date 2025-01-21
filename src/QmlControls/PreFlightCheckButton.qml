@@ -46,7 +46,7 @@ QGCButton {
     property int _telemetryState:       _statePassed
     property int _horizontalPadding:    ScreenTools.defaultFontPixelWidth
     property int _verticalPadding:      Math.round(ScreenTools.defaultFontPixelHeight / 2)
-    property real _stateFlagWidth:      ScreenTools.defaultFontPixelWidth * 4
+    property real _stateFlagWidth:      ScreenTools.defaultFontPixelWidth * 5
 
     readonly property int _statePending:    0   ///< Telemetry check is failing or manual check not yet verified, user can click to make it pass
     readonly property int _stateFailed:     1   ///< Telemetry check is failing, user cannot click to make it pass
@@ -125,7 +125,9 @@ QGCButton {
                     //     reference_pic_visible = false
                     // else
                     //     reference_pic_visible = true
-                    referenceImageDialog.open()
+                    if (need_pic) {
+                        referenceImageDialog.open()
+                    }
                 }
             }
         }
