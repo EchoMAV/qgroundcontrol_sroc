@@ -11,6 +11,7 @@ import QtQuick                  2.3
 import QtQuick.Controls         2.5
 import QtQuick.Controls.Styles  1.4
 import QtQuick.Layouts              1.12
+import QtQuick.Window 2.15
 
 
 import QGroundControl               1.0
@@ -30,6 +31,10 @@ import QGroundControl.ScreenTools   1.0
 QGCButton {
     property string name:                           ""
     property string manualText:                     ""      ///< text to show for a manual check, "" signals no manual check
+
+    property bool need_pic:                       faLse
+    property string pic_name:                       ""
+
     property string telemetryTextFailure                    ///< text to show if telemetry check failed (override not allowed)
     property bool   telemetryFailure:               false   ///< true: telemetry check failing, false: telemetry check passing
     property bool   allowTelemetryFailureOverride:  false   ///< true: user can click past telemetry failure
@@ -71,21 +76,22 @@ QGCButton {
 
     Dialog {
         id: referenceImageDialog
-        title: qsTr("Reference Image")
         modal: true
-        standardButtons: Dialog.Ok
+        // standardButtons: Dialog.Ok
 
         contentItem: Column {
-            spacing: 10
-            anchors.margins: 10
+            // spacing: 10
+            // anchors.margins: 10
 
             Image {
-                source: "/qmlimages/folding_arms.png"
+                source: pic_name
                 // Helps keep the aspect ratio
                 fillMode: Image.PreserveAspectFit
                 // Example size; adjust as needed
-                width: 300
-                height: 300
+                // width: 300
+                // height: 300
+                width: Screen.width * 0.1
+                height: Screen.height * 0.1
             }
         }
     }
@@ -104,6 +110,7 @@ QGCButton {
             width:          _stateFlagWidth
 
             Text {
+                visible: need_pic
                 anchors.centerIn: parent
                 text: "?"
                 font.pixelSize: 32

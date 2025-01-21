@@ -36,11 +36,17 @@ Item {
             PreFlightCheckButton {
                 name:           qsTr("Hardware")
                 manualText:     qsTr("Unfold Arms")
+
+                need_pic:       true
+                pic_name:       "/qmlimages/folding_arms.png"
             }
 
             PreFlightBatteryCheck {
                 failurePercent:                 40
                 allowFailurePercentOverride:    false
+
+                need_pic: true
+                pic_name: "/qmlimages/battery_latch.png"
             }
 
             PreFlightSensorsHealthCheck {
