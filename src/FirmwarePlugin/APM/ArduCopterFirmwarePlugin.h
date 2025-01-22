@@ -49,7 +49,7 @@ public:
         AUTOROTATE  = 26,
         AUTO_RTL    = 27,
         TURTLE      = 28,
-        OPTICAL_FLOW = 99, // This truly points to stock "FLOWHOLD" in EchoMAV ArduPilot
+        // OPTICAL_FLOW = 99, // This truly points to stock "FLOWHOLD" in EchoMAV ArduPilot
     };
 
     APMCopterMode(uint32_t mode, bool settable);
