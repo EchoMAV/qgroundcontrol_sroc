@@ -108,6 +108,7 @@ QGCButton {
             Image  {
                 visible: need_pic
 
+                fillMode: Image.PreserveAspectFit
                 width: parent.width * 0.8
                 height: parent.height * 0.8
                 anchors.centerIn: parent

@@ -45,7 +45,10 @@ PreFlightCheckButton {
 
         function startMotorTest()
         {
-            preFlightChecklistWindow.showPopupDialogFromComponent(motorTestComponent)
+            console.log("testing here 1323")
+            // preFlightChecklistPopup.showPopupDialogFromComponent(motorTestComponent)
+            var dialog = motorTestComponent.createObject(parent)
+            dialog.open()
         }
     }
 

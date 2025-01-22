@@ -330,6 +330,12 @@ Item {
 
     Component {
         id: preFlightChecklistPopup
+
+        // function doSomething() {
+        //     console.log("Button do be clicked!")
+        // }
+
         FlyViewPreFlightChecklistPopup {}
+
     }
 }
