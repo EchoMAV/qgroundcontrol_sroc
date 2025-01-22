@@ -433,6 +433,28 @@ SetupPage {
                             QGroundControl.monarkManager.gotoChangeTxPower()
                         }
                     }
+                    QGCButton {
+                        Layout.fillWidth: true
+                        text: qsTr("RESET ACTIVE VEHICLE")
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        enabled: QGroundControl.multiVehicleManager.activeVehicle
+                        onClicked: {
+                            confirmVehicleReset.open()
+                        }
+
+                        MessageDialog {
+                            id: confirmVehicleReset
+                            title: qsTr("Confirm Reset")
+                            text: qsTr("Are you sure you want to reset active drone ID ")
+                                  + QGroundControl.multiVehicleManager.activeVehicle.id + qsTr(
+                                      "? Be sure to power-cycle the drone after you hear a beep indicator.")
+                            standardButtons: StandardButton.Yes | StandardButton.No
+                            onYes: {
+                                QGroundControl.monarkManager.resetActiveVehicle(
+                                            )
+                            }
+                        }
+                    }
                 }
             }
 
