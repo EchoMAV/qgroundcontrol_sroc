@@ -200,33 +200,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _terrainProtocolHandler       (new TerrainProtocolHandler(this, &_terrainFactGroup, this))
     , _cot_timer(new QTimer(this)) // Timer for CoT XML packet generation
 {
-    auto *const p_monarkManager = qgcApp()->toolbox()->monarkManager();
-    auto const newSysId=p_monarkManager->newSysId();
-    if(newSysId>0)
-    {
-        _id=newSysId;
-        p_monarkManager->invalidateNewSysId();
-        auto const p_sysIdFact=_parameterManager->getParameter(defaultComponentId,"SYSID_THISMAV");
-        if(p_sysIdFact)
-        {
-            auto const errorString = p_sysIdFact->validate(QString::number(_id),false);
-            if(errorString.isEmpty())
-            {
-                p_sysIdFact->setCookedValue(_id);
-                rebootVehicle();
-                qCDebug(VehicleLog) << "Set SYSID_THISMAV to "<<_id<<" on active vehicle";
-            }
-            else
-            {
-                qCCritical(VehicleLog)<<"Unable to set SYSID_THISMAV to "<<_id<<" because: "<<errorString;
-            }
-        }
-        else
-        {
-            qCCritical(VehicleLog)<<"SYSID_THISMAV fact was not found";
-        }
-    }
-    p_monarkManager->refreshDroneList();
 
 
     // Setup the CoT timer to trigger every second
@@ -501,6 +474,38 @@ void Vehicle::_commonInit()
     connect(_initialConnectStateMachine, &InitialConnectStateMachine::progressUpdate,
             this, &Vehicle::_gotProgressUpdate);
     connect(_parameterManager, &ParameterManager::loadProgressChanged, this, &Vehicle::_gotProgressUpdate);
+
+    auto *const p_monarkManager = qgcApp()->toolbox()->monarkManager();
+    if(p_monarkManager)
+    {
+        auto const newSysId=p_monarkManager->newSysId();
+        if(newSysId>0 && _id>0)
+        {
+            _id=newSysId;
+            p_monarkManager->invalidateNewSysId();
+            auto const p_sysIdFact=_parameterManager->getParameter(_defaultComponentId,"SYSID_THISMAV");
+            if(p_sysIdFact)
+            {
+                auto const errorString = p_sysIdFact->validate(QString::number(_id),false);
+                if(errorString.isEmpty())
+                {
+                    p_sysIdFact->setCookedValue(_id);
+                    rebootVehicle();
+                    qCDebug(VehicleLog) << "Set SYSID_THISMAV to "<<_id<<" on active vehicle";
+                }
+                else
+                {
+                    qCCritical(VehicleLog)<<"Unable to set SYSID_THISMAV to "<<_id<<" because: "<<errorString;
+                }
+            }
+            else
+            {
+                qCCritical(VehicleLog)<<"SYSID_THISMAV fact was not found";
+            }
+        }
+        p_monarkManager->refreshDroneList();
+    }
+
 
     _objectAvoidance = new VehicleObjectAvoidance(this, this);
 
