@@ -49,7 +49,6 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
         { AUTOROTATE,   "AutoRotate" },
         { AUTO_RTL,     "AutoRTL" },
         { TURTLE,       "Turtle" },
-        { OPTICAL_FLOW, "Optical Flow" },
     });
 }
 
@@ -82,7 +81,6 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         APMCopterMode(APMCopterMode::AUTOROTATE,    false),
         APMCopterMode(APMCopterMode::AUTO_RTL,      false),
         APMCopterMode(APMCopterMode::TURTLE,        false),
-        APMCopterMode(APMCopterMode::OPTICAL_FLOW,  false),
     });
 
     if (!_remapParamNameIntialized) {
