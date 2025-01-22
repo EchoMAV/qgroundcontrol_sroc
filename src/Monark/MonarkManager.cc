@@ -1066,6 +1066,61 @@ void MonarkManager::saveFlutterManagementSettings()
     }
 }
 
+void MonarkManager::resetActiveVehicle()
+{
+    if(mp_slotHandler->needDispatch())
+    {
+        mp_slotHandler->dispatch([this](){resetActiveVehicle();});
+    }
+    else
+    {
+        //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::resetActiveVehicle()";
+        auto const activeVehicleId = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id();
+        if(activeVehicleId>0)
+        {
+            auto const ip=_getDroneIPAddress(activeVehicleId);
+            std::vector<std::string> droneCommands;
+            droneCommands.push_back("microhard --action=reset --monark_id="+std::to_string(activeVehicleId)+"\n");
+            auto const response= _sendCommands(ip.c_str(),"monark", "monark", &droneCommands,true).second;
+            if(!response.empty() && response.back().find(np_droneSuccessStr)!= std::string::npos)
+            {
+                if(m_allDrones.erase(activeVehicleId))
+                {
+                    emit allDronesChanged();
+                }
+                if(m_beforeUpdateDrones.erase(activeVehicleId))
+                {
+                    emit beforeUpdateDronesChanged();
+                }
+                if(m_updateInProgressDrones.erase(activeVehicleId))
+                {
+                    emit updateInProgressDronesChanged();
+                }
+                if(m_updateSuccessfulDrones.erase(activeVehicleId))
+                {
+                    emit updateSuccessfulDronesChanged();
+                }
+                if(m_updateFailedDrones.erase(activeVehicleId))
+                {
+                    emit updateFailedDronesChanged();
+                }
+                if(m_newDroneId==activeVehicleId)
+                {
+                    m_newDroneId=0;
+                     emit newDroneIdChanged();
+                }
+                if(m_newSysId==activeVehicleId)
+                {
+                    m_newSysId=0;
+                    emit newSysIdChanged();
+                }
+            }
+
+        }
+        //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::resetActiveVehicle()";
+    }
+}
+
 void MonarkManager::detect()
 {
     if(mp_slotHandler->needDispatch())

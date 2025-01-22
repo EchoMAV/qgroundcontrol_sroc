@@ -31,6 +31,8 @@
 #include "QGCLoggingCategory.h"
 #include "MultiVehicleManager.h"
 #include "SettingsManager.h"
+#include "Monark/MonarkManager.h"
+
 
 Q_DECLARE_METATYPE(mavlink_message_t)
 

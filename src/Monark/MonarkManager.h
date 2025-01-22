@@ -103,6 +103,7 @@ public:
     Q_INVOKABLE void refreshDroneList();
     Q_INVOKABLE void removeDrone(int monarkID);
     Q_INVOKABLE void saveFlutterManagementSettings();
+    Q_INVOKABLE void resetActiveVehicle();
 
 #if 0
     Q_INVOKABLE void saveEncryptionKey();
