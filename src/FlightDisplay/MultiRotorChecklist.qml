@@ -50,7 +50,7 @@ Item {
 
             PreFlightCheckButton {
                 name:           qsTr("Antenna Orientation")
-                manualText:     qsTr("Both antennas are angled down 45deg.")
+                manualText:     qsTr("Orientate antennas down 45deg.")
 
                 need_pic: true
                 pic_name: "/qmlimages/antenna_orientation"
@@ -66,13 +66,15 @@ Item {
 
             PreFlightCheckButton {
                 name:           qsTr("Propellers")
-                manualText:     qsTr("Propellers are unfolded")
+                manualText:     qsTr("unfolded Propellers")
 
                 need_pic: true
                 pic_name: "/qmlimages/folding_props.png"
             }
 
             PreFlightMultiRotorHealthCheck {
+                need_pic: true
+                pic_name: "/qmlimages/motor_test.png"
             }
         }
 

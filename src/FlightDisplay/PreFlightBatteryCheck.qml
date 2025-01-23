@@ -15,8 +15,8 @@ import QGroundControl.Vehicle   1.0
 
 // This class stores the data and functions of the check list but NOT the GUI (which is handled somewhere else).
 PreFlightCheckButton {
-    name:                           qsTr("Battery Lid Latch")
-    manualText:                     qsTr("Battery Lid is Fully latched?")
+    name:                           qsTr("Battery")
+    manualText:                     qsTr("Charge Battery and Close lid")
     telemetryFailure:               _batLow
     telemetryTextFailure:           allowTelemetryFailureOverride ?
                                         qsTr("Warning - Battery charge below %1%.").arg(failurePercent) :
