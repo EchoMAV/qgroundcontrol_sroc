@@ -45,8 +45,6 @@ PreFlightCheckButton {
 
         function startMotorTest()
         {
-            console.log("testing here 1323")
-            // preFlightChecklistPopup.showPopupDialogFromComponent(motorTestComponent)
             var dialog = motorTestComponent.createObject(parent)
             dialog.open()
         }
@@ -55,7 +53,7 @@ PreFlightCheckButton {
     Component {
         id: motorTestComponent
         QGCPopupDialog {
-            title:      qsTr("Quad Motor Run Up")
+            title:      qsTr("Motor Run Up")
             buttons:    StandardButton.Close
             ColumnLayout {
                 id: motorTestCol
@@ -74,7 +72,7 @@ PreFlightCheckButton {
                             width:          ScreenTools.defaultFontPixelWidth * 60
                             height:         ScreenTools.defaultFontPixelHeight * 4
                             wrapMode:       Text.WordWrap
-                            text:           qsTr("WARNING: Running up the quad motors is dangerous! Ensure the props are clear, then push and hold the button below. The test will spin each motor sequentially for 3 seconds each. Watch each motor and ensure it spins normally.")
+                            text:           qsTr("WARNING: Running up the motors is dangerous! Ensure the props are clear, then push and hold the button below. The test will spin each motor sequentially for 3 seconds each. Watch each motor and ensure it spins normally.")
                         }
                         Item {
                             width:  1

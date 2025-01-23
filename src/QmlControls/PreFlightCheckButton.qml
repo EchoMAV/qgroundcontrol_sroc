@@ -12,7 +12,7 @@ import QtQuick.Controls         2.5
 import QtQuick.Controls.Styles  1.4
 import QtQuick.Layouts              1.12
 import QtQuick.Window 2.15
-
+import QtQuick.Dialogs  1.3
 
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0
@@ -76,24 +76,6 @@ QGCButton {
     leftPadding:    (_horizontalPadding * 2) + _stateFlagWidth
     rightPadding:   _horizontalPadding
 
-    Dialog {
-        id: referenceImageDialog
-        modal: true
-        // standardButtons: Dialog.Ok
-        width: Screen.width * 0.5
-        height: Screen.height * 0.5
-
-        Image {
-            source: pic_name
-            fillMode: Image.PreserveAspectFit
-
-            width: parent.width
-            height: parent.height
-        }
-    }
-
-
-
     background: Rectangle {
         color:          qgcPal.button
         border.color:   qgcPal.button;
@@ -118,33 +100,40 @@ QGCButton {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-                    console.log("I got clicked")
-                    // if (reference_pic_visible == true)
-                    //     reference_pic_visible = false
-                    // else
-                    //     reference_pic_visible = true
                     if (need_pic) {
-                        referenceImageDialog.open()
-                        ScreenTools.printScreenStats()
+                        var dialog = picture_component.createObject(parent)
+                        dialog.open()
                     }
                 }
             }
         }
-        // Image {
-        //     id: reference_pic
-        //     source: "/qmlimages/folding_arms.png"
-        //     visible: reference_pic_visible
-
-        //     anchors.right: parent.right
-        //     // Optionally center it vertically within the parent
-        //     anchors.verticalCenter: parent.verticalCenter
-        //     // You can also add some right margin if you want a gap
-        //     anchors.rightMargin: 10
-        // }
     }
 
+    Component {
+        id: picture_component
+        QGCPopupDialog {
+            title:      qsTr("Reference Picture")
+            buttons:    StandardButton.Close
 
+            ColumnLayout {
+                Layout.fillWidth:   true
+                Layout.fillHeight:   true
 
+                RowLayout{
+                    Layout.fillWidth:           true
+                    Layout.fillHeight:          true
+
+                    Image {
+                        source: pic_name
+                        fillMode: Image.PreserveAspectFit
+
+                        Layout.preferredWidth: Math.min(Screen.width * 0.5, 1200)
+                        Layout.preferredHeight: Math.min(Screen.height * 0.5, 600)
+                    }
+                }
+            }
+        }
+    }
 
     contentItem: QGCLabel {
         wrapMode:               Text.WordWrap
