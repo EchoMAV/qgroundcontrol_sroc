@@ -67,7 +67,7 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         APMCopterMode(APMCopterMode::DRIFT,         false),
         APMCopterMode(APMCopterMode::SPORT,         false),
         APMCopterMode(APMCopterMode::FLIP,          false),
-        APMCopterMode(APMCopterMode::AUTOTUNE,      false),
+        APMCopterMode(APMCopterMode::AUTOTUNE,      true),
         APMCopterMode(APMCopterMode::POS_HOLD,      false),
         APMCopterMode(APMCopterMode::BRAKE,         false),
         APMCopterMode(APMCopterMode::THROW,         false),
