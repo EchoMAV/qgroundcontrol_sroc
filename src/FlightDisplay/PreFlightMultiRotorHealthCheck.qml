@@ -20,13 +20,13 @@ import QGroundControl.Palette       1.0
 import QGroundControl.SettingsManager 1.0
 
 PreFlightCheckButton {
-    name:               qsTr("Quad Motor Run Up")
+    name:               qsTr("Motor Run Up")
     manualText:         qsTr("A run up of the motors is recommend to ensure proper operation prior to flight.")
 
     bottomPadding: Math.round(ScreenTools.defaultFontPixelHeight / 2) + motorTestButton.height + Math.round(ScreenTools.defaultFontPixelHeight / 2)
     property bool   allowFailurePercentOverride:    false
-    property string   _buttonLabel:   qsTr("Quad Motor Run Up")
-    property int    _motorTestThrottle: 20  //percent throttle to use for motor runup
+    property string   _buttonLabel:   qsTr("Motor Run Up")
+    property int    _motorTestThrottle: 1//percent throttle to use for motor runup
     property int    _motorTestDurationSec: 2  //seconds for the motor test to last
     property int    _testDelayDurationSec: 4  //seconds to delay between each motor test message
 
@@ -42,6 +42,12 @@ PreFlightCheckButton {
         anchors.horizontalCenterOffset: ScreenTools.defaultFontPixelWidth * 3
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Math.round(ScreenTools.defaultFontPixelHeight / 2)
+
+        background: Rectangle {
+            color: "lightblue"
+            border.color: "black"
+            border.width: 4
+        }
 
         function startMotorTest()
         {
@@ -238,17 +244,17 @@ PreFlightCheckButton {
                     width:  1
                     height: Math.round(ScreenTools.defaultFontPixelHeight * 1)
                 }
-                RowLayout
-                {
-                    Layout.fillWidth:           true
-                    Layout.alignment:   Qt.AlignHCenter
-                    QGCButton {
-                        text:               qsTr("Close")
-                        onClicked: {
-                            hideDialog()
-                        }
-                    }
-                }
+                // RowLayout
+                // {
+                //     Layout.fillWidth:           true
+                //     Layout.alignment:   Qt.AlignHCenter
+                //     QGCButton {
+                //         text:               qsTr("Close")
+                //         onClicked: {
+                //             hideDialog()
+                //         }
+                //     }
+                // }
             }
             function reject() {
                 hideDialog()

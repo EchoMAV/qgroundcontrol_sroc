@@ -136,7 +136,7 @@
     "shortDesc": "Use preflight checklist",
     "longDesc":  "If this option is enabled the preflight checklist will be used.",
     "type":             "bool",
-    "default":     false
+    "default":     true
 },
 {
     "name":             "enforceChecklist",

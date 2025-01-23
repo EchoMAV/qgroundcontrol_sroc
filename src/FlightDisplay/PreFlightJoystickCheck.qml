@@ -59,7 +59,7 @@ PreFlightCheckButton {
 
     function updateTelemetryTextFailure() {
         if(joysticksDisabled()) {
-            telemetryTextFailure = qsTr("Failure. No joystick found or it is disabled. It is not recommended to operate the aircraft without a functional joystick.")
+            telemetryTextFailure = qsTr("No Joystick found. Please use a Joystick to operate the drone.")
             return
          }
     }
