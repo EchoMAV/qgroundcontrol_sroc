@@ -1121,6 +1121,25 @@ void MonarkManager::resetActiveVehicle()
     }
 }
 
+
+void MonarkManager::rebootActiveVehicle()
+{
+    if(mp_slotHandler->needDispatch())
+    {
+        mp_slotHandler->dispatch([this](){rebootActiveVehicle();});
+    }
+    else
+    {
+        //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::rebootActiveVehicle()";
+        auto const p_activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+        if(p_activeVehicle)
+        {
+            p_activeVehicle->rebootVehicle();
+        }
+        //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::rebootActiveVehicle()";
+    }
+}
+
 void MonarkManager::detect()
 {
     if(mp_slotHandler->needDispatch())
