@@ -229,6 +229,8 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     _commonInit();
 
+    _initRC();
+
     _vehicleLinkManager->_addLink(link);
 
     // Set video stream to udp if running ArduSub and Video is disabled
@@ -429,6 +431,48 @@ void Vehicle::stopTrackingFirmwareVehicleTypeChanges(void)
     disconnect(_settingsManager->appSettings()->offlineEditingVehicleClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
 }
 
+void Vehicle::_setSysId()
+{
+
+    if(_needToSetSysId)
+    {
+        auto *const p_monarkManager = qgcApp()->toolbox()->monarkManager();
+        if(p_monarkManager)
+        {
+            auto const newSysId=p_monarkManager->newSysId();
+            if(newSysId>0 && _id>0)
+            {
+                if(_parameterManager->parameterExists(_defaultComponentId,"SYSID_THISMAV"))
+                {
+                    _id=newSysId;
+                    p_monarkManager->invalidateNewSysId();
+                    auto const p_sysIdFact=_parameterManager->getParameter(_defaultComponentId,"SYSID_THISMAV");
+                    if(p_sysIdFact)
+                    {
+                        auto const errorString = p_sysIdFact->validate(QString::number(_id),false);
+                        if(errorString.isEmpty())
+                        {
+                            p_sysIdFact->setCookedValue(_id);
+                            rebootVehicle();
+                            qCDebug(VehicleLog) << "Set SYSID_THISMAV to "<<_id<<" on active vehicle";
+                        }
+                        else
+                        {
+                            qCCritical(VehicleLog)<<"Unable to set SYSID_THISMAV to "<<_id<<" because: "<<errorString;
+                        }
+                    }
+                    else
+                    {
+                        qCCritical(VehicleLog)<<"SYSID_THISMAV fact was not found";
+                    }
+                }
+                p_monarkManager->refreshDroneList();
+                _needToSetSysId=false;
+            }
+        }
+    }
+}
+
 void Vehicle::_commonInit()
 {
     _firmwarePlugin = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
@@ -475,36 +519,6 @@ void Vehicle::_commonInit()
             this, &Vehicle::_gotProgressUpdate);
     connect(_parameterManager, &ParameterManager::loadProgressChanged, this, &Vehicle::_gotProgressUpdate);
 
-    auto *const p_monarkManager = qgcApp()->toolbox()->monarkManager();
-    if(p_monarkManager)
-    {
-        auto const newSysId=p_monarkManager->newSysId();
-        if(newSysId>0 && _id>0)
-        {
-            _id=newSysId;
-            p_monarkManager->invalidateNewSysId();
-            auto const p_sysIdFact=_parameterManager->getParameter(_defaultComponentId,"SYSID_THISMAV");
-            if(p_sysIdFact)
-            {
-                auto const errorString = p_sysIdFact->validate(QString::number(_id),false);
-                if(errorString.isEmpty())
-                {
-                    p_sysIdFact->setCookedValue(_id);
-                    rebootVehicle();
-                    qCDebug(VehicleLog) << "Set SYSID_THISMAV to "<<_id<<" on active vehicle";
-                }
-                else
-                {
-                    qCCritical(VehicleLog)<<"Unable to set SYSID_THISMAV to "<<_id<<" because: "<<errorString;
-                }
-            }
-            else
-            {
-                qCCritical(VehicleLog)<<"SYSID_THISMAV fact was not found";
-            }
-        }
-        p_monarkManager->refreshDroneList();
-    }
 
 
     _objectAvoidance = new VehicleObjectAvoidance(this, this);
@@ -743,12 +757,17 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         qCDebug(VehicleLog) << "_mavlinkMessageReceived Link already running Mavlink v2. Setting _maxProtoVersion" << _maxProtoVersion;
     }
 
+
     if (message.sysid != _id && message.sysid != 0) {
         // We allow RADIO_STATUS messages which come from a link the vehicle is using to pass through and be handled
         if (!(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _vehicleLinkManager->containsLink(link))) {
             return;
         }
     }
+    //once we know the message is for us, send a message back to the drone to tell us our address has changed
+    _setSysId();
+
+
 
     // We give the link manager first whack since it it reponsible for adding new links
     _vehicleLinkManager->mavlinkMessageReceived(link, message);
@@ -1226,10 +1245,16 @@ void Vehicle::_handleAttitudeWorker(double rollRadians, double pitchRadians, dou
 
 void Vehicle::_handleAttitude(mavlink_message_t& message)
 {
+
+
     // only accept the attitude message from the vehicle's flight controller
     if (message.sysid != _id || message.compid != _compID) {
         return;
     }
+
+    //once we know the message is for us, send a message back to the drone to tell us our address has changed
+    _setSysId();
+
 
     if (_receivingAttitudeQuaternion) {
         return;
@@ -1243,10 +1268,14 @@ void Vehicle::_handleAttitude(mavlink_message_t& message)
 
 void Vehicle::_handleAttitudeQuaternion(mavlink_message_t& message)
 {
+
     // only accept the attitude message from the vehicle's flight controller
     if (message.sysid != _id || message.compid != _compID) {
         return;
     }
+
+    //once we know the message is for us, send a message back to the drone to tell us our address has changed
+    _setSysId();
 
     _receivingAttitudeQuaternion = true;
 
@@ -2591,6 +2620,13 @@ void Vehicle::_parametersReady(bool parametersReady)
         disconnect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
         _setupAutoDisarmSignalling();
         _initialConnectStateMachine->advance();
+
+        if(_needToSetSysId)
+        {
+
+        }
+
+
     }
 
     _multirotor_speed_limits_available = _firmwarePlugin->mulirotorSpeedLimitsAvailable(this);
@@ -2850,6 +2886,81 @@ void Vehicle::guidedModeRTL(bool smartRTL)
         return;
     }
     _firmwarePlugin->guidedModeRTL(this, smartRTL);
+}
+
+void Vehicle::_initRC()
+{
+    //set RC 7 and 8 low at start
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog) << "_sendMavCommandFromList: primary link gone!";
+        return;
+    }
+    mavlink_message_t msg;
+    constexpr uint16_t const rc7Value=1000;
+    constexpr uint16_t const rc8Value=1000;
+    constexpr uint16_t const uintMaxMin1=std::numeric_limits<uint16_t>::max()-1;
+    mavlink_msg_rc_channels_override_pack(_mavlink->getSystemId(),
+                                          _mavlink->getComponentId(),
+                                          &msg,
+                                          _id, //target system
+                                          defaultComponentId(), //target component
+                                          0, 0, 0, 0, 0, 0,
+                                          rc7Value,//channel 7
+                                          rc8Value,//channel 8
+                                          uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1);
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+    _rc7High = false;
+    emit rc7Changed(_rc7High);
+    //_rc8High = false;
+    //emit rc8Changed(_rc8High);
+}
+
+void Vehicle::toggleRC7()
+{
+    qDebug() << "Toggling RC 7";
+    mavlink_message_t msg;
+
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog) << "_sendMavCommandFromList: primary link gone!";
+        return;
+    }
+    uint16_t rc7Value=2000;
+    uint16_t rc8Value=2000;
+    if(_rc7High)
+    {
+        qDebug() << "Setting RC 7 to 1000";
+        rc7Value = 1000;
+        _rc7High = false;
+        emit rc7Changed(false);
+    }
+    else
+    {
+        qDebug() << "Setting RC 7 to 2000";
+        rc7Value = 2000;
+        _rc7High = true;
+        emit rc7Changed(true);
+    }
+    //if(_rc8High)
+    //{
+    //    rc8Value = 2000;
+    //}
+    //else
+    //{
+    //    rc8Value = 1000;
+    //}
+    constexpr uint16_t const uintMaxMin1=std::numeric_limits<uint16_t>::max()-1;
+    mavlink_msg_rc_channels_override_pack(_mavlink->getSystemId(),
+                                          _mavlink->getComponentId(),
+                                          &msg,
+                                          _id, //target system
+                                          defaultComponentId(), //target component
+                                          0, 0, 0, 0, 0, 0,
+                                          rc7Value,//channel 7
+                                          rc8Value,//channel 8
+                                          uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1,uintMaxMin1);
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
 
 void Vehicle::guidedModeLand()

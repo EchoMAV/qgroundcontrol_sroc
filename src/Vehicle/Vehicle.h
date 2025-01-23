@@ -260,6 +260,9 @@ public:
     Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
     Q_PROPERTY(QGCMapCircle*    orbitMapCircle  READ orbitMapCircle     CONSTANT)
 
+    //RC States
+    Q_PROPERTY(bool     rc7High                  READ rc7High                                         NOTIFY rc7Changed)
+
     // Vehicle state used for guided control
     Q_PROPERTY(bool     flying                  READ flying                                         NOTIFY flyingChanged)       ///< Vehicle is flying
     Q_PROPERTY(bool     landing                 READ landing                                        NOTIFY landingChanged)      ///< Vehicle is in landing pattern (DO_LAND_START)
@@ -350,6 +353,9 @@ public:
     Q_INVOKABLE void resetErrorLevelMessages();
 
     Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust);
+
+    /// Command vehicle to toggle RC 7
+    Q_INVOKABLE void toggleRC7(void);
 
     /// Command vehicle to return to launch
     Q_INVOKABLE void guidedModeRTL(bool smartRTL);
@@ -610,6 +616,7 @@ public:
     uint            messagesSent                () const{ return _messagesSent; }
     uint            messagesLost                () const{ return _messagesLost; }
     bool            flying                      () const { return _flying; }
+    bool            rc7High                     () const { return _rc7High; }
     bool            landing                     () const { return _landing; }
     bool            guidedMode                  () const;
     bool            vtolInFwdFlight             () const { return _vtolInFwdFlight; }
@@ -937,6 +944,7 @@ signals:
     void armedChanged                   (bool armed);
     void flightModeChanged              (const QString& flightMode);
     void flyingChanged                  (bool flying);
+    void rc7Changed                     (bool rc7High);
     void landingChanged                 (bool landing);
     void guidedModeChanged              (bool guidedMode);
     void vtolInFwdFlightChanged         (bool vtolInFwdFlight);
@@ -1114,6 +1122,8 @@ private:
     void _handleMavlinkLoggingDataAcked (mavlink_message_t& message);
     void _ackMavlinkLogData             (uint16_t sequence);
     void _commonInit                    ();
+    void _setSysId();
+    void _initRC                        ();
     void _setupAutoDisarmSignalling     ();
     void _setCapabilities               (uint64_t capabilityBits);
     void _updateArmed                   (bool armed);
@@ -1131,6 +1141,7 @@ private:
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
 
     int     _id;                    ///< Mavlink system id
+    bool    _needToSetSysId = true;
     int     _defaultComponentId;
     bool    _offlineEditingVehicle = false; ///< true: This Vehicle is a "disconnected" vehicle for ui use while offline editing
 
@@ -1166,6 +1177,7 @@ private:
     int             _rcRSSI = 255;
     double          _rcRSSIstore = 255;
     bool            _flying = false;
+    bool            _rc7High = false;
     bool            _landing = false;
     bool            _vtolInFwdFlight = false;
     uint32_t        _onboardControlSensorsPresent = 0;

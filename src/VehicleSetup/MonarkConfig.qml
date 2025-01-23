@@ -488,7 +488,7 @@ SetupPage {
                     columns: 2
                     QGCLabel {
                         wrapMode: Text.Wrap
-                        text: qsTr("MONARK ID (1-255)")
+                        text: qsTr("MONARK ID (1-254)")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     FactTextField {
@@ -957,7 +957,7 @@ SetupPage {
             IntValidator {
                 id: monarkIdValidator
                 bottom: 1
-                top: 255
+                top: 254
             }
             IntValidator {
                 id: txPowerValidator
