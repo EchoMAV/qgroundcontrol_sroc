@@ -455,6 +455,27 @@ SetupPage {
                             }
                         }
                     }
+                    QGCButton {
+                        Layout.fillWidth: true
+                        text: qsTr("REBOOT ACTIVE VEHICLE")
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        enabled: QGroundControl.multiVehicleManager.activeVehicle
+                        onClicked: {
+                            confirmVehicleReboot.open()
+                        }
+
+                        MessageDialog {
+                            id: confirmVehicleReboot
+                            title: qsTr("Confirm Reboot")
+                            text: qsTr("Are you sure you want to reboot active drone ID ")
+                                  + QGroundControl.multiVehicleManager.activeVehicle.id + qsTr(
+                                      "?")
+                            standardButtons: StandardButton.Yes | StandardButton.No
+                            onYes: {
+                                QGroundControl.monarkManager.rebootActiveVehicle()
+                            }
+                        }
+                    }
                 }
             }
 
