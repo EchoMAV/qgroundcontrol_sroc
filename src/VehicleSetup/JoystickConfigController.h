@@ -45,11 +45,13 @@ public:
     Q_PROPERTY(bool pitchAxisMapped             READ pitchAxisMapped            NOTIFY pitchAxisMappedChanged)
     Q_PROPERTY(bool yawAxisMapped               READ yawAxisMapped              NOTIFY yawAxisMappedChanged)
     Q_PROPERTY(bool throttleAxisMapped          READ throttleAxisMapped         NOTIFY throttleAxisMappedChanged)
+    Q_PROPERTY(bool zoomAxisMapped              READ zoomAxisMapped             NOTIFY zoomAxisMappedChanged)
 
     Q_PROPERTY(int  rollAxisReversed            READ rollAxisReversed           NOTIFY rollAxisReversedChanged)
     Q_PROPERTY(int  pitchAxisReversed           READ pitchAxisReversed          NOTIFY pitchAxisReversedChanged)
     Q_PROPERTY(int  yawAxisReversed             READ yawAxisReversed            NOTIFY yawAxisReversedChanged)
     Q_PROPERTY(int  throttleAxisReversed        READ throttleAxisReversed       NOTIFY throttleAxisReversedChanged)
+    Q_PROPERTY(int  zoomAxisReversed            READ zoomAxisReversed           NOTIFY zoomAxisReversedChanged)
 
     Q_PROPERTY(bool deadbandToggle              READ getDeadbandToggle          WRITE setDeadbandToggle    NOTIFY deadbandToggled)
 
@@ -57,6 +59,8 @@ public:
     Q_PROPERTY(bool calibrating                 READ calibrating                NOTIFY calibratingChanged)
     Q_PROPERTY(bool nextEnabled                 READ nextEnabled                NOTIFY nextEnabledChanged)
     Q_PROPERTY(bool skipEnabled                 READ skipEnabled                NOTIFY skipEnabledChanged)
+
+    Q_PROPERTY(bool hasTopRightZoom             READ hasTopRightZoom            NOTIFY hasTopRightZoomChanged)
 
     Q_PROPERTY(QList<qreal> stickPositions      READ stickPositions             NOTIFY stickPositionsChanged)
 
@@ -72,11 +76,13 @@ public:
     bool pitchAxisMapped                    () { return _rgFunctionAxisMapping[Joystick::pitchFunction]         != _axisNoAxis; }
     bool yawAxisMapped                      () { return _rgFunctionAxisMapping[Joystick::yawFunction]           != _axisNoAxis; }
     bool throttleAxisMapped                 () { return _rgFunctionAxisMapping[Joystick::throttleFunction]      != _axisNoAxis; }
+    bool zoomAxisMapped                     () { return _rgFunctionAxisMapping[Joystick::zoomFunction]      != _axisNoAxis; }
 
     bool rollAxisReversed                   ();
     bool pitchAxisReversed                  ();
     bool yawAxisReversed                    ();
     bool throttleAxisReversed               ();
+    bool zoomAxisReversed                   ();
 
     bool getDeadbandToggle                  ();
     void setDeadbandToggle                  (bool);
@@ -90,6 +96,8 @@ public:
     bool nextEnabled                        ();
     bool skipEnabled                        ();
 
+    bool hasTopRightZoom                        ();
+
     QList<qreal> stickPositions             () { return _currentStickPositions; }
 
     struct stateStickPositions {
@@ -97,6 +105,7 @@ public:
         qreal   leftY;
         qreal   rightX;
         qreal   rightY;
+        qreal   topRightX;
     };
 
 signals:
@@ -106,14 +115,17 @@ signals:
     void pitchAxisMappedChanged             (bool mapped);
     void yawAxisMappedChanged               (bool mapped);
     void throttleAxisMappedChanged          (bool mapped);
+    void zoomAxisMappedChanged              (bool mapped);
     void rollAxisReversedChanged            (bool reversed);
     void pitchAxisReversedChanged           (bool reversed);
     void yawAxisReversedChanged             (bool reversed);
     void throttleAxisReversedChanged        (bool reversed);
+    void zoomAxisReversedChanged            (bool reversed);
     void deadbandToggled                    (bool value);
     void transmitterModeChanged             (int mode);
     void calibratingChanged                 ();
     void nextEnabledChanged                 ();
+    void hasTopRightZoomChanged                 ();
     void skipEnabledChanged                 ();
     void stickPositionsChanged              ();
     void statusTextChanged                  ();
@@ -127,6 +139,7 @@ private slots:
     void _axisDeadbandChanged(int axis, int value);
 
 private:
+#if 0
     /// @brief The states of the calibration state machine.
     enum calStates {
         calStateAxisWait,
@@ -138,6 +151,7 @@ private:
         calStateTrims,
         calStateSave
     };
+#endif
 
     typedef void (JoystickConfigController::*inputFn)(Joystick::AxisFunction_t function, int axis, int value);
     typedef void (JoystickConfigController::*buttonFn)(void);
@@ -211,6 +225,8 @@ private:
     stateStickPositions _sticksRollRight;
     stateStickPositions _sticksPitchUp;
     stateStickPositions _sticksPitchDown;
+    stateStickPositions _sticksZoomIn;
+    stateStickPositions _sticksZoomOut;
 
     QList<qreal> _currentStickPositions;
 
@@ -225,12 +241,18 @@ private:
     int*                _axisValueSave  = nullptr;  ///< Saved values prior to detecting axis movement
     int*                _axisRawValue   = nullptr;  ///< Current set of raw axis values
 
+#if 0
     enum calStates _calState = calStateAxisWait;    ///< Current calibration state
 
+
     int     _calStateCurrentAxis;                   ///< Current axis being worked on in calStateIdentify and calStateDetectInversion
+
     bool    _calStateAxisComplete;                  ///< Work associated with current axis is complete
+
     int     _calStateIdentifyOldMapping;            ///< Previous mapping for axis being currently identified
+
     int     _calStateReverseOldMapping;             ///< Previous mapping for axis being currently used to detect inversion
+#endif
 
     static const int _calCenterPoint;
     static const int _calValidMinValue;

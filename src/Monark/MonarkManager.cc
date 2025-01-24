@@ -560,10 +560,6 @@ void MonarkManager::startScanning()
             return _sendCommands(np_srmPairedIp, "admin", password.toStdString().c_str(), nullptr, false);
         });
         auto const pingDefaultResponse=_sendCommands(np_srmDefaultIp, "admin", nullptr, nullptr, false).second;
-        //for(auto const& str: pingDefaultResponse)
-        //{
-        //    qCDebug(MonarkManagerLog)<<"ping default responseStr="<<str.c_str();
-        //}
         if(!pingDefaultResponse.empty() && pingDefaultResponse.back() == np_groundRadioSuccessStr)
         {
             qCDebug(MonarkManagerLog)<<"ScanSuccessPairingRequired";
@@ -612,8 +608,10 @@ void MonarkManager::startScanning()
                         return _sendCommands(ip.c_str(), "admin", nullptr, nullptr, true).second;
                     }));
                 }
+
                 qCDebug(MonarkManagerLog)<<"ScanSuccessAndPaired";
                 scanningResult=MonarkState::ScanSuccessAndPaired;
+                _sendEncryptionKeyToGcsRadio( this->mp_monarkSettings->encryptionKey()->cookedValueString().toStdString().c_str());
 
                 _initializeNetworkId(true);
                 _initializeTxPower(true);

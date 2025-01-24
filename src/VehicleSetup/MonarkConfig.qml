@@ -210,7 +210,7 @@ SetupPage {
                     QGCLabel {
                         wrapMode: Text.Wrap
                         //Layout.fillWidth: true
-                        text: qsTr("Ground Tx Power (dBm):")
+                        text: qsTr("Tx Power (dBm):")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     FactTextField {
@@ -237,7 +237,7 @@ SetupPage {
                     QGCLabel {
                         wrapMode: Text.Wrap
                         //Layout.fillWidth: true
-                        text: qsTr("Ground Frequency (MHz):")
+                        text: qsTr("Frequency (MHz):")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     FactTextField {
@@ -305,7 +305,7 @@ SetupPage {
                               || QGroundControl.monarkManager.monarkState === 7 //SaveSettingsFailed
                               )
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("Ground Tx Power must be an integer between 7 and 33")
+                    text: qsTr("Tx Power must be an integer between 7 and 33")
                     color: groundTxPowerTextField.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
@@ -316,7 +316,8 @@ SetupPage {
                               || QGroundControl.monarkManager.monarkState === 7 //SaveSettingsFailed
                               )
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("Ground Frequency must be in band for an 8Mhz bandwidth (see documentation)")
+                    text: qsTr(
+                              "Frequency must be in band for an 8Mhz bandwidth (see documentation)")
                     color: groundFrequencyTextField.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
             }
@@ -791,7 +792,7 @@ SetupPage {
                     Layout.fillWidth: true
                     visible: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("EchoLink Tx Power must be an integer between 7 and 33")
+                    text: qsTr("Tx Power must be an integer between 7 and 33")
                     color: desiredTxPower.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
@@ -799,7 +800,8 @@ SetupPage {
                     Layout.fillWidth: true
                     visible: QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("Ground Frequency must be in band for an 8Mhz bandwidth (see documentation)")
+                    text: qsTr(
+                              "Frequency must be in band for an 8Mhz bandwidth (see documentation)")
                     color: desiredFrequency.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
@@ -917,6 +919,7 @@ SetupPage {
                         id: inProgressDronesText
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: QGroundControl.monarkManager.updateInProgressDrones
+                        color: qgcPal.colorYellow
                         //color: desiredEncryptionKey.acceptableInput ? qgcPal.text : qgcPal.warningText
                     }
 
@@ -925,7 +928,7 @@ SetupPage {
                         //Layout.fillWidth: true
                         font.pointSize: ScreenTools.mediumFontPointSize
                         text: qsTr("Successful:")
-                        color: qgcPal.colorGreen
+                        //color: qgcPal.colorGreen
                     }
                     QGCLabel {
                         wrapMode: Text.Wrap

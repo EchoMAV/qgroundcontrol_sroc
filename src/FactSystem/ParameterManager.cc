@@ -514,6 +514,11 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
         _missingParameters = true;
         _initialLoadComplete = true;
         _waitingForDefaultComponent = false;
+        auto *const p_monarkManager = qgcApp()->toolbox()->monarkManager();
+        if(p_monarkManager)
+        {
+            p_monarkManager->refreshDroneList();
+        }
         emit parametersReadyChanged(_parametersReady);
         emit missingParametersChanged(_missingParameters);
     }
@@ -1231,6 +1236,11 @@ void ParameterManager::_checkInitialLoadComplete(void)
     _parametersReady = true;
     _vehicle->autopilotPlugin()->parametersReadyPreChecks();
     emit parametersReadyChanged(true);
+    auto *const p_monarkManager = qgcApp()->toolbox()->monarkManager();
+    if(p_monarkManager)
+    {
+        p_monarkManager->refreshDroneList();
+    }
     emit missingParametersChanged(_missingParameters);
 }
 

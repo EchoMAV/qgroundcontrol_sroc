@@ -433,7 +433,6 @@ void Vehicle::stopTrackingFirmwareVehicleTypeChanges(void)
 
 void Vehicle::_setSysId()
 {
-
     if(_needToSetSysId)
     {
         auto *const p_monarkManager = qgcApp()->toolbox()->monarkManager();
@@ -2620,13 +2619,6 @@ void Vehicle::_parametersReady(bool parametersReady)
         disconnect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
         _setupAutoDisarmSignalling();
         _initialConnectStateMachine->advance();
-
-        if(_needToSetSysId)
-        {
-
-        }
-
-
     }
 
     _multirotor_speed_limits_available = _firmwarePlugin->mulirotorSpeedLimitsAvailable(this);
