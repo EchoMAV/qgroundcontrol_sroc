@@ -18,7 +18,7 @@
 #include "ComponentInformationManager.h"
 #include "CompInfoParam.h"
 #include "FTPManager.h"
-
+#include "Monark/MonarkManager.h"
 #include <QEasingCurve>
 #include <QFile>
 #include <QDebug>
