@@ -19,6 +19,8 @@ SetupPage {
     pageName: qsTr("MONARK")
     pageDescription: ""
 
+
+    /*
     MessageDialog {
         id: newDroneAddedConfirmation
         title: qsTr("New MONARK ID Added")
@@ -32,7 +34,7 @@ SetupPage {
             newDroneAddedConfirmation.open()
         }
     }
-
+    */
     Component {
         id: pageComponent
         ColumnLayout {
@@ -448,7 +450,7 @@ SetupPage {
                             title: qsTr("Confirm Reset")
                             text: qsTr("Are you sure you want to reset active drone ID ")
                                   + QGroundControl.multiVehicleManager.activeVehicle.id + qsTr(
-                                      "? Be sure to power-cycle the drone after you hear a beep indicator.")
+                                      "? During reset you will hear a double beep heartbeat for approximately 2 minutes. Do not interrupt! Once beeping stops, power cycle the drone.")
                             standardButtons: StandardButton.Yes | StandardButton.No
                             onYes: {
                                 QGroundControl.monarkManager.resetActiveVehicle(
@@ -594,7 +596,7 @@ SetupPage {
                         Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("4. Once the beeping stops, wait for the GCS to finalize connection.")
+                        text: qsTr("4. Once the beeping stops, wait for the GCS to restart itself, then power-cycle the MONARK drone's battery.")
                         font.pointSize: ScreenTools.defaultFontPointSize
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
@@ -635,6 +637,9 @@ SetupPage {
                     }
                 }
 
+                //QGCLabel {
+                //    text: "Width = " + Screen.width + ", Height = " + Screen.height
+                //}
                 Image {
                     Layout.alignment: Qt.AlignTop
                     source: "image://MONARKQRCodes/" + networkIdTextField.text + ","

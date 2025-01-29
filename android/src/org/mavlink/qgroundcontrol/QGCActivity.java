@@ -199,6 +199,16 @@ public class QGCActivity extends QtActivity
         m_ioManager =               new HashMap<Integer, UsbIoManager>();
     }
 
+    public static void restartApp()
+    {
+        Intent intent = new Intent(m_context,QGCActivity.class);
+        int mPendingIntentId = 2;
+        PendingIntent mPendingIntent = PendingIntent.getActivity(m_context, mPendingIntentId, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        AlarmManager alarmManager = (AlarmManager)m_context.getSystemService(Context.ALARM_SERVICE);
+        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
+        System.exit(0);
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState)
     {

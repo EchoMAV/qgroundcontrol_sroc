@@ -1140,8 +1140,11 @@ private:
 
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
 
+
+
     int     _id;                    ///< Mavlink system id
     bool    _needToSetSysId = true;
+    std::mutex _sysIdMut;
     int     _defaultComponentId;
     bool    _offlineEditingVehicle = false; ///< true: This Vehicle is a "disconnected" vehicle for ui use while offline editing
 

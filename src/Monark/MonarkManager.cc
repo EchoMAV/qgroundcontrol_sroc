@@ -8,6 +8,7 @@
 #include <QQmlEngine>
 #include <sstream>
 #include <future>
+#include <QtAndroidExtras/QAndroidJniObject>
 
 QGC_LOGGING_CATEGORY(MonarkManagerLog, "MonarkManagerLog")
 
@@ -66,21 +67,30 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
         p_session = ssh_new();
         if(!p_session)
         {
-            qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_new failed";
+            if(!quiet)
+            {
+                qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_new failed";
+            }
             commandResponses.push_back("ssh_new failed");
             break;
         }
         returnCode=ssh_options_set(p_session, SSH_OPTIONS_HOST, p_host);
         if(returnCode)
         {
-            qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_options_set failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+            if(!quiet)
+            {
+                qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_options_set failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+            }
             commandResponses.push_back("ssh_options_set failed");
             break;
         }
         returnCode=ssh_connect(p_session);
         if(returnCode)
         {
-            qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_connect failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+            if(!quiet)
+            {
+                qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_connect failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+            }
             commandResponses.push_back("ssh_connect failed");
             break;
         }
@@ -90,7 +100,10 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
             returnCode = ssh_userauth_password(p_session, p_username, p_password);
             if(returnCode)
             {
-                qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_userauth_password failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                if(!quiet)
+                {
+                    qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_userauth_password failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                }
                 commandResponses.push_back("ssh_userauth_password failed");
                 break;
             }
@@ -99,21 +112,30 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
                 p_channel=ssh_channel_new(p_session);
                 if(!p_channel)
                 {
-                    qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_channel_new failed: "<<ssh_get_error(p_session);
+                    if(!quiet)
+                    {
+                        qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_channel_new failed: "<<ssh_get_error(p_session);
+                    }
                     commandResponses.push_back("ssh_channel_new failed");
                     break;
                 }
                 returnCode = ssh_channel_open_session(p_channel);
                 if(returnCode)
                 {
-                    qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_channel_open_session failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    if(!quiet)
+                    {
+                        qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_channel_open_session failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    }
                     commandResponses.push_back("ssh_channel_open_session failed");
                     break;
                 }
                 returnCode = ssh_channel_request_shell(p_channel);
                 if(returnCode)
                 {
-                    qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_channel_request_shell failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    if(!quiet)
+                    {
+                        qCCritical(MonarkManagerLog)<<"_sendCommands("<<p_host<<") : ssh_channel_request_shell failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    }
                     commandResponses.push_back("ssh_channel_request_shell failed");
                     break;
                 }
@@ -124,11 +146,14 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
                     std::string responseStr;
                     auto const& command=(*p_commands)[commandIndex];
                     bool writeLog=false;
-                    if(toDrone?(command.find("export NEWEK=") == std::string::npos):(command.find("AT+MWVENCRYPT") == std::string::npos && command.find("AT+MSPWD") == std::string::npos))
+                    if(!quiet)
                     {
-                        //don't put passwords in the logs
-                        qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") command="<<command.c_str();
-                        writeLog=true;
+                        if(toDrone?(command.find("export NEWEK=") == std::string::npos):(command.find("AT+MWVENCRYPT") == std::string::npos && command.find("AT+MSPWD") == std::string::npos))
+                        {
+                            //don't put passwords in the logs
+                            qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") command="<<command.c_str();
+                            writeLog=true;
+                        }
                     }
                     //command is sent
                     ssh_channel_write(p_channel,command.c_str(), command.size());
@@ -157,7 +182,7 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
                                 if(numBytesRead>0)
                                 {
                                     responseStr=  std::string(p_buffer,p_bufferItr - (&p_buffer[0]));
-                                    if(writeLog)
+                                    if(!quiet && writeLog)
                                     {
                                         //don't put passwords in the logs
                                         qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") responseStr="<<responseStr.c_str();
@@ -168,14 +193,6 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
                                         break;
                                     }
 
-                                }
-                            }
-                            if(!quiet)
-                            {
-                                //TODO for debugging purposes
-                                if(MonarkManagerLog().isDebugEnabled())
-                                {
-                                    qgcApp()->toolbox()->audioOutput()->say("Beep");
                                 }
                             }
                             if(std::chrono::system_clock::now() - start > std::chrono::seconds(30))
@@ -392,8 +409,10 @@ void _sendEncryptionKeyToGcsRadio(char const*const p_password)
                 qCWarning(MonarkManagerLog) << "Failed to set flow control";
             }
             std::string command="AT+SETADMIN="+std::string{p_password}+"\r\n";
+            //TODO remove this
             qCDebug(MonarkManagerLog)<<"command="<<command.c_str();
             auto const numBytesWritten=serialPort.write(command.c_str(),command.size());
+            serialPort.close();
             qDebug(MonarkManagerLog) << "Wrote "<<numBytesWritten<<" bytes";
         }
         else
@@ -583,16 +602,11 @@ void MonarkManager::startScanning()
                 qCDebug(MonarkManagerLog)<<"ScanSuccessBadCredentials";
                 scanningResult = MonarkState::ScanSuccessBadCredentials;
                 _initializeNetworkId(true);
-                _initializeTxPower(true);
-                _initializeFrequency(true);
+                //_initializeTxPower(true);
+                //_initializeFrequency(true);
             }
             else if(!pingPairedResponse.empty() && pingPairedResponse.back() ==np_groundRadioSuccessStr)
             {
-                auto oldAllDrones=m_allDrones;
-                auto oldBeforeUpdateDrones=m_beforeUpdateDrones;
-                auto updateInProgressChanged=!m_updateInProgressDrones.empty();
-                auto updateSuccessfulChanged=!m_updateSuccessfulDrones.empty();
-                auto updateFailedChanged=!m_updateFailedDrones.empty();
 
                 m_allDrones.clear();
                 m_beforeUpdateDrones.clear();
@@ -616,45 +630,20 @@ void MonarkManager::startScanning()
                 _initializeNetworkId(true);
                 _initializeTxPower(true);
                 _initializeFrequency(true);
-                bool beforeChanged=false;
-                bool allChanged=false;
                 for(auto i=0;i<255;++i)
                 {
                     auto response = dronePingResponses[i].get();
                     if(!response.empty() && response.back() == np_droneSuccessStr)
                     {
                         m_beforeUpdateDrones.insert(i);
-                        if(!oldBeforeUpdateDrones.count(i))
-                        {
-                            beforeChanged=true;
-                        }
                         m_allDrones.insert(i);
-                        if(!oldAllDrones.count(i))
-                        {
-                            allChanged=true;
-                        }
                     }
                 }
-                if(allChanged || m_allDrones.size()!=oldAllDrones.size())
-                {
-                    emit allDronesChanged();
-                }
-                if(beforeChanged || m_beforeUpdateDrones.size()!=oldBeforeUpdateDrones.size())
-                {
-                    emit beforeUpdateDronesChanged();
-                }
-                if(updateInProgressChanged)
-                {
-                    emit updateInProgressDronesChanged();
-                }
-                if(updateSuccessfulChanged)
-                {
-                    emit updateSuccessfulDronesChanged();
-                }
-                if(updateFailedChanged)
-                {
-                    emit updateFailedDronesChanged();
-                }
+                emit allDronesChanged();
+                emit beforeUpdateDronesChanged();
+                emit updateInProgressDronesChanged();
+                emit updateSuccessfulDronesChanged();
+                emit updateFailedDronesChanged();
             }
             else
             {
@@ -685,23 +674,15 @@ void MonarkManager::refreshDroneList()
                 return _sendCommands(ip.c_str(), "admin", nullptr, nullptr, true).second;
             }));
         }
-        bool allChanged=false;
         for(auto i=0;i<255;++i)
         {
             auto response = dronePingResponses[i].get();
             if(!response.empty() && response.back() == np_droneSuccessStr)
             {
                 m_allDrones.insert(i);
-                if(!oldAllDrones.count(i))
-                {
-                    allChanged=true;
-                }
             }
         }
-        if(allChanged || m_allDrones.size()!=oldAllDrones.size())
-        {
-            emit allDronesChanged();
-        }
+        emit allDronesChanged();
         //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::refreshDroneList()";
     }
 }
@@ -713,27 +694,17 @@ void MonarkManager::removeDrone(int monarkID)
     }
     else
     {
-        //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::removeDrone(monarkID="<<monarkID<<")";
-        if(m_allDrones.erase(monarkID))
-        {
-            emit allDronesChanged();
-        }
-        if(m_beforeUpdateDrones.erase(monarkID))
-        {
-            emit beforeUpdateDronesChanged();
-        }
-        if(m_updateInProgressDrones.erase(monarkID))
-        {
-            emit updateInProgressDronesChanged();
-        }
-        if(m_updateSuccessfulDrones.erase(monarkID))
-        {
-            emit updateSuccessfulDronesChanged();
-        }
-        if(m_updateFailedDrones.erase(monarkID))
-        {
-            emit updateFailedDronesChanged();
-        }
+        qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::removeDrone(monarkID="<<monarkID<<")";
+        m_allDrones.erase(monarkID);
+        emit allDronesChanged();
+        m_beforeUpdateDrones.erase(monarkID);
+        emit beforeUpdateDronesChanged();
+        m_updateInProgressDrones.erase(monarkID);
+        emit updateInProgressDronesChanged();
+        m_updateSuccessfulDrones.erase(monarkID);
+        emit updateSuccessfulDronesChanged();
+        m_updateFailedDrones.erase(monarkID);
+        emit updateFailedDronesChanged();
         if(monarkID==m_newDroneId)
         {
             m_newDroneId=0;
@@ -744,7 +715,7 @@ void MonarkManager::removeDrone(int monarkID)
             m_newSysId=0;
             emit newSysIdChanged();
         }
-        //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::removeDrone(monarkID="<<monarkID<<")";
+        qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::removeDrone(monarkID="<<monarkID<<")";
     }
 }
 
@@ -821,7 +792,7 @@ void MonarkManager::_initializeTxPower(bool paired)
     std::string txPower="";
     std::vector<std::string> commands;
     commands.emplace_back("AT+MWTXPOWER\n");
-    auto encryptionKey=paired?mp_monarkSettings->getOldEncryptionKey().toStdString():np_sshUsername;
+    auto encryptionKey=paired?mp_monarkSettings->encryptionKey()->rawValueString().toStdString(): np_sshUsername;//mp_monarkSettings->getOldEncryptionKey().toStdString():np_sshUsername;
     auto const& response = _sendCommands(paired?np_srmPairedIp:np_srmDefaultIp,"admin", encryptionKey.c_str(), &commands, false).second;
     for(auto const& responseStr: response)
     {
@@ -869,63 +840,19 @@ void MonarkManager::gotoBeforePairNewDrone()
 void MonarkManager::_resetToBeforeUpdate()
 {
     //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_resetToBeforeUpdate()";
-    bool beforeChanged=false;
-    bool inProgressChanged=false;
-    bool successfulChanged=false;
-    bool failedChanged=false;
     for(auto id:m_allDrones)
     {
-        if(m_beforeUpdateDrones.insert(id).second)
-        {
-            beforeChanged=true;
-        }
+        m_beforeUpdateDrones.insert(id);
     }
-    if(!m_updateInProgressDrones.empty())
-    {
-        m_updateInProgressDrones.clear();
-        inProgressChanged=true;
-    }
-    if(!m_updateSuccessfulDrones.empty())
-    {
-        m_updateSuccessfulDrones.clear();
-        successfulChanged=true;
-    }
-    if(!m_updateFailedDrones.empty())
-    {
-        m_updateFailedDrones.clear();
-        failedChanged=true;
-    }
-    switch(m_groundRadioUpdateState)
-    {
-    case (int)UpdateState::UpdateFailed:
-        failedChanged=true;
-        break;
-    case (int)UpdateState::UpdateInProgress:
-        inProgressChanged=true;
-        break;
-    case (int)UpdateState::UpdateSuccessful:
-        successfulChanged=true;
-        break;
-    default:
-        break;
-    }
+    m_updateInProgressDrones.clear();
+    m_updateSuccessfulDrones.clear();
+    m_updateFailedDrones.clear();
     m_groundRadioUpdateState=(int)UpdateState::BeforeUpdate;
-    if(beforeChanged)
-    {
-        emit beforeUpdateDronesChanged();
-    }
-    if(inProgressChanged)
-    {
-        emit updateInProgressDronesChanged();
-    }
-    if(failedChanged)
-    {
-        emit updateFailedDronesChanged();
-    }
-    if(successfulChanged)
-    {
-        emit updateSuccessfulDronesChanged();
-    }
+    emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+    emit beforeUpdateDronesChanged();
+    emit updateInProgressDronesChanged();
+    emit updateFailedDronesChanged();
+    emit updateSuccessfulDronesChanged();
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_resetToBeforeUpdate()";
 }
 
@@ -1019,6 +946,33 @@ void MonarkManager::invalidateNewSysId()
 }
 
 
+void MonarkManager::showRestartMessage()
+{
+    m_displayRestartMessage=true;
+    emit displayRestartMessageChanged();
+}
+
+void MonarkManager::restartApplication()
+{
+    //wait 5 seconds for the sysid command to process
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    //auto *const p_vehicle=qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    //auto *const p_vehicle = qgcApp()->toolbox()->multiVehicleManager()->getVehicleById(m_newSysId);
+    //if(p_vehicle)
+    //{
+    //     p_vehicle->rebootVehicle();
+    //}
+    //wait 5 seconds for the reboot command to process
+    //std::this_thread::sleep_for(std::chrono::seconds(5));
+
+    auto const program = QGCApplication::_app->arguments()[0];
+    QStringList arguments = QGCApplication::_app->arguments().mid(1);
+    QGCApplication::_app->quit();
+    QProcess::startDetached(program, arguments);
+    //QAndroidJniObject::callStaticObjectMethod("org/mavlink/qgroundcontrol/QGCActivity", "restartApp",
+    //                                                                    "()V;");
+}
+
 void MonarkManager::saveFlutterManagementSettings()
 {
     if(mp_slotHandler->needDispatch())
@@ -1059,6 +1013,12 @@ void MonarkManager::saveFlutterManagementSettings()
             // also send the encryption key to the radio microcontroller over serial so it can reset the microhard natively. 
             _sendEncryptionKeyToGcsRadio(encryptionKey.c_str());
         }
+        if(paired)
+        {
+            _initializeNetworkId(true);
+            _initializeFrequency(true);
+            _initializeTxPower(true);
+        }
         _setMonarkState(saveResult);
         //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::saveFlutterManagementSettings()";
     }
@@ -1082,30 +1042,20 @@ void MonarkManager::resetActiveVehicle()
             auto const response= _sendCommands(ip.c_str(),"monark", "monark", &droneCommands,true).second;
             if(!response.empty() && response.back().find(np_droneSuccessStr)!= std::string::npos)
             {
-                if(m_allDrones.erase(activeVehicleId))
-                {
-                    emit allDronesChanged();
-                }
-                if(m_beforeUpdateDrones.erase(activeVehicleId))
-                {
-                    emit beforeUpdateDronesChanged();
-                }
-                if(m_updateInProgressDrones.erase(activeVehicleId))
-                {
-                    emit updateInProgressDronesChanged();
-                }
-                if(m_updateSuccessfulDrones.erase(activeVehicleId))
-                {
-                    emit updateSuccessfulDronesChanged();
-                }
-                if(m_updateFailedDrones.erase(activeVehicleId))
-                {
-                    emit updateFailedDronesChanged();
-                }
+                m_allDrones.erase(activeVehicleId);
+                emit allDronesChanged();
+                m_beforeUpdateDrones.erase(activeVehicleId);
+                emit beforeUpdateDronesChanged();
+                m_updateInProgressDrones.erase(activeVehicleId);
+                emit updateInProgressDronesChanged();
+                m_updateSuccessfulDrones.erase(activeVehicleId);
+                emit updateSuccessfulDronesChanged();
+                m_updateFailedDrones.erase(activeVehicleId);
+                emit updateFailedDronesChanged();
                 if(m_newDroneId==activeVehicleId)
                 {
                     m_newDroneId=0;
-                     emit newDroneIdChanged();
+                    emit newDroneIdChanged();
                 }
                 if(m_newSysId==activeVehicleId)
                 {
@@ -1146,7 +1096,7 @@ void MonarkManager::detect()
     }
     else
     {
-        qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::detect()";
+        //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::detect()";
         auto monarkID = mp_monarkSettings->monarkID()->cookedValue().toUInt();
         m_newSysId=monarkID;
         emit newSysIdChanged();
@@ -1175,26 +1125,10 @@ void MonarkManager::detect()
             if(!response.empty() && response.back().find(np_droneSuccessStr)!= std::string::npos)
             {
                 qCDebug(MonarkManagerLog)<<"found drone";
-                if(m_allDrones.insert(monarkID).second)
-                {
-                    emit allDronesChanged();
-                }
-                if(m_beforeUpdateDrones.insert(monarkID).second)
-                {
-                    emit beforeUpdateDronesChanged();
-                }
-                if(m_updateInProgressDrones.insert(monarkID).second)
-                {
-                    emit updateInProgressDronesChanged();
-                }
-                if(m_updateSuccessfulDrones.insert(monarkID).second)
-                {
-                    emit updateSuccessfulDronesChanged();
-                }
-                if(m_updateFailedDrones.insert(monarkID).second)
-                {
-                    emit updateFailedDronesChanged();
-                }
+                m_allDrones.insert(monarkID);
+                emit allDronesChanged();
+                m_beforeUpdateDrones.insert(monarkID);
+                emit beforeUpdateDronesChanged();
                 detectionResult=MonarkState::ScanSuccessAndPaired;
                 m_newDroneId=monarkID;
                 emit newDroneIdChanged();

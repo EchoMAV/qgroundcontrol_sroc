@@ -389,7 +389,7 @@ void Vehicle::_generateCotPacket()
                             .arg(currentAltitude, 0, 'f', 1);
 
     // Print to console
-    qDebug(VehicleLog) << "Generated CoT Packet:\n" << cotPacket;
+    //qDebug(VehicleLog) << "Generated CoT Packet:\n" << cotPacket;
 
     // Define file path on desktop
     QString desktopPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValueString() + "/cot_packets.txt";
@@ -413,7 +413,7 @@ void Vehicle::_generateCotPacket()
     quint16 targetPort = 6969; // Replace with the appropriate port number
 
     udpSocket.writeDatagram(datagram, targetAddress, targetPort);
-    qDebug(VehicleLog) << "CoT packet sent to" << targetAddress.toString() << "on port" << targetPort;
+    //qDebug(VehicleLog) << "CoT packet sent to" << targetAddress.toString() << "on port" << targetPort;
 }
 
 void Vehicle::trackFirmwareVehicleTypeChanges(void)
@@ -433,43 +433,61 @@ void Vehicle::stopTrackingFirmwareVehicleTypeChanges(void)
 
 void Vehicle::_setSysId()
 {
-    if(_needToSetSysId)
+    if(_sysIdMut.try_lock())
     {
-        auto *const p_monarkManager = qgcApp()->toolbox()->monarkManager();
-        if(p_monarkManager)
+        //qCDebug(VehicleLog)<<"ENTER Vehicle::_setSysId()";
+        if(_needToSetSysId)
         {
-            auto const newSysId=p_monarkManager->newSysId();
-            if(newSysId>0 && _id>0)
+            //qCDebug(VehicleLog)<<"_needToSetSysId=true";
+            auto *const p_monarkManager = qgcApp()->toolbox()->monarkManager();
+            if(p_monarkManager)
             {
-                if(_parameterManager->parameterExists(_defaultComponentId,"SYSID_THISMAV"))
+                auto const newSysId=p_monarkManager->newSysId();
+                //qCDebug(VehicleLog)<<"newSysId="<<newSysId<<" id="<<_id;
+                if(newSysId>0 && _id>0)
                 {
-                    _id=newSysId;
-                    p_monarkManager->invalidateNewSysId();
-                    auto const p_sysIdFact=_parameterManager->getParameter(_defaultComponentId,"SYSID_THISMAV");
-                    if(p_sysIdFact)
+                    if(_parameterManager->parameterExists(_defaultComponentId,"SYSID_THISMAV"))
                     {
-                        auto const errorString = p_sysIdFact->validate(QString::number(_id),false);
-                        if(errorString.isEmpty())
+
+                        auto const p_sysIdFact=_parameterManager->getParameter(_defaultComponentId,"SYSID_THISMAV");
+                        if(p_sysIdFact)
                         {
-                            p_sysIdFact->setCookedValue(_id);
-                            rebootVehicle();
-                            qCDebug(VehicleLog) << "Set SYSID_THISMAV to "<<_id<<" on active vehicle";
+
+                            auto const errorString = p_sysIdFact->validate(QString::number(newSysId),false);
+                            if(errorString.isEmpty())
+                            {
+                                //p_monarkManager->invalidateNewSysId();
+                                _needToSetSysId=false;
+
+                                p_sysIdFact->setCookedValue(newSysId);
+                                p_monarkManager->showRestartMessage();
+
+
+
+
+                                //qgcApp()->showAppMessage(QString("MONARK-%1 added. Rebooting in 10 seconds").arg(newSysId));
+                                //p_monarkManager->restartApplication();
+
+                            }
+                            else
+                            {
+                                qCCritical(VehicleLog)<<"Unable to set SYSID_THISMAV to "<<newSysId<<" because: "<<errorString;
+                            }
                         }
                         else
                         {
-                            qCCritical(VehicleLog)<<"Unable to set SYSID_THISMAV to "<<_id<<" because: "<<errorString;
+                            qCCritical(VehicleLog)<<"SYSID_THISMAV fact was not found";
                         }
+
                     }
-                    else
-                    {
-                        qCCritical(VehicleLog)<<"SYSID_THISMAV fact was not found";
-                    }
+
                 }
-                p_monarkManager->refreshDroneList();
-                _needToSetSysId=false;
             }
         }
+        _sysIdMut.unlock();
+        //qCDebug(VehicleLog)<<"EXIT Vehicle::_setSysId()";
     }
+
 }
 
 void Vehicle::_commonInit()
@@ -2505,7 +2523,7 @@ void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate, bool send
 void Vehicle::_sendMessageMultipleNext()
 {
     if (_nextSendMessageMultipleIndex < _sendMessageMultipleList.count()) {
-        qCDebug(VehicleLog) << "_sendMessageMultipleNext:" << _sendMessageMultipleList[_nextSendMessageMultipleIndex].message.msgid;
+        //qCDebug(VehicleLog) << "_sendMessageMultipleNext:" << _sendMessageMultipleList[_nextSendMessageMultipleIndex].message.msgid;
 
         SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
         if (sharedLink) {
@@ -2885,7 +2903,7 @@ void Vehicle::_initRC()
     //set RC 7 and 8 low at start
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qCDebug(VehicleLog) << "_sendMavCommandFromList: primary link gone!";
+        //qCDebug(VehicleLog) << "_sendMavCommandFromList: primary link gone!";
         return;
     }
     mavlink_message_t msg;
@@ -2915,7 +2933,7 @@ void Vehicle::toggleRC7()
 
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qCDebug(VehicleLog) << "_sendMavCommandFromList: primary link gone!";
+        //qCDebug(VehicleLog) << "_sendMavCommandFromList: primary link gone!";
         return;
     }
     uint16_t rc7Value=2000;
@@ -3448,7 +3466,7 @@ void Vehicle::_sendMavCommandFromList(int index)
     QString rawCommandName  = _toolbox->missionCommandTree()->rawName(commandEntry.command);
 
     if (++_mavCommandList[index].tryCount > commandEntry.maxTries) {
-        qCDebug(VehicleLog) << "_sendMavCommandFromList giving up after max retries" << rawCommandName;
+        //qCDebug(VehicleLog) << "_sendMavCommandFromList giving up after max retries" << rawCommandName;
         _mavCommandList.removeAt(index);
         if (commandEntry.ackHandlerInfo.resultHandler) {
             mavlink_command_ack_t ack = {};
@@ -3469,11 +3487,11 @@ void Vehicle::_sendMavCommandFromList(int index)
         return;
     }
 
-    qCDebug(VehicleLog) << "_sendMavCommandFromList command:tryCount" << rawCommandName << commandEntry.tryCount;
+    //qCDebug(VehicleLog) << "_sendMavCommandFromList command:tryCount" << rawCommandName << commandEntry.tryCount;
 
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qCDebug(VehicleLog) << "_sendMavCommandFromList: primary link gone!";
+        //qCDebug(VehicleLog) << "_sendMavCommandFromList: primary link gone!";
         return;
     }
 
@@ -3546,7 +3564,7 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     mavlink_msg_command_ack_decode(&message, &ack);
 
     QString rawCommandName  =_toolbox->missionCommandTree()->rawName(static_cast<MAV_CMD>(ack.command));
-    qCDebug(VehicleLog) << QStringLiteral("_handleCommandAck command(%1) result(%2)").arg(rawCommandName).arg(QGCMAVLink::mavResultToString(static_cast<MAV_RESULT>(ack.result)));
+    //qCDebug(VehicleLog) << QStringLiteral("_handleCommandAck command(%1) result(%2)").arg(rawCommandName).arg(QGCMAVLink::mavResultToString(static_cast<MAV_RESULT>(ack.result)));
 
     if (ack.command == MAV_CMD_DO_SET_ROI_LOCATION) {
         if (ack.result == MAV_RESULT_ACCEPTED) {
@@ -3619,7 +3637,7 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
             }
         }
     } else {
-        qCDebug(VehicleLog) << "_handleCommandAck Ack not in list" << rawCommandName;
+        //qCDebug(VehicleLog) << "_handleCommandAck Ack not in list" << rawCommandName;
     }
 
     // advance PID tuning setup/teardown
@@ -3814,6 +3832,8 @@ void Vehicle::_rebootCommandResultHandler(void* resultHandlerData, int /*compId*
         vehicle->closeVehicle();
     }
 }
+
+
 
 void Vehicle::rebootVehicle()
 {
@@ -4692,6 +4712,7 @@ void Vehicle::closeVehicle(void)
 {
     qgcApp()->toolbox()->monarkManager()->removeDrone(_id);
     _vehicleLinkManager->closeVehicle();
+    _needToSetSysId=true;
 }
 
 

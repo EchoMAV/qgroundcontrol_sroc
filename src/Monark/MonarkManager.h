@@ -77,6 +77,7 @@ public:
     Q_PROPERTY(QString updateFailedDrones READ updateFailedDrones NOTIFY updateFailedDronesChanged);
     Q_PROPERTY(int newDroneId READ newDroneId NOTIFY newDroneIdChanged);
     Q_PROPERTY(int newSysId READ newSysId NOTIFY newSysIdChanged);
+    Q_PROPERTY(bool displayRestartMessage READ displayRestartMessage NOTIFY displayRestartMessageChanged);
 
     //Q_PROPERTY(QList<QString> connectedDroneListNames READ connectedDroneListNames NOTIFY connectedDroneListNamesChanged)
     //Q_PROPERTY(QList<QString> connectedDroneListStatuses READ connectedDroneListStatuses NOTIFY connectedDroneListStatusesChanged)
@@ -95,6 +96,8 @@ public:
     int newDroneId() const{return m_newDroneId;}
     int newSysId() const{return m_newSysId;}
 
+    bool displayRestartMessage() const{return m_displayRestartMessage;}
+
     void invalidateNewSysId();
 
     virtual void setToolbox(QGCToolbox* p_toolbox) override;
@@ -112,6 +115,11 @@ public:
 
 
     Q_INVOKABLE void detect();
+
+    Q_INVOKABLE void restartApplication();
+
+    Q_INVOKABLE void showRestartMessage();
+
 
     Q_INVOKABLE void gotoBeforePairNewDrone();
     Q_INVOKABLE void gotoChangeEncryptionKey();
@@ -140,6 +148,7 @@ signals:
     void updateFailedDronesChanged();
     void newDroneIdChanged();
     void newSysIdChanged();
+    void displayRestartMessageChanged();
 
 
 
@@ -180,5 +189,6 @@ private:
     std::condition_variable m_monarkStateCondition;
     int m_newDroneId;
     int m_newSysId;
+    bool m_displayRestartMessage=false;
 
 };
