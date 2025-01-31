@@ -170,7 +170,7 @@ bool JoystickConfigController::nextEnabled()
 
 bool JoystickConfigController::hasTopRightZoom()
 {
-    if(_activeJoystick->axisCount() > 4 && _joystickManager)
+    if(_activeJoystick && _activeJoystick->axisCount() > 4 && _joystickManager)
     {
         QString const& activeJoystickName = _joystickManager->activeJoystickName();
         return activeJoystickName == "Kutta KTAC GC" || activeJoystickName == "UXV Technologies SROC";
