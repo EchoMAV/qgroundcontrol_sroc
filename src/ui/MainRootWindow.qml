@@ -35,9 +35,9 @@ ApplicationWindow {
 
     MessageDialog {
         id: restartApplicationConfirmation
-        title: qsTr("Restart Application")
+        title: qsTr("READ CAREFULLY")
         text: "MONARK-" + QGroundControl.monarkManager.newSysId
-              + " has been added. Press OK to restart the GCS, then power-cycle the MONARK drone's battery."
+              + " has been added. Press OK, wait 5 seconds, and the application will automatically close. Then power cycle the drone and relaunch MONARK GCS App."
         standardButtons: StandardButton.Ok
 
         onAccepted: {

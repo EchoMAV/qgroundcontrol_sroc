@@ -198,9 +198,10 @@ public class QGCActivity extends QtActivity
         _userDataHashByDeviceId =   new HashMap<Integer, Long>();
         m_ioManager =               new HashMap<Integer, UsbIoManager>();
     }
-
+/*
     public static void restartApp()
     {
+        //TODO broken
         Intent intent = new Intent(m_context,QGCActivity.class);
         int mPendingIntentId = 2;
         PendingIntent mPendingIntent = PendingIntent.getActivity(m_context, mPendingIntentId, intent, PendingIntent.FLAG_CANCEL_CURRENT);
@@ -208,6 +209,7 @@ public class QGCActivity extends QtActivity
         mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
         System.exit(0);
     }
+*/
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -406,7 +408,7 @@ public class QGCActivity extends QtActivity
 
             deviceInfo = deviceInfo + Integer.toString(device.getProductId()) + ":";
             deviceInfo = deviceInfo + Integer.toString(device.getVendorId()) + ":";
-            qgcLogDebug("deviceInfo="+deviceInfo);
+            //qgcLogDebug("deviceInfo="+deviceInfo);
 
             deviceInfoList.add(deviceInfo);
         }
@@ -424,6 +426,8 @@ public class QGCActivity extends QtActivity
     /// @return Device id
     public static int open(Context parentContext, String deviceName, long userData)
     {
+        qgcLogDebug("ENTER QGCActivity::open(deviceName="+deviceName+")");
+
         int deviceId = BAD_DEVICE_ID;
 
         m_context = parentContext;
@@ -486,11 +490,16 @@ public class QGCActivity extends QtActivity
 
     public static void stopIoManager(int idA)
     {
+        qgcLogDebug("ENTER QGCActivity::stopIoManager(idA="+idA+")");
         if(m_ioManager.get(idA) == null)
+        {
+            qgcLogDebug("QGCActivity::stopIoManager(idA="+idA+") m_ioManager.get(idA) == null");
             return;
+        }
 
         m_ioManager.get(idA).stop();
         m_ioManager.remove(idA);
+        qgcLogDebug("QGCActivity::stopIoManager(idA="+idA+") m_ioManager.remove(idA)");
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -508,6 +517,8 @@ public class QGCActivity extends QtActivity
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     public static boolean setParameters(int idA, int baudRateA, int dataBitsA, int stopBitsA, int parityA)
     {
+        qgcLogDebug("ENTER QGCActivity::setParameters(idA="+idA+", baudRateA="+baudRateA+", dataBitsA="+dataBitsA+", stopBitsA="+stopBitsA+", parityA="+parityA+")");
+
         UsbSerialDriver driverL = _findDriverByDeviceId(idA);
 
         if (driverL == null)
@@ -537,27 +548,33 @@ public class QGCActivity extends QtActivity
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     public static boolean close(int idA)
     {
+        qgcLogDebug("ENTER QGCActivity::close(idA="+idA+")");
+
         UsbSerialDriver driverL = _findDriverByDeviceId(idA);
 
         if (driverL == null)
+        {
+            qgcLogDebug("QGCActivity::close(idA="+idA+") driverL==null");
             return false;
+        }
 
         try
         {
             stopIoManager(idA);
             _userDataHashByDeviceId.remove(idA);
+            qgcLogDebug("QGCActivity::close(idA="+idA+") _userDataHashByDeviceId.remove(idA)");
             driverL.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired);
+            qgcLogDebug("QGCActivity::close(idA="+idA+") driverL.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired)");
             driverL.close();
-
+            qgcLogDebug("QGCActivity::close(idA="+idA+") returning true");
             return true;
         }
         catch(IOException eA)
         {
+            qgcLogDebug("QGCActivity::close(idA="+idA+") IOException="+eA);
             return false;
         }
     }
-
-
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -572,6 +589,8 @@ public class QGCActivity extends QtActivity
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     public static int write(int idA, byte[] sourceA, int timeoutMSecA)
     {
+        qgcLogDebug("ENTER QGCActivity::write(idA="+idA+", timeoutMSecA="+timeoutMSecA+")");
+
         UsbSerialDriver driverL = _findDriverByDeviceId(idA);
 
         if (driverL == null)
@@ -694,6 +713,8 @@ public class QGCActivity extends QtActivity
     ///////////////////////////////////////////////////////////////////////////////////////////////
     public static boolean purgeBuffers(int idA, boolean inputA, boolean outputA)
     {
+        qgcLogDebug("ENTER QGCActivity::purgeBuffers(idA="+idA+", inputA="+inputA+", outputA="+outputA+")");
+
         try
         {
             UsbSerialDriver driverL = _findDriverByDeviceId(idA);

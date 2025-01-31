@@ -5,6 +5,7 @@
 #include <libssh/libssh.h>
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
+#include "qtandroidserialport/src/qserialport_android_p.h"
 #include <QQmlEngine>
 #include <sstream>
 #include <future>
@@ -377,51 +378,11 @@ std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>
 }
 
 
+//void _closeSerialPort(QSerialPort& serialPort)
+//{
+//     serialPort.close();
+//}
 
-void _sendEncryptionKeyToGcsRadio(char const*const p_password)
-{
-    qCDebug(MonarkManagerLog)<<"ENTER: _sendEncryptionKeyToGcsRadio()";
-    for (const QSerialPortInfo &port : QSerialPortInfo::availablePorts())
-    {
-        QSerialPort serialPort;
-        serialPort.setPort(port);
-        if (serialPort.open(QIODevice::ReadWrite))
-        {
-            qDebug(MonarkManagerLog) << "Active Port:" << port.portName();
-            if(!serialPort.setBaudRate(QSerialPort::Baud115200))
-            {
-                qCWarning(MonarkManagerLog) << "Failed to set baud rate";
-            }
-            if(!serialPort.setDataBits(QSerialPort::Data8))
-            {
-                qCWarning(MonarkManagerLog) << "Failed to set data bits";
-            }
-            if(!serialPort.setParity(QSerialPort::NoParity))
-            {
-                qCWarning(MonarkManagerLog) << "Failed to set parity";
-            }
-            if(!serialPort.setStopBits(QSerialPort::OneStop))
-            {
-                qCWarning(MonarkManagerLog) << "Failed to set stop bits";
-            }
-            if(!serialPort.setFlowControl(QSerialPort::NoFlowControl))
-            {
-                qCWarning(MonarkManagerLog) << "Failed to set flow control";
-            }
-            std::string command="AT+SETADMIN="+std::string{p_password}+"\r\n";
-            //TODO remove this
-            qCDebug(MonarkManagerLog)<<"command="<<command.c_str();
-            auto const numBytesWritten=serialPort.write(command.c_str(),command.size());
-            serialPort.close();
-            qDebug(MonarkManagerLog) << "Wrote "<<numBytesWritten<<" bytes";
-        }
-        else
-        {
-            qDebug(MonarkManagerLog) << "Port" << port.portName() << "is not active.";
-        }
-    }
-    qCDebug(MonarkManagerLog)<<"EXIT : _sendEncryptionKeyToGcsRadio()";
-}
 
 }
 
@@ -489,10 +450,66 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , m_monarkStateCondition{}
     , m_newDroneId{0}
     , m_newSysId{0}
+    , m_displayRestartMessage{false}
+    , m_openPorts{}
 {
     //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::MonarkManager()()";
     mp_slotHandler->start();
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::MonarkManager()()";
+}
+
+
+
+void MonarkManager::_sendEncryptionKeyToGcsRadio(char const*const p_password)
+{
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_sendEncryptionKeyToGcsRadio()";
+    for (auto const& port : QSerialPortInfo::availablePorts())
+    {
+        m_openPorts.emplace_back(new QSerialPort(this));
+        auto& serialPort=*m_openPorts.back();
+        serialPort.setPort(port);
+        if (serialPort.open(QIODevice::ReadWrite))
+        {
+            qDebug(MonarkManagerLog) << "Active Port:" << serialPort.portName();
+            if(!serialPort.setBaudRate(QSerialPort::Baud115200))
+            {
+                qCWarning(MonarkManagerLog) << "Failed to set baud rate";
+            }
+            if(!serialPort.setDataBits(QSerialPort::Data8))
+            {
+                qCWarning(MonarkManagerLog) << "Failed to set data bits";
+            }
+            if(!serialPort.setParity(QSerialPort::NoParity))
+            {
+                qCWarning(MonarkManagerLog) << "Failed to set parity";
+            }
+            if(!serialPort.setStopBits(QSerialPort::OneStop))
+            {
+                qCWarning(MonarkManagerLog) << "Failed to set stop bits";
+            }
+            if(!serialPort.setFlowControl(QSerialPort::NoFlowControl))
+            {
+                qCWarning(MonarkManagerLog) << "Failed to set flow control";
+            }
+        }
+        else
+        {
+            m_openPorts.pop_back();
+            qDebug(MonarkManagerLog) << "Port" << serialPort.portName() << "is not active.";
+        }
+    }
+    std::string command="AT+SETADMIN="+std::string{p_password}+"\r";
+    for(auto p_openPort: m_openPorts)
+    {
+        auto const numBytesWritten=p_openPort->write(command.c_str(),command.size());
+        p_openPort->flush();
+        while(p_openPort->bytesToWrite()>0)
+        {
+            p_openPort->waitForBytesWritten(100);
+        }
+        qDebug(MonarkManagerLog) << "Wrote "<<numBytesWritten<<" bytes to port "<<p_openPort->portName();
+    }
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_sendEncryptionKeyToGcsRadio()";
 }
 
 void MonarkManager::_setMonarkState(MonarkState monarkState)

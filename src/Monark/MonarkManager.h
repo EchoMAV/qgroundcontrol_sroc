@@ -11,7 +11,7 @@
 #include <future>
 Q_DECLARE_LOGGING_CATEGORY(MonarkManagerLog)
 
-
+class QSerialPort;
 
 
 class MonarkManagerWorkerWorker : public QThread
@@ -158,6 +158,8 @@ private:
     void _initializeFrequency(bool paired);
     void _initializeTxPower(bool paired);
 
+    void _sendEncryptionKeyToGcsRadio(char const*const p_password);
+
 
     void _pingAllDrones();
 
@@ -189,6 +191,9 @@ private:
     std::condition_variable m_monarkStateCondition;
     int m_newDroneId;
     int m_newSysId;
-    bool m_displayRestartMessage=false;
+    bool m_displayRestartMessage;
+    std::vector<QSerialPort*> m_openPorts;
+
+    //std::set<std::string> m_serialPorts;
 
 };

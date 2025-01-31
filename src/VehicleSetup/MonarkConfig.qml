@@ -596,7 +596,7 @@ SetupPage {
                         Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("4. Once the beeping stops, wait for the GCS to restart itself, then power-cycle the MONARK drone's battery.")
+                        text: qsTr("4. Once the beeping stops, wait patiently for a message to pop up. Read it carefully for the next set of instructions.")
                         font.pointSize: ScreenTools.defaultFontPointSize
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
