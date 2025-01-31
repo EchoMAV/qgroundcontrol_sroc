@@ -703,6 +703,7 @@ void MonarkManager::refreshDroneList()
         //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::refreshDroneList()";
     }
 }
+
 void MonarkManager::removeDrone(int monarkID)
 {
     if(mp_slotHandler->needDispatch())
@@ -962,7 +963,6 @@ void MonarkManager::invalidateNewSysId()
     }
 }
 
-
 void MonarkManager::showRestartMessage()
 {
     m_displayRestartMessage=true;
@@ -971,6 +971,7 @@ void MonarkManager::showRestartMessage()
 
 void MonarkManager::restartApplication()
 {
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::restartApplication()";
     //wait 5 seconds for the sysid command to process
     std::this_thread::sleep_for(std::chrono::seconds(5));
     //auto *const p_vehicle=qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
@@ -986,8 +987,12 @@ void MonarkManager::restartApplication()
     QStringList arguments = QGCApplication::_app->arguments().mid(1);
     QGCApplication::_app->quit();
     QProcess::startDetached(program, arguments);
-    //QAndroidJniObject::callStaticObjectMethod("org/mavlink/qgroundcontrol/QGCActivity", "restartApp",
-    //                                                                    "()V;");
+
+
+   // QAndroidJniObject::callStaticObjectMethod("org/mavlink/qgroundcontrol/QGCActivity", "restartApp",
+   //                                                                     "()V;");
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::restartApplication()";
+
 }
 
 void MonarkManager::saveFlutterManagementSettings()

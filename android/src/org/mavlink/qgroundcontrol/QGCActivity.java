@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -198,18 +199,25 @@ public class QGCActivity extends QtActivity
         _userDataHashByDeviceId =   new HashMap<Integer, Long>();
         m_ioManager =               new HashMap<Integer, UsbIoManager>();
     }
-/*
+
     public static void restartApp()
     {
+        qgcLogDebug("ENTER QGCActivity::restartApp()");
         //TODO broken
-        Intent intent = new Intent(m_context,QGCActivity.class);
+        Intent intent = new Intent(_instance,QGCActivity.class);
+        qgcLogDebug("QGCActivity::restartApp() Intent intent = new Intent(_instance,QGCActivity.class);");
         int mPendingIntentId = 2;
-        PendingIntent mPendingIntent = PendingIntent.getActivity(m_context, mPendingIntentId, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-        AlarmManager alarmManager = (AlarmManager)m_context.getSystemService(Context.ALARM_SERVICE);
-        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
+        qgcLogDebug("QGCActivity::restartApp() int mPendingIntentId = 2;");
+        PendingIntent mPendingIntent = PendingIntent.getActivity(_instance, mPendingIntentId, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        qgcLogDebug("QGCActivity::restartApp() PendingIntent mPendingIntent = PendingIntent.getActivity(_instance, mPendingIntentId, intent, PendingIntent.FLAG_CANCEL_CURRENT);");
+        AlarmManager alarmManager = (AlarmManager)_instance.getSystemService(Context.ALARM_SERVICE);
+        qgcLogDebug("QGCActivity::restartApp() AlarmManager alarmManager = (AlarmManager)_instance.getSystemService(Context.ALARM_SERVICE);");
+        alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
+        qgcLogDebug("QGCActivity::restartApp() alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);");
         System.exit(0);
+        qgcLogDebug("QGCActivity::restartApp() System.exit(0);");
     }
-*/
+
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -490,16 +498,16 @@ public class QGCActivity extends QtActivity
 
     public static void stopIoManager(int idA)
     {
-        qgcLogDebug("ENTER QGCActivity::stopIoManager(idA="+idA+")");
+        //qgcLogDebug("ENTER QGCActivity::stopIoManager(idA="+idA+")");
         if(m_ioManager.get(idA) == null)
         {
-            qgcLogDebug("QGCActivity::stopIoManager(idA="+idA+") m_ioManager.get(idA) == null");
+            //qgcLogDebug("QGCActivity::stopIoManager(idA="+idA+") m_ioManager.get(idA) == null");
             return;
         }
 
         m_ioManager.get(idA).stop();
         m_ioManager.remove(idA);
-        qgcLogDebug("QGCActivity::stopIoManager(idA="+idA+") m_ioManager.remove(idA)");
+        //qgcLogDebug("QGCActivity::stopIoManager(idA="+idA+") m_ioManager.remove(idA)");
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -554,7 +562,7 @@ public class QGCActivity extends QtActivity
 
         if (driverL == null)
         {
-            qgcLogDebug("QGCActivity::close(idA="+idA+") driverL==null");
+            //qgcLogDebug("QGCActivity::close(idA="+idA+") driverL==null");
             return false;
         }
 
@@ -562,11 +570,11 @@ public class QGCActivity extends QtActivity
         {
             stopIoManager(idA);
             _userDataHashByDeviceId.remove(idA);
-            qgcLogDebug("QGCActivity::close(idA="+idA+") _userDataHashByDeviceId.remove(idA)");
+            //qgcLogDebug("QGCActivity::close(idA="+idA+") _userDataHashByDeviceId.remove(idA)");
             driverL.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired);
-            qgcLogDebug("QGCActivity::close(idA="+idA+") driverL.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired)");
+            //qgcLogDebug("QGCActivity::close(idA="+idA+") driverL.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired)");
             driverL.close();
-            qgcLogDebug("QGCActivity::close(idA="+idA+") returning true");
+            //qgcLogDebug("QGCActivity::close(idA="+idA+") returning true");
             return true;
         }
         catch(IOException eA)
