@@ -299,7 +299,16 @@ public class QGCActivity extends QtActivity
     /// Incrementally updates the list of drivers connected to the device
     private static void updateCurrentDrivers()
     {
-        List<UsbSerialDriver> currentDrivers = UsbSerialProber.findAllDevices(_usbManager);
+        final List<UsbSerialDriver> currentDrivers = new ArrayList<UsbSerialDriver>();
+        // For each UsbDevice, call probe() for each prober.
+        for (final UsbDevice usbDevice : _usbManager.getDeviceList().values()) {
+            final List<UsbSerialDriver> result = new ArrayList<UsbSerialDriver>();
+            for (final UsbSerialProber prober : UsbSerialProber.values()) {
+                final List<UsbSerialDriver> probedDevices = prober.probe(_usbManager, usbDevice);
+                result.addAll(probedDevices);
+            }
+            currentDrivers.addAll(result);
+        }
 
         // Remove stale drivers
         for (int i=_drivers.size()-1; i>=0; i--) {
@@ -346,6 +355,7 @@ public class QGCActivity extends QtActivity
                 }
             }
         }
+
     }
 
     /// Returns array of device info for each unopened device.
@@ -363,7 +373,6 @@ public class QGCActivity extends QtActivity
         for (int i=0; i<_drivers.size(); i++) {
             String          deviceInfo;
             UsbSerialDriver driver = _drivers.get(i);
-
             if (driver.permissionStatus() != UsbSerialDriver.permissionStatusSuccess) {
                 continue;
             }
@@ -384,8 +393,10 @@ public class QGCActivity extends QtActivity
                 deviceInfo = deviceInfo + "Unknown:";
             }
 
+
             deviceInfo = deviceInfo + Integer.toString(device.getProductId()) + ":";
             deviceInfo = deviceInfo + Integer.toString(device.getVendorId()) + ":";
+            qgcLogDebug("deviceInfo="+deviceInfo);
 
             deviceInfoList.add(deviceInfo);
         }

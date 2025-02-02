@@ -209,5 +209,8 @@
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
         <file alias="echomav.png">src/FirmwarePlugin/APM/echomav.png</file>
         <file alias="echomav_outdoor.png">src/FirmwarePlugin/APM/echomav_outdoor.png</file>
+        <file alias="folding_arms.png">resources/folding_arms.png</file>
+        <file alias="battery_latch.png">resources/battery_latch.png</file>
+        <file alias="Monark_logo_no_text.svg">src/ui/toolbar/Images/Monark logo_no_text.svg</file>
     </qresource>
 </RCC>

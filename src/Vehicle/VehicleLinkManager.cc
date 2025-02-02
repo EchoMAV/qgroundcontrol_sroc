@@ -331,7 +331,6 @@ bool VehicleLinkManager::_updatePrimaryLink(void)
 void VehicleLinkManager::closeVehicle(void)
 {
     // Vehicle is no longer communicating with us. Remove all link references
-
     QList<LinkInfo_t> rgLinkInfoCopy = _rgLinkInfo;
     for (const LinkInfo_t& linkInfo: rgLinkInfoCopy) {
         _removeLink(linkInfo.link.get());

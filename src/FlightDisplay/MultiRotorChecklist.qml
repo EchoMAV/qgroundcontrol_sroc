@@ -10,6 +10,8 @@
 import QtQuick                      2.11
 import QtQuick.Controls             2.4
 import QtQml.Models                 2.1
+import QtQuick.Layouts              1.12
+
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -17,21 +19,34 @@ import QGroundControl.Controls      1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.Vehicle       1.0
 
+//going to do stuff for monark
 Item {
     property var model: listModel
     PreFlightCheckModel {
         id:     listModel
         PreFlightCheckGroup {
             name: qsTr("Multirotor Initial Checks")
+            PreFlightJoystickCheck {
+                allowTelemetryFailureOverride:    !QGroundControl.settingsManager.appSettings.enforceJoystickRequired.value
+            }
+
+            PreFlightMultiRotorHealthCheck {
+            }
 
             PreFlightCheckButton {
                 name:           qsTr("Hardware")
-                manualText:     qsTr("Props mounted and secured?")
+                manualText:     qsTr("Unfold Arms")
+
+                need_pic:       true
+                pic_name:       "/qmlimages/folding_arms.png"
             }
 
             PreFlightBatteryCheck {
                 failurePercent:                 40
                 allowFailurePercentOverride:    false
+
+                need_pic: true
+                pic_name: "/qmlimages/battery_latch.png"
             }
 
             PreFlightSensorsHealthCheck {

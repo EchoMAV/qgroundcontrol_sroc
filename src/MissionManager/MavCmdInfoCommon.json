@@ -1030,38 +1030,7 @@
                 "decimalPlaces":    0
             }
         },
-        {
-            "id":                   208,
-            "rawName":              "MAV_CMD_DO_PARACHUTE",
-            "friendlyName":         "Trigger parachute",
-            "description":          "Enable/Disable geofence.",
-            "specifiesCoordinate":  false,
-            "friendlyEdit":         true,
-            "category":             "Safety",
-            "param1": {
-                "label":            "Trigger",
-                "enumStrings":      "Disable,Enable,Release",
-                "enumValues":       "0,1,2",
-                "default":          1,
-                "decimalPlaces":    0
-            }
-        },
         { "id": 209, "rawName": "MAV_CMD_DO_MOTOR_TEST", "friendlyName": "Motor test" },
-        {
-            "id":                   210,
-            "rawName":              "MAV_CMD_DO_INVERTED_FLIGHT",
-            "friendlyName":         "Inverted flight",
-            "description":          "Change to/from inverted flight.",
-            "specifiesCoordinate":  false,
-            "friendlyEdit":         true,
-            "category":             "Flight control",
-            "param1": {
-                "label":            "Inverted",
-                "enumStrings":      "Normal,Inverted",
-                "enumValues":       "0,1",
-                "default":          0
-            }
-        },
         {
             "id":                   211,
             "rawName":              "MAV_CMD_DO_GRIPPER",

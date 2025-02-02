@@ -356,9 +356,9 @@ CustomBuild {
         RESOURCES += $$PWD/resources/InstrumentValueIcons/InstrumentValueIcons.qrc
     }
 } else {
-    DEFINES += QGC_APPLICATION_NAME=\"\\\"QGroundControl\\\"\"
-    DEFINES += QGC_ORG_NAME=\"\\\"QGroundControl.org\\\"\"
-    DEFINES += QGC_ORG_DOMAIN=\"\\\"org.qgroundcontrol\\\"\"
+    DEFINES += QGC_APPLICATION_NAME='"\\\"MONARK GCS\\\""'
+    DEFINES += QGC_ORG_NAME=\"\\\"echomav.com\\\"\"
+    DEFINES += QGC_ORG_DOMAIN=\"\\\"com.echomav\\\"\"
     RESOURCES += \
         $$PWD/qgroundcontrol.qrc \
         $$PWD/qgcresources.qrc \
@@ -431,7 +431,10 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 #
 
 HEADERS += \
+    src/Monark/MonarkDrone.h \
     src/Monark/MonarkManager.h \
+    src/Monark/MonarkQRCodeProvider.h \
+    src/Monark/qrcodegen.h \
     src/QmlControls/CustomAction.h \
     src/QmlControls/CustomActionManager.h \
     src/QmlControls/QmlUnitsConversion.h \
@@ -449,7 +452,10 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 }
 
 SOURCES += \
+    src/Monark/MonarkDrone.cpp \
     src/Monark/MonarkManager.cc \
+    src/Monark/MonarkQRCodeProvider.cc \
+    src/Monark/qrcodegen.cc \
     src/QmlControls/CustomActionManager.cc \
     src/Settings/MonarkSettings.cc \
     src/Vehicle/VehicleEscStatusFactGroup.cc \

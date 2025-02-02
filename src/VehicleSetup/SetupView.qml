@@ -274,7 +274,8 @@ Rectangle {
 
             SubMenuButton {
                 id: monarkButton
-                imageResource:    "/qmlimages/Joystick.png" //TODO replace with the monark logo
+                imageResource:    "/qmlimages/Monark_logo_no_text.svg"
+                imageColor:       qgcPal.button
                 setupIndicator:   false //TODO what does this mean?
                 setupComplete:    false //TODO what does this mean?
                 exclusiveGroup:   setupButtonGroup //TODO what does this mean?
@@ -333,9 +334,11 @@ Rectangle {
         anchors.leftMargin:     _horizontalMargin
         anchors.rightMargin:    _horizontalMargin
         anchors.left:           divider.right
-        anchors.right:          parent.right
+        //anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
+        width: parent.width - divider.width - buttonScroll.width
+
 
         function setSource(source, vehicleComponent) {
             panelLoader.source = ""

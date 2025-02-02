@@ -295,6 +295,7 @@ VideoManager::startRecording(const QString& videoFile)
     if (qgcApp()->runningUnitTests()) {
         return;
     }
+    qCDebug(VideoManagerLog) << "ENTER VideoManager::startRecording";
 #if defined(QGC_GST_STREAMING)
     if (!_videoReceiver[0]) {
         qgcApp()->showAppMessage(tr("Video receiver is not ready."));
@@ -315,7 +316,7 @@ VideoManager::startRecording(const QString& videoFile)
     QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
 
     if (savePath.isEmpty()) {
-        qgcApp()->showAppMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
+        qgcApp()->showAppMessage(tr("Unable to record video. Video save path must be specified in Settings."));
         return;
     }
 
@@ -333,6 +334,7 @@ VideoManager::startRecording(const QString& videoFile)
     }
 
 #else
+    qCDebug(VideoManagerLog) << "VideoManager::startRecording UNUSED";
     Q_UNUSED(videoFile)
 #endif
 }

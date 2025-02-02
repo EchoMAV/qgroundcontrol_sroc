@@ -13,7 +13,8 @@
 #include <QDir>
 #include <QDateTime>
 #include <QDebug>
-
+#include <string>
+#include <sstream>
 #include <iostream>
 #include <cmath>
 #include <chrono>
@@ -63,6 +64,7 @@
 #include "EventHandler.h"
 #include "Actuators/Actuators.h"
 #include "GimbalController.h"
+#include "Monark/MonarkManager.h"
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
@@ -344,6 +346,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _distanceSensorFactGroup          (this)
     , _localPositionFactGroup           (this)
     , _localPositionSetpointFactGroup   (this)
+    , _cot_timer{nullptr}
 {
     _linkManager = _toolbox->linkManager();
 
@@ -382,10 +385,10 @@ void Vehicle::_generateCotPacket()
                             .arg(currentAltitude, 0, 'f', 1);
 
     // Print to console
-    qDebug() << "Generated CoT Packet:\n" << cotPacket;
+    qDebug(VehicleLog) << "Generated CoT Packet:\n" << cotPacket;
 
     // Define file path on desktop
-    QString desktopPath = QDir::homePath() + "/Desktop/cot_packets.txt";
+    QString desktopPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValueString() + "/cot_packets.txt";
     QFile file(desktopPath);
 
     // Write to file, appending each packet
@@ -394,7 +397,7 @@ void Vehicle::_generateCotPacket()
         out << cotPacket;
         file.close();
     } else {
-        qCWarning(VehicleLog) << "Could not open file on desktop to write CoT packet";
+        qCWarning(VehicleLog) << "Could not open file on desktop to write CoT packet. path = "<<file;
     }
 
     // Convert CoT packet to QByteArray for network transmission
@@ -406,7 +409,7 @@ void Vehicle::_generateCotPacket()
     quint16 targetPort = 6969; // Replace with the appropriate port number
 
     udpSocket.writeDatagram(datagram, targetAddress, targetPort);
-    qDebug() << "CoT packet sent to" << targetAddress.toString() << "on port" << targetPort;
+    qDebug(VehicleLog) << "CoT packet sent to" << targetAddress.toString() << "on port" << targetPort;
 }
 
 void Vehicle::trackFirmwareVehicleTypeChanges(void)
@@ -573,11 +576,18 @@ void Vehicle::_commonInit()
 
 Vehicle::~Vehicle()
 {
+     qCDebug(VehicleLog) << "~Vehicle" << this;
     // Stop and delete timer
-    _cot_timer->stop();
-    delete _cot_timer;
+    if(_cot_timer)
+    {
+         qCDebug(VehicleLog) << "Stoping COT timer";
+        _cot_timer->stop();
+        delete _cot_timer;
+        _cot_timer=nullptr;
+    }
 
-    qCDebug(VehicleLog) << "~Vehicle" << this;
+
+
 
     delete _missionManager;
     _missionManager = nullptr;
@@ -2345,6 +2355,7 @@ bool Vehicle::setFlightModeCustom(const QString& flightMode, uint8_t* base_mode,
     return _firmwarePlugin->setFlightMode(flightMode, base_mode, custom_mode);
 }
 
+
 void Vehicle::setFlightMode(const QString& flightMode)
 {
     uint8_t     base_mode;
@@ -2546,6 +2557,36 @@ void Vehicle::_parametersReady(bool parametersReady)
         disconnect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
         _setupAutoDisarmSignalling();
         _initialConnectStateMachine->advance();
+        auto *const p_monarkManager = qgcApp()->toolbox()->monarkManager();
+        auto const newSysId=p_monarkManager->newSysId();
+        if(newSysId<=0)
+        {
+            qCDebug(VehicleLog)<<"Parameters were ready, but there was no valid MONARK ID to set SYSID_THISMAV";
+        }
+        else
+        {
+            auto const p_sysIdFact=_parameterManager->getParameter(defaultComponentId(),"SYSID_THISMAV");
+            if(p_sysIdFact)
+            {
+                auto const errorString = p_sysIdFact->validate(QString::number(newSysId),false);
+                if(errorString.isEmpty())
+                {
+                    _id=newSysId;
+                    p_sysIdFact->setCookedValue(newSysId);
+                    qCDebug(VehicleLog) << "Set SYSID_THISMAV to "<<newSysId<<" on active vehicle";
+                }
+                else
+                {
+                    qCCritical(VehicleLog)<<"Unable to set SYSID_THISMAV to "<<newSysId<<" because: "<<errorString;
+                }
+            }
+            else
+            {
+                qCCritical(VehicleLog)<<"SYSID_THISMAV fact was not found";
+            }
+            p_monarkManager->invalidateNewSysId();
+        }
+        p_monarkManager->refreshDroneList();
     }
 
     _multirotor_speed_limits_available = _firmwarePlugin->mulirotorSpeedLimitsAvailable(this);
@@ -4539,6 +4580,13 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
                 0, 0, 0, 0);
     sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }
+
+void Vehicle::closeVehicle(void)
+{
+    qgcApp()->toolbox()->monarkManager()->removeDrone(_id);
+    _vehicleLinkManager->closeVehicle();
+}
+
 
 void Vehicle::triggerSimpleCamera()
 {
