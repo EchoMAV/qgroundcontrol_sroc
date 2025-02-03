@@ -885,12 +885,13 @@ SetupPage {
                         onClicked: {
                             QGroundControl.monarkManager.gotoScanSuccessAndPaired()
                         }
-                        enabled: QGroundControl.monarkManager.groundRadioUpdateState
-                                 === 0 //BeforeUpdate
-                                 || QGroundControl.monarkManager.groundRadioUpdateState
-                                 === 2 //UpdateSuccessful
-                                 || QGroundControl.monarkManager.groundRadioUpdateState
-                                 === 3 //UpdateFailed
+                        enable: QGroundControl.monarkManager.updateInProgressDrones.length === 0
+                        //enabled: QGroundControl.monarkManager.groundRadioUpdateState
+                        //         === 0 //BeforeUpdate
+                        //         || QGroundControl.monarkManager.groundRadioUpdateState
+                        //         === 2 //UpdateSuccessful
+                        //         || QGroundControl.monarkManager.groundRadioUpdateState
+                        //         === 3 //UpdateFailed
                     }
                 }
                 GridLayout {
