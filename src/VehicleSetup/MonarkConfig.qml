@@ -885,7 +885,7 @@ SetupPage {
                         onClicked: {
                             QGroundControl.monarkManager.gotoScanSuccessAndPaired()
                         }
-                        enable: QGroundControl.monarkManager.updateInProgressDrones.length === 0
+                        enabled: QGroundControl.monarkManager.updateInProgressDrones.length === 0
                         //enabled: QGroundControl.monarkManager.groundRadioUpdateState
                         //         === 0 //BeforeUpdate
                         //         || QGroundControl.monarkManager.groundRadioUpdateState
