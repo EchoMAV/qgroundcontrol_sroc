@@ -609,6 +609,37 @@ SetupPage {
                         }
                     }
                     Timer {
+                        property var timeTaken: 0
+                        id: paringCountdownTimer
+                        interval: 1000
+                        running: pairingProgressBar.visible
+                        repeat: true
+                        triggeredOnStart: true
+                        onTriggered: {
+                            pairingProgressBar.value = timeTaken / 180.0
+                            if (timeTaken < 180) {
+                                ++timeTaken
+                            }
+                        }
+                    }
+                    ProgressBar {
+                        id: pairingProgressBar
+                        Layout.fillWidth: true
+                        //height:     ScreenTools.defaultFontPixelHeight
+                        //minimumValue: 0
+                        //maximumValue: 180
+                        //value:          object.progress * 100.0
+                        onVisibleChanged: {
+                            if (visible) {
+                                paringCountdownTimer.timeTaken = 0
+                                paringCountdownTimer.restart()
+                            }
+                        }
+                    }
+
+
+                    /*
+                    Timer {
                         property var timeLeft: 180
                         id: paringCountdownTimer
                         interval: 1000
@@ -635,6 +666,7 @@ SetupPage {
                             }
                         }
                     }
+                    */
                 }
 
                 //QGCLabel {
