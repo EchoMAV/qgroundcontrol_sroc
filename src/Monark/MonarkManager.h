@@ -78,6 +78,7 @@ public:
     Q_PROPERTY(int newDroneId READ newDroneId NOTIFY newDroneIdChanged);
     Q_PROPERTY(int newSysId READ newSysId NOTIFY newSysIdChanged);
     Q_PROPERTY(bool displayRestartMessage READ displayRestartMessage NOTIFY displayRestartMessageChanged);
+    Q_PROPERTY(QStringList          validFrequencies READ    validFrequencies NOTIFY validFrequenciesChanged)
 
     //Q_PROPERTY(QList<QString> connectedDroneListNames READ connectedDroneListNames NOTIFY connectedDroneListNamesChanged)
     //Q_PROPERTY(QList<QString> connectedDroneListStatuses READ connectedDroneListStatuses NOTIFY connectedDroneListStatusesChanged)
@@ -92,6 +93,8 @@ public:
     QString updateInProgressDrones() const;
     QString updateSuccessfulDrones() const;
     QString updateFailedDrones() const;
+    QStringList                     validFrequencies       () const;
+
 
     int newDroneId() const{return m_newDroneId;}
     int newSysId() const{return m_newSysId;}
@@ -149,6 +152,7 @@ signals:
     void newDroneIdChanged();
     void newSysIdChanged();
     void displayRestartMessageChanged();
+    void validFrequenciesChanged();
 
 
 

@@ -1981,6 +1981,7 @@ void Vehicle::_handleRadioStatus(mavlink_message_t& message)
     int remrssi = rstatus.remrssi;
     int lnoise = (int)(int8_t)rstatus.noise;
     int rnoise = (int)(int8_t)rstatus.remnoise;
+#if 0
     //-- 3DR Si1k radio needs rssi fields to be converted to dBm
     if (message.sysid == '3' && message.compid == 'D') {
         /* Per the Si1K datasheet figure 23.25 and SI AN474 code
@@ -1995,7 +1996,9 @@ void Vehicle::_handleRadioStatus(mavlink_message_t& message)
          */
         rssi    = qMin(qMax(qRound(static_cast<qreal>(rssi)    / 1.9 - 127.0), - 120), 0);
         remrssi = qMin(qMax(qRound(static_cast<qreal>(remrssi) / 1.9 - 127.0), - 120), 0);
-    } else {
+    } else
+#endif
+    {
         rssi    = (int)(int8_t)rstatus.rssi;
         remrssi = (int)(int8_t)rstatus.remrssi;
     }
@@ -2637,6 +2640,7 @@ void Vehicle::_parametersReady(bool parametersReady)
         disconnect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
         _setupAutoDisarmSignalling();
         _initialConnectStateMachine->advance();
+        qgcApp()->toolbox()->monarkManager()->refreshDroneList();
     }
 
     _multirotor_speed_limits_available = _firmwarePlugin->mulirotorSpeedLimitsAvailable(this);

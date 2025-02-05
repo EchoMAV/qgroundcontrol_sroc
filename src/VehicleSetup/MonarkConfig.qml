@@ -212,7 +212,7 @@ SetupPage {
                     QGCLabel {
                         wrapMode: Text.Wrap
                         //Layout.fillWidth: true
-                        text: qsTr("Tx Power (dBm):")
+                        text: qsTr("Tx Power (7-32 dBm):")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     FactTextField {
@@ -242,6 +242,22 @@ SetupPage {
                         text: qsTr("Frequency (MHz):")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
+
+                    FactComboBox {
+                        visible: QGroundControl.monarkManager.monarkState
+                                 === 2 //ScanSuccessPairingRequired
+                                 || QGroundControl.monarkManager.monarkState
+                                 === 7 //SaveSettingsFailed
+                        id: groundFrequencyTextField
+                        Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
+                        indexModel: false
+                        fact: QGroundControl.settingsManager.monarkSettings.groundFrequency
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        model: QGroundControl.monarkManager.validFrequencies
+                    }
+
+
+                    /*
                     FactTextField {
                         visible: QGroundControl.monarkManager.monarkState
                                  === 2 //ScanSuccessPairingRequired
@@ -254,6 +270,7 @@ SetupPage {
                         textColor: acceptableInput ? qgcPal.textFieldText : qgcPal.warningText
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
+                    */
                     QGCLabel {
                         wrapMode: Text.Wrap
                         //Layout.fillWidth: true
@@ -284,7 +301,7 @@ SetupPage {
                     }
                     enabled: encryptionKeyTextField.acceptableInput
                              && groundTxPowerTextField.acceptableInput
-                             && groundFrequencyTextField.acceptableInput
+                    // && groundFrequencyTextField.acceptableInput
                              && (encryptionKeyTextField.text === confirmEncryptionKey1.text)
                 }
                 //acceptable input error messages
@@ -320,7 +337,8 @@ SetupPage {
                     font.pointSize: ScreenTools.mediumFontPointSize
                     text: qsTr(
                               "Frequency must be in band for an 8Mhz bandwidth (see documentation)")
-                    color: groundFrequencyTextField.acceptableInput ? qgcPal.text : qgcPal.warningText
+                    color: qgcPal.text
+                    //color: groundFrequencyTextField.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
             }
 
@@ -676,7 +694,7 @@ SetupPage {
                     Layout.alignment: Qt.AlignTop
                     source: "image://MONARKQRCodes/" + networkIdTextField.text + ","
                             + encryptionKeyTextField.text + "," + groundTxPowerTextField.text + ","
-                            + groundFrequencyTextField.text + "," + monarkIdTextField.text
+                            + groundFrequencyTextField.currentText + "," + monarkIdTextField.text
                     sourceSize.width: 875
                     sourceSize.height: 875 //TODO is there a way to un-hard-code these
                     cache: false
@@ -728,7 +746,7 @@ SetupPage {
                         text: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
                               ? qsTr("Current Tx Power") : QGroundControl.monarkManager.monarkState
                                 === 13 //ChangeFrequencies
-                                ? qsTr("Current Frequency") : qsTr(
+                                ? qsTr("Current Frequency (MHz)") : qsTr(
                                       "INVALID Application state. Restart application or contact support.")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
@@ -766,9 +784,8 @@ SetupPage {
                         wrapMode: Text.Wrap
                         //Layout.fillWidth: true
                         text: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
-                              ? qsTr("Desired Tx Power") : QGroundControl.monarkManager.monarkState
-                                === 13 //ChangeFrequencies
-                                ? qsTr("Desired Frequency") : QGroundControl.monarkManager.monarkState === 14 //ChangeEncryptionKey
+                              ? qsTr("Desired Tx Power (7-32dBm)") : QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
+                                ? qsTr("Desired Frequency (MHz)") : QGroundControl.monarkManager.monarkState === 14 //ChangeEncryptionKey
                                   ? qsTr("Desired Encryption Key") : qsTr(
                                         "INVALID Application state. Restart application or contact support.")
                         font.pointSize: ScreenTools.mediumFontPointSize
@@ -783,6 +800,20 @@ SetupPage {
                         font.pointSize: ScreenTools.mediumFontPointSize
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
                     }
+
+                    QGCComboBox {
+                        visible: QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
+                        id: desiredFrequency
+                        Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
+                        //indexModel: false
+                        //currentText: QGroundControl.settingsManager.monarkSettings.groundFrequency
+                        //fact:                   QGroundControl.settingsManager.monarkSettings.groundFrequency
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        model: QGroundControl.monarkManager.validFrequencies
+                    }
+
+
+                    /*
                     QGCTextField {
                         visible: QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
                         id: desiredFrequency
@@ -793,6 +824,7 @@ SetupPage {
                         font.pointSize: ScreenTools.mediumFontPointSize
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
                     }
+                    */
                     QGCTextField {
                         visible: QGroundControl.monarkManager.monarkState
                                  === 14 //ChangeEncryptionKey
@@ -839,7 +871,8 @@ SetupPage {
                     font.pointSize: ScreenTools.mediumFontPointSize
                     text: qsTr(
                               "Frequency must be in band for an 8Mhz bandwidth (see documentation)")
-                    color: desiredFrequency.acceptableInput ? qgcPal.text : qgcPal.warningText
+                    color: qgcPal.text
+                    //color: desiredFrequency.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
                     wrapMode: Text.Wrap
@@ -883,7 +916,7 @@ SetupPage {
                                        === 13) //ChangeFrequencies
                             {
                                 QGroundControl.monarkManager.changeFrequencies(
-                                            desiredFrequency.text)
+                                            desiredFrequency.currentText)
                             } else if (QGroundControl.monarkManager.monarkState
                                        === 14) //ChangeEncryptionKey
                             {
@@ -901,8 +934,9 @@ SetupPage {
                                  && ((desiredTxPower.acceptableInput
                                       && QGroundControl.monarkManager.monarkState
                                       === 12) //ChangeTxPower
-                                     || (desiredFrequency.acceptableInput
-                                         && QGroundControl.monarkManager.monarkState
+                                     || (
+                                         /*desiredFrequency.acceptableInput
+                                         && */ QGroundControl.monarkManager.monarkState
                                          === 13) //ChangeFrequencies
                                      || (desiredEncryptionKey.acceptableInput
                                          && QGroundControl.monarkManager.monarkState
@@ -1003,7 +1037,7 @@ SetupPage {
             IntValidator {
                 id: txPowerValidator
                 bottom: 7
-                top: 33
+                top: 32
             }
             RegExpValidator {
                 id: encryptionKeyValidator

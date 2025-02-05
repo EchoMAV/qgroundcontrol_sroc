@@ -83,6 +83,9 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _microhardManager       = new MicrohardManager          (app, this);
 #endif
     _monarkManager          = new MonarkManager             (app, this);
+
+    connect(_corePlugin, &QGCCorePlugin::showAdvancedUIChanged, _monarkManager, &MonarkManager::validFrequenciesChanged);
+
 }
 
 void QGCToolbox::setChildToolboxes(void)

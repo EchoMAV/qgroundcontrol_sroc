@@ -10,6 +10,7 @@
 #include <sstream>
 #include <future>
 #include <QtAndroidExtras/QAndroidJniObject>
+#include "QGCCorePlugin.h"
 
 QGC_LOGGING_CATEGORY(MonarkManagerLog, "MonarkManagerLog")
 
@@ -310,6 +311,7 @@ std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>
     return droneResponses;
 }
 
+
 std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> _sendDroneTxPowerChangeCommands(std::string const& desiredTxPower, std::set<int>& beforeSet, std::set<int>& inProgressSet)
 {
     //qCDebug(MonarkManagerLog)<<"ENTER: _sendDroneTxPowerChangeCommands(desiredTxPower="<<desiredTxPower.c_str()<<")";
@@ -454,10 +456,56 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , m_openPorts{}
 {
     //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::MonarkManager()()";
+    //connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &MonarkManager::validFrequenciesChanged);
+
     mp_slotHandler->start();
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::MonarkManager()()";
 }
 
+QStringList MonarkManager::validFrequencies       () const
+{
+    QStringList list;
+    if(qgcApp()->toolbox()->corePlugin()->showAdvancedUI())
+    {
+        for(auto i=1629;i<=1721;++i)
+        {
+            list.append(QString::number(i));
+        }
+        for(auto i=1784;i<=1846;++i)
+        {
+            list.append(QString::number(i));
+        }
+        for(auto i=2024;i<=2106;++i)
+        {
+            list.append(QString::number(i));
+        }
+        for(auto i=2204;i<=2296;++i)
+        {
+            list.append(QString::number(i));
+        }
+        for(auto i=2305;i<=2386;++i)
+        {
+            list.append(QString::number(i));
+        }
+        for(auto i=2404;i<=2496;++i)
+        {
+            list.append(QString::number(i));
+        }
+    }
+    else
+    {
+
+        list.append("1813");
+        list.append("1817");
+        list.append("1820");
+        list.append("1825");
+        list.append("1828");
+        list.append("1833");
+        list.append("1838");
+        list.append("1845");
+    }
+    return list;
+}
 
 
 void MonarkManager::_sendEncryptionKeyToGcsRadio(char const*const p_password)
