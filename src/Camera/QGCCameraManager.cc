@@ -61,6 +61,17 @@ QGCCameraManager::_vehicleReady(bool ready)
             _activeJoystickChanged(pJoyMgr->activeJoystick());
             connect(pJoyMgr, &JoystickManager::activeJoystickChanged, this, &QGCCameraManager::_activeJoystickChanged);
         }
+        else
+        {
+            //in this case, a new camera is ready, but it is not the active vehicle, so we want to stop the video streams in case they are running        
+            qDebug() << "Sending STOP VIDEO STREAM since this is not the current vehicle, Sending to vehicle" << _vehicle->id();           
+            _vehicle->sendMavCommand(
+                MAV_COMP_ID_CAMERA,                     // Target component
+                MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
+                false,                                  // ShowError
+                0);
+        }
+
     }
 }
 
