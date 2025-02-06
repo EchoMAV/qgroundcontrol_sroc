@@ -250,21 +250,33 @@ SetupPage {
                                  === 7 //SaveSettingsFailed
                         id: groundFrequencyTextField
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
-                        indexModel: false
+                        // indexModel: false
                         //fact: QGroundControl.settingsManager.monarkSettings.groundFrequency
                         font.pointSize: ScreenTools.mediumFontPointSize
                         model: QGroundControl.monarkManager.validFrequencies
 
                         onVisibleChanged: {
-                            currentIndex = 0
+                            if (visible) {
+                                for (var index = 0; index < count; ++index) {
+                                    if (QGroundControl.monarkManager.validFrequencies[index]
+                                            === "2310") {
+                                        currentIndex = index
+                                        break
+                                    }
+                                }
+
+                                ///currentIndex = 0
+                            }
                         }
 
+                        /*
                         onCurrentIndexChanged: {
                             console.warn("currentIndex = ", currentIndex)
                             if (currentIndex >= 0 && currentIndex < count) {
                                 QGroundControl.settingsManager.monarkSettings.groundFrequency.rawValue = QGroundControl.monarkManager.validFrequencies[currentIndex]
                             }
                         }
+                        */
                     }
 
 
@@ -308,7 +320,8 @@ SetupPage {
                         // at the end, will transition to
                         // 4 ScanSuccessAndPaired      if the settings were saved
                         // 7 SaveSettingsFailed        if the settings could not be saved
-                        QGroundControl.monarkManager.saveFlutterManagementSettings()
+                        QGroundControl.monarkManager.saveFlutterManagementSettings(
+                                    groundFrequencyTextField.currentText)
                     }
                     enabled: encryptionKeyTextField.acceptableInput
                              && groundTxPowerTextField.acceptableInput

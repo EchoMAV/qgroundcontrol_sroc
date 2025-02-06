@@ -1064,30 +1064,12 @@ void MonarkManager::saveFlutterManagementSettings()
     else
     {
         //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::saveFlutterManagementSettings()";
-        auto const paired = m_monarkState==(int)MonarkState::ScanSuccessBadCredentials;
         _setMonarkState(MonarkState::SaveSettingsInProgress);
         std::vector<std::string> commands;
         auto encryptionKey=mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
-        if(!paired)
-        {
-            using namespace std::string_literals;
-            auto txPower=mp_monarkSettings->groundTxPower()->cookedValueString().toStdString();
-            auto frequency=mp_monarkSettings->groundFrequency()->cookedValueString().toStdString();
-            auto networkId=mp_monarkSettings->networkID()->cookedValueString().toStdString();
-            commands.emplace_back("AT+MWRADIO=1\n");
-            commands.emplace_back("AT+MWDISTANCE=8047\n"); //acceptable RF distance 5 miles
-            commands.emplace_back("AT+MWTXPOWER="+txPower+"\n");
-            commands.emplace_back("AT+MWFREQ="+frequency+"\n");
-            commands.emplace_back("AT+MWNETWORKID="+networkId+"\n");
-            commands.emplace_back("AT+MWVENCRYPT=2,"+encryptionKey+"\n");
-            commands.emplace_back("AT+MSPWD="+encryptionKey+","+encryptionKey+"\n");
-            commands.emplace_back("AT+MWVMODE=0\n");
-            commands.emplace_back("AT+MNLAN=LAN,EDIT,0,"s+np_srmPairedIp+",255.255.0.0,0\n");
-            commands.emplace_back("AT+MNLANDHCP=LAN,1,"s+np_srocIp+",1,0\n");
-            commands.emplace_back("AT&W\n");
-        }
-        auto saveResult=paired ? MonarkState::ScanSuccessBadCredentials: MonarkState::SaveSettingsFailed;
-        auto const& response = _sendCommands(paired?np_srmPairedIp:np_srmDefaultIp,"admin", paired?encryptionKey.c_str():np_sshUsername, &commands, false).second;
+
+        auto saveResult=MonarkState::ScanSuccessBadCredentials;
+        auto const& response = _sendCommands(np_srmPairedIp,"admin", encryptionKey.c_str(), &commands, false).second;
         if(!response.empty() && response.back().find(np_groundRadioSuccessStr)!= std::string::npos)
         {
             saveResult=MonarkState::ScanSuccessAndPaired;
@@ -1095,41 +1077,36 @@ void MonarkManager::saveFlutterManagementSettings()
             // also send the encryption key to the radio microcontroller over serial so it can reset the microhard natively. 
             _sendEncryptionKeyToGcsRadio(encryptionKey.c_str());
         }
-        if(paired)
-        {
-            _initializeNetworkId(true);
-            _initializeFrequency(true);
-            _initializeTxPower(true);
-        }
+        _initializeNetworkId(true);
+        _initializeFrequency(true);
+        _initializeTxPower(true);
         _setMonarkState(saveResult);
         //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::saveFlutterManagementSettings()";
     }
 }
 
-void MonarkManager::saveFlutterManagementSettings(QString const& txPower, QString const& frequency, QString const& networkId)
+void MonarkManager::saveFlutterManagementSettings(QString const& frequency)
 {
     if(mp_slotHandler->needDispatch())
     {
-        auto cachedTxPower=txPower;
         auto cachedFrequency=frequency;
-        auto cachedNetworkId=networkId;
-        mp_slotHandler->dispatch([this,cachedTxPower,cachedFrequency,cachedNetworkId](){saveFlutterManagementSettings(cachedTxPower,cachedFrequency,cachedNetworkId);});
+        mp_slotHandler->dispatch([this,cachedFrequency](){saveFlutterManagementSettings(cachedFrequency);});
     }
     else
     {
-        //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::saveFlutterManagementSettings(txPower="<<txPower<<", frequency="<<frequency<<", networkId="<<networkId<<")";
+        //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::saveFlutterManagementSettings(frequency="<<frequency<<")";
         _setMonarkState(MonarkState::SaveSettingsInProgress);
         std::vector<std::string> commands;
         auto encryptionKey=mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
 
         using namespace std::string_literals;
         auto txPower=mp_monarkSettings->groundTxPower()->cookedValueString().toStdString();
-        auto frequency=mp_monarkSettings->groundFrequency()->cookedValueString().toStdString();
+        mp_monarkSettings->groundFrequency()->setCookedValue(frequency);
         auto networkId=mp_monarkSettings->networkID()->cookedValueString().toStdString();
         commands.emplace_back("AT+MWRADIO=1\n");
         commands.emplace_back("AT+MWDISTANCE=8047\n"); //acceptable RF distance 5 miles
         commands.emplace_back("AT+MWTXPOWER="+txPower+"\n");
-        commands.emplace_back("AT+MWFREQ="+frequency+"\n");
+        commands.emplace_back("AT+MWFREQ="+frequency.toStdString()+"\n");
         commands.emplace_back("AT+MWNETWORKID="+networkId+"\n");
         commands.emplace_back("AT+MWVENCRYPT=2,"+encryptionKey+"\n");
         commands.emplace_back("AT+MSPWD="+encryptionKey+","+encryptionKey+"\n");
@@ -1148,7 +1125,7 @@ void MonarkManager::saveFlutterManagementSettings(QString const& txPower, QStrin
             _sendEncryptionKeyToGcsRadio(encryptionKey.c_str());
         }
         _setMonarkState(saveResult);
-        //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::saveFlutterManagementSettings()";
+        //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::saveFlutterManagementSettings(frequency="<<frequency<<")";
     }
 }
 
