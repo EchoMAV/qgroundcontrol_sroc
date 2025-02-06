@@ -2662,6 +2662,15 @@ void Vehicle::_parametersReady(bool parametersReady)
             false,                                  // ShowError
             0);
     }
+    else
+    {
+	qDebug() << "Sending START VIDEO STREAM (paramsready) to the active Vehicle " << _id;
+        sendMavCommand(
+            MAV_COMP_ID_CAMERA,                     // Target component
+            MAV_CMD_VIDEO_START_STREAMING,           // Command id
+            false,                                  // ShowError
+            0);
+    }
 }
 
 void Vehicle::_sendQGCTimeToVehicle()
