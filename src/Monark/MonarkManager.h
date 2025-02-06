@@ -108,6 +108,7 @@ public:
     Q_INVOKABLE void startScanning();
     Q_INVOKABLE void refreshDroneList();
     Q_INVOKABLE void removeDrone(int monarkID);
+    Q_INVOKABLE void saveFlutterManagementSettings(QString const& txPower, QString const& frequency, QString const& networkId);
     Q_INVOKABLE void saveFlutterManagementSettings();
     Q_INVOKABLE void resetActiveVehicle();
     Q_INVOKABLE void rebootActiveVehicle();

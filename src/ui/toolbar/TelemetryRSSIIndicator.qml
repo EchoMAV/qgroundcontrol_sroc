@@ -1,3 +1,5 @@
+
+
 /****************************************************************************
  *
  * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
@@ -6,57 +8,60 @@
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
+import QtQuick 2.11
+import QtQuick.Layouts 1.11
 
-import QtQuick          2.11
-import QtQuick.Layouts  1.11
-
-import QGroundControl                       1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.Palette               1.0
+import QGroundControl 1.0
+import QGroundControl.Controls 1.0
+import QGroundControl.MultiVehicleManager 1.0
+import QGroundControl.ScreenTools 1.0
+import QGroundControl.Palette 1.0
 
 //-------------------------------------------------------------------------
 //-- Telemetry RSSI
 Item {
-    id:             _root
-    anchors.top:    parent.top
+    id: _root
+    anchors.top: parent.top
     anchors.bottom: parent.bottom
-    width:          telemIcon.width * 1.1
+    width: telemIcon.width * 1.1
 
     property bool showIndicator: _hasTelemetry
 
-    property var  _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
-    property bool _hasTelemetry:    _activeVehicle ? _activeVehicle.telemetryLRSSI !== 0 : false
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property bool _hasTelemetry: _activeVehicle ? _activeVehicle.telemetryLRSSI !== 0 : false
 
     Component {
         id: telemRSSIInfo
         Rectangle {
-            width:  telemCol.width   + ScreenTools.defaultFontPixelWidth  * 3
-            height: telemCol.height  + ScreenTools.defaultFontPixelHeight * 2
+            width: telemCol.width + ScreenTools.defaultFontPixelWidth * 3
+            height: telemCol.height + ScreenTools.defaultFontPixelHeight * 2
             radius: ScreenTools.defaultFontPixelHeight * 0.5
-            color:  qgcPal.window
-            border.color:   qgcPal.text
+            color: qgcPal.window
+            border.color: qgcPal.text
             Column {
-                id:                 telemCol
-                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-                width:              Math.max(telemGrid.width, telemLabel.width)
-                anchors.margins:    ScreenTools.defaultFontPixelHeight
-                anchors.centerIn:   parent
+                id: telemCol
+                spacing: ScreenTools.defaultFontPixelHeight * 0.5
+                width: Math.max(telemGrid.width, telemLabel.width)
+                anchors.margins: ScreenTools.defaultFontPixelHeight
+                anchors.centerIn: parent
                 QGCLabel {
-                    id:             telemLabel
-                    text:           qsTr("Telemetry RSSI Status")
-                    font.family:    ScreenTools.demiboldFontFamily
+                    id: telemLabel
+                    text: qsTr("Telemetry RSSI Status")
+                    font.family: ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 GridLayout {
-                    id:                 telemGrid
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
-                    columnSpacing:      ScreenTools.defaultFontPixelWidth
-                    columns:            2
+                    id: telemGrid
+                    anchors.margins: ScreenTools.defaultFontPixelHeight
+                    columnSpacing: ScreenTools.defaultFontPixelWidth
+                    columns: 2
                     anchors.horizontalCenter: parent.horizontalCenter
-                    QGCLabel { text: qsTr("Signal Strength:") }
-                    QGCLabel { text: _activeVehicle.telemetryLRSSI + "%"}
+                    QGCLabel {
+                        text: qsTr("Signal Strength:")
+                    }
+                    QGCLabel {
+                        text: _activeVehicle.telemetryLRSSI + "%"
+                    }
                     //QGCLabel { text: qsTr("Remote RSSI:") }
                     //QGCLabel { text: _activeVehicle.telemetryRRSSI + " dBm"}
                     //QGCLabel { text: qsTr("RX Errors:") }
@@ -73,6 +78,17 @@ Item {
             }
         }
     }
+    SignalStrength {
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.verticalCenter: parent.verticalCenter
+        id: telemIcon
+        //size: parent.height * 0.5
+        percent: _activeVehicle ? _activeVehicle.telemetryLRSSI : 0
+    }
+
+
+    /*
     QGCColoredImage {
         id:                 telemIcon
         anchors.top:        parent.top
@@ -83,6 +99,7 @@ Item {
         fillMode:           Image.PreserveAspectFit
         color:              qgcPal.buttonText
     }
+    */
     MouseArea {
         anchors.fill: parent
         onClicked: {

@@ -243,7 +243,7 @@ SetupPage {
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
 
-                    FactComboBox {
+                    QGCComboBox {
                         visible: QGroundControl.monarkManager.monarkState
                                  === 2 //ScanSuccessPairingRequired
                                  || QGroundControl.monarkManager.monarkState
@@ -251,9 +251,20 @@ SetupPage {
                         id: groundFrequencyTextField
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
                         indexModel: false
-                        fact: QGroundControl.settingsManager.monarkSettings.groundFrequency
+                        //fact: QGroundControl.settingsManager.monarkSettings.groundFrequency
                         font.pointSize: ScreenTools.mediumFontPointSize
                         model: QGroundControl.monarkManager.validFrequencies
+
+                        onVisibleChanged: {
+                            currentIndex = 0
+                        }
+
+                        onCurrentIndexChanged: {
+                            console.warn("currentIndex = ", currentIndex)
+                            if (currentIndex >= 0 && currentIndex < count) {
+                                QGroundControl.settingsManager.monarkSettings.groundFrequency.rawValue = QGroundControl.monarkManager.validFrequencies[currentIndex]
+                            }
+                        }
                     }
 
 
@@ -810,6 +821,16 @@ SetupPage {
                         //fact:                   QGroundControl.settingsManager.monarkSettings.groundFrequency
                         font.pointSize: ScreenTools.mediumFontPointSize
                         model: QGroundControl.monarkManager.validFrequencies
+
+                        onVisibleChanged: {
+                            for (var index = 0; index < count; ++index) {
+                                if (QGroundControl.monarkManager.validFrequencies[index]
+                                        === QGroundControl.settingsManager.monarkSettings.groundFrequency.rawValue) {
+                                    currentIndex = index
+                                    break
+                                }
+                            }
+                        }
                     }
 
 

@@ -1,3 +1,5 @@
+
+
 /****************************************************************************
  *
  * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
@@ -13,21 +15,22 @@
  *   @brief QGC Main Tool Signal Strength
  *   @author Gus Grubba <gus@auterion.com>
  */
-
 import QtQuick 2.3
 
-import QGroundControl.Controls  1.0
-import QGroundControl.Palette   1.0
+import QGroundControl.Controls 1.0
+import QGroundControl.Palette 1.0
 
 Item {
-    id:     signalRoot
-    width:  size
+    id: signalRoot
+    width: size
     height: size
 
-    property real size:     50
-    property real percent:  0
+    property real size: 50
+    property real percent: 0
 
-    QGCPalette { id: qgcPal }
+    QGCPalette {
+        id: qgcPal
+    }
 
     function getIcon() {
         if (percent < 20)
@@ -43,11 +46,19 @@ Item {
         return "/qmlimages/Signal100.svg"
     }
 
+    function getColor() {
+        if (percent < 26)
+            return qgcPal.colorRed
+        if (percent < 71)
+            return qgcPal.colorYellow
+        return qgcPal.colorGreen
+    }
+
     QGCColoredImage {
-        source:             getIcon()
-        fillMode:           Image.PreserveAspectFit
-        anchors.fill:       parent
-        color:              qgcPal.buttonText
-        sourceSize.height:  size
+        source: getIcon()
+        fillMode: Image.PreserveAspectFit
+        anchors.fill: parent
+        color: getColor()
+        sourceSize.height: size
     }
 }
