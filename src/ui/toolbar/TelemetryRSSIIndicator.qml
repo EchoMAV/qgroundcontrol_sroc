@@ -66,7 +66,7 @@ Item {
                         text: qsTr("RSSI: ")
                     }
                     QGCLabel {
-                        text: _activeVehicle.telemetryLRSSI + " dBm"
+                        text: "-" + _activeVehicle.telemetryLRSSI + " dBm"
                     }
                     QGCLabel {
                         text: qsTr("SNR: ")
@@ -97,7 +97,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         id: telemIcon
         //size: parent.height * 0.5
-        percent: _activeVehicle ? _activeVehicle.telemetryLRSSI : 0
+        percent: _activeVehicle ? _activeVehicle.telemetryTXBuffer : 0
     }
 
 

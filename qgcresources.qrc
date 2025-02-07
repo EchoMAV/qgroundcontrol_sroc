@@ -18,7 +18,7 @@
         <file alias="counter-clockwise-arrow.svg">resources/counter-clockwise-arrow.svg</file>
         <file alias="chevron-down.svg">resources/chevron-down.svg</file>
         <file alias="chevron-up.svg">resources/chevron-up.svg</file>
-		<file alias="DropArrow.svg">resources/DropArrow.svg</file>
+        <file alias="DropArrow.svg">resources/DropArrow.svg</file>
         <file alias="gear-black.svg">resources/gear-black.svg</file>
         <file alias="gear-white.svg">resources/gear-white.svg</file>
         <file alias="helicoptericon.svg">resources/helicoptericon.svg</file>
@@ -38,8 +38,8 @@
         <file alias="Play">resources/Play.svg</file>
         <file alias="PowerButton">resources/PowerButton.svg</file>
         <file alias="QGCLogoBlack">resources/QGCLogoBlack.svg</file>
-	<file alias="QGCLogoFull">resources/QGCLogoFull.svg</file>
-	<file alias="QGCLogoFullecho.svg">resources/QGCLogoFullecho.svg</file>
+        <file alias="QGCLogoFull">resources/QGCLogoFull.svg</file>
+        <file alias="QGCLogoFullecho.svg">resources/QGCLogoFullecho.svg</file>
         <file alias="QGCLogoWhite">resources/QGCLogoWhite.svg</file>
         <file alias="QGCLogoArrow">resources/QGCLogoArrow.svg</file>
         <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
@@ -60,6 +60,8 @@
         <file alias="GripperRelease.svg">resources/GripperRelease.svg</file>
         <file alias="GripperGrab.svg">resources/GripperGrab.svg</file>
         <file>resources/icons/qgroundcontrol.ico</file>
+        <file alias="monark_logo_blue.svg">resources/monark_logo_blue.svg</file>
+        <file alias="monark_logo_gray.svg">resources/monark_logo_gray.svg</file>
     </qresource>
     <qresource prefix="/res/firmware">
         <file alias="3drradio.png">resources/firmware/3drradio.png</file>

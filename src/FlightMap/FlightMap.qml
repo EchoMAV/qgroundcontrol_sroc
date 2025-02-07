@@ -129,7 +129,7 @@ Map {
 
         sourceItem: Image {
             id:             mapItemImage
-            source:         isNaN(gcsHeading) ? "/res/QGCLogoFullecho" : "/res/QGCLogoArrow"
+            source:         isNaN(gcsHeading) ? "/res/monark_logo_gray" : "/res/QGCLogoArrow"
             mipmap:         true
             antialiasing:   true
             fillMode:       Image.PreserveAspectFit

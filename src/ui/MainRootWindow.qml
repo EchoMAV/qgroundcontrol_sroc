@@ -194,12 +194,13 @@ ApplicationWindow {
     }
 
     function showSetupTool() {
-        showTool(qsTr("Vehicle Setup"), "SetupView.qml", "/qmlimages/Gears.svg")
+        showTool(qsTr("Vehicle Setup"), "SetupView.qml",
+                 "/res/monark_logo_gray")
     }
 
     function showSettingsTool() {
         showTool(qsTr("Application Settings"), "AppSettings.qml",
-                 "/res/QGCLogoWhite")
+                 "/qmlimages/Gears.svg")
     }
 
     //-------------------------------------------------------------------------
@@ -349,8 +350,9 @@ ApplicationWindow {
                         height: toolSelectDialog._toolButtonHeight
                         Layout.fillWidth: true
                         text: qsTr("Vehicle Setup")
-                        imageColor: qgcPal.text
-                        imageResource: "/qmlimages/Gears.svg"
+                        imageColor: "transparent"
+
+                        imageResource: "/res/monark_logo_gray"
                         onClicked: {
                             if (!mainWindow.preventViewSwitch()) {
                                 toolSelectDialog.close()
@@ -379,9 +381,9 @@ ApplicationWindow {
                         id: settingsButton
                         height: toolSelectDialog._toolButtonHeight
                         Layout.fillWidth: true
+                        imageResource: "/qmlimages/Gears.svg"
                         text: qsTr("Application Settings")
-                        imageResource: "/res/QGCLogoFullecho"
-                        imageColor: "transparent"
+                        imageColor: qgcPal.text
                         visible: !QGroundControl.corePlugin.options.combineSettingsAndSetup
                         onClicked: {
                             if (!mainWindow.preventViewSwitch()) {
@@ -546,7 +548,8 @@ ApplicationWindow {
                     height: ScreenTools.defaultFontPixelHeight * 2
                     fillMode: Image.PreserveAspectFit
                     mipmap: true
-                    color: qgcPal.text
+                    color: "transparent"
+                    //color: qgcPal.text
                 }
 
                 QGCLabel {
