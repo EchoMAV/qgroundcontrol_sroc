@@ -54,9 +54,10 @@ const char* Joystick::_buttonActionStepZoomIn =         QT_TR_NOOP("Step Zoom In
 const char* Joystick::_buttonActionStepZoomOut =        QT_TR_NOOP("Step Zoom Out");
 const char* Joystick::_buttonActionNextStream =         QT_TR_NOOP("Next Video Stream");
 const char* Joystick::_buttonActionPreviousStream =     QT_TR_NOOP("Previous Video Stream");
+const char* Joystick::_buttonActionToggleEOIR =         QT_TR_NOOP("Toggle EO/IR");
 const char* Joystick::_buttonActionNextCamera =         QT_TR_NOOP("Next Camera");
 const char* Joystick::_buttonActionPreviousCamera =     QT_TR_NOOP("Previous Camera");
-const char* Joystick::_buttonActionTriggerCamera =      QT_TR_NOOP("Trigger Camera");
+const char* Joystick::_buttonActionTriggerCamera =      QT_TR_NOOP("Take Picture");
 const char* Joystick::_buttonActionStartVideoRecord =   QT_TR_NOOP("Start Recording Video");
 const char* Joystick::_buttonActionStopVideoRecord =    QT_TR_NOOP("Stop Recording Video");
 const char* Joystick::_buttonActionToggleVideoRecord =  QT_TR_NOOP("Toggle Recording Video");
@@ -72,7 +73,8 @@ const char* Joystick::_buttonActionGripperGrab =        QT_TR_NOOP("Gripper Clos
 const char* Joystick::_buttonActionGripperRelease =     QT_TR_NOOP("Gripper Open");
 const char* Joystick::_buttonActionLandingGearDeploy=   QT_TR_NOOP("Landing gear deploy");
 const char* Joystick::_buttonActionLandingGearRetract=  QT_TR_NOOP("Landing gear retract");
-const char* Joystick::_buttonActionToggleRC7=           QT_TR_NOOP("Toggle Optical Flow source");
+const char* Joystick::_buttonActionToggleRC7=           QT_TR_NOOP("Toggle Optical Flow tuning");
+
 
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
@@ -1134,6 +1136,8 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
         if (buttonDown) emit landingGearRetract();
     } else if(action == _buttonActionToggleRC7) {
         if (buttonDown) emit toggleRC7();
+    } else if(action == _buttonActionToggleEOIR) {
+        if (buttonDown) emit toggleEOIR();
     } else {
         if (buttonDown && _activeVehicle) {
             for (auto& item : _customMavCommands) {
@@ -1189,32 +1193,33 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
             _assignableButtonActions.append(new AssignableButtonAction(this, mode));
         }
     }
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionVTOLFixedWing));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionVTOLMultiRotor));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionVTOLFixedWing));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionVTOLMultiRotor));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionContinuousZoomIn, true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionContinuousZoomOut, true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionStepZoomIn,  true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionStepZoomOut, true));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionNextStream));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionPreviousStream));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionNextCamera));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionPreviousCamera));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionNextStream));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionPreviousStream));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionToggleEOIR));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionNextCamera));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionPreviousCamera));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionTriggerCamera));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionStartVideoRecord));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionStopVideoRecord));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionToggleVideoRecord));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalDown,    true));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalUp,      true));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalLeft,    true));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalRight,   true));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalCenter));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalYawLock));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalYawFollow));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalDown,    true));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalUp,      true));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalLeft,    true));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalRight,   true));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalCenter));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalYawLock));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalYawFollow));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionEmergencyStop));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperGrab));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperRelease));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionLandingGearDeploy));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionLandingGearRetract));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionLandingGearDeploy));
+    //_assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionLandingGearRetract));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionToggleRC7));
 
     for (auto& item : _customMavCommands) {

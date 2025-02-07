@@ -36,6 +36,7 @@ Row {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             source: modelData
+            //visible: true
             visible: item.showIndicator
         }
     }
@@ -57,6 +58,7 @@ Row {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             source: modelData
+            //visible: true
             visible: item.showIndicator
         }
     }
@@ -67,6 +69,7 @@ Row {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             source: modelData
+            //visible: true
             visible: item.showIndicator
         }
     }

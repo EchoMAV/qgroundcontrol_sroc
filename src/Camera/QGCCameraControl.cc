@@ -372,12 +372,20 @@ QGCCameraControl::toggleVideo()
 bool
 QGCCameraControl::takePhoto()
 {
+
+
     qCDebug(CameraControlLog) << "takePhoto()";
     //-- Check if camera can capture photos or if it can capture it while in Video Mode
     if(!capturesPhotos()) {
         qCWarning(CameraControlLog) << "Camera does not handle image capture";
         return false;
     }
+    if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING){
+        qCWarning(CameraControlLog) << "Can't take a picture while you're recording video";
+        return false;
+    }
+
+
     if(cameraMode() == CAM_MODE_VIDEO && !photosInVideoMode()) {
         qCWarning(CameraControlLog) << "Camera does not handle image capture while in video mode";
         return false;
@@ -537,6 +545,21 @@ QGCCameraControl::setThermalMode(ThermalViewMode mode)
     settings.setValue(kThermalMode, static_cast<uint32_t>(mode));
     _thermalMode = mode;
     emit thermalModeChanged();
+}
+
+void
+QGCCameraControl::toggleThermalMode()
+{
+    switch(_thermalMode)
+    {
+    case ThermalViewMode::THERMAL_BLEND:
+    case ThermalViewMode::THERMAL_OFF:
+    case ThermalViewMode::THERMAL_PIP:
+        setThermalMode(ThermalViewMode::THERMAL_FULL);
+        break;
+    default:
+        setThermalMode(ThermalViewMode::THERMAL_OFF);
+    }
 }
 
 //-----------------------------------------------------------------------------

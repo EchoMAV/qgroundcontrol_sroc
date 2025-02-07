@@ -929,7 +929,7 @@ Rectangle {
                     QGCLabel {
                         id:         rtkSectionLabel
                         text:       qsTr("RTK GPS")
-                        visible:    QGroundControl.settingsManager.rtkSettings.visible
+                        visible:    false//QGroundControl.settingsManager.rtkSettings.visible
                     }
                     Rectangle {
                         Layout.preferredHeight: rtkGrid.height + (_margins * 2)
@@ -1063,7 +1063,7 @@ Rectangle {
                     QGCLabel {
                         id:         adsbSectionLabel
                         text:       qsTr("ADSB Server")
-                        visible:    QGroundControl.settingsManager.adsbVehicleManagerSettings.visible
+                        visible:    false//QGroundControl.settingsManager.adsbVehicleManagerSettings.visible
                     }
                     Rectangle {
                         Layout.preferredHeight: adsbGrid.y + adsbGrid.height + _margins

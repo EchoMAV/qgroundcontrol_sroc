@@ -26,14 +26,14 @@ Item {
     anchors.top: parent.top
     anchors.bottom: parent.bottom
 
-    property bool showIndicator: _activeVehicle.supportsRadio
-                                 && _rcRSSIAvailable
+    //property bool showIndicator: _activeVehicle && _activeVehicle.supportsRadio
+    //                             && _rcRSSIAvailable
+    property bool showIndicator: false
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    property bool _rcRSSIAvailable: activeVehicle ? activeVehicle.mavlinkLossPercent >= 0
-                                                    && activeVehicle.mavlinkLossPercent
-                                                    <= 100 : false
-
+    property bool _rcRSSIAvailable: _activeVehicle ? _activeVehicle.mavlinkLossPercent >= 0
+                                                     && _activeVehicle.mavlinkLossPercent
+                                                     <= 100 : false
 
     Component {
         id: rcRSSIInfo

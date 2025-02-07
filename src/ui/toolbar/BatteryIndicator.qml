@@ -110,7 +110,8 @@ Item {
 
             function getBatteryVoltageText() {
                 if (!isNaN(battery.voltage.rawValue)) {
-                    return battery.voltage.valueString + battery.voltage.units
+                    return (battery.voltage.rawValue).toFixed(
+                                1) + battery.voltage.units
                 } else if (battery.chargeState.rawValue
                            !== MAVLink.MAV_BATTERY_CHARGE_STATE_UNDEFINED) {
                     return battery.chargeState.enumStringValue
@@ -263,7 +264,8 @@ Item {
                                 //          + " " + object.percentRemaining.units
                                 //}
                                 QGCLabel {
-                                    text: object.voltage.valueString + " " + object.voltage.units
+                                    text: (object.voltage.rawValue).toFixed(
+                                              1) + " " + object.voltage.units
                                 }
                                 QGCLabel {
                                     text: object.mahConsumed.valueString + " "

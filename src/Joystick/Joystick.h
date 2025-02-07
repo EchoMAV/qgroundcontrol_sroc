@@ -223,6 +223,7 @@ signals:
     void landingGearDeploy          ();
     void landingGearRetract         ();
     void toggleRC7                  ();
+    void toggleEOIR                 ();
 
 protected:
     void    _setDefaultCalibration  ();
@@ -343,6 +344,7 @@ private:
     static const char* _buttonActionContinuousZoomOut;
     static const char* _buttonActionNextStream;
     static const char* _buttonActionPreviousStream;
+    static const char* _buttonActionToggleEOIR;
     static const char* _buttonActionNextCamera;
     static const char* _buttonActionPreviousCamera;
     static const char* _buttonActionTriggerCamera;

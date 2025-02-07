@@ -94,7 +94,7 @@ Item {
     SignalStrength {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        anchors.verticalCenter: parent.verticalCenter
+        //anchors.verticalCenter: parent.verticalCenter
         id: telemIcon
         //size: parent.height * 0.5
         percent: _activeVehicle ? _activeVehicle.telemetryTXBuffer : 0

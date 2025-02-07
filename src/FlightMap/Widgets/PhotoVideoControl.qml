@@ -444,7 +444,7 @@ Rectangle {
             }
             QGCButton {
                 enabled: true
-                text: qsTr("Day/IR")
+                text: qsTr("EO/IR")
                 width: 100
                 onClicked: {
                     if (_mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_BLEND

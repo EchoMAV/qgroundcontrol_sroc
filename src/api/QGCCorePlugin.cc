@@ -241,13 +241,13 @@ bool QGCCorePlugin::adjustSettingMetaData(const QString& settingsGroup, FactMeta
             return true;
         }
 
-#if defined (__mobile__)
-        if (metaData.name() == AppSettings::telemetrySaveName) {
-            // Mobile devices have limited storage so don't turn on telemtry saving by default
-            metaData.setRawDefaultValue(false);
-            return true;
-        }
-#endif
+//#if defined (__mobile__)
+//        if (metaData.name() == AppSettings::telemetrySaveName) {
+//            // Mobile devices have limited storage so don't turn on telemtry saving by default
+//            metaData.setRawDefaultValue(false);
+//            return true;
+//        }
+//#endif
 
 #ifndef __android__
         if (metaData.name() == AppSettings::androidSaveToSDCardName) {

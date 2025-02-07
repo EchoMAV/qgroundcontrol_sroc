@@ -289,6 +289,7 @@ public:
 
     virtual ThermalViewMode thermalMode     () { return _thermalMode; }
     virtual void        setThermalMode      (ThermalViewMode mode);
+    virtual void        toggleThermalMode   ();
     virtual double      thermalOpacity      () { return _thermalOpacity; }
     virtual void        setThermalOpacity   (double val);
 

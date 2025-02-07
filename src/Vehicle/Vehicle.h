@@ -357,6 +357,7 @@ public:
     /// Command vehicle to toggle RC 7
     Q_INVOKABLE void toggleRC7(void);
 
+
     /// Command vehicle to return to launch
     Q_INVOKABLE void guidedModeRTL(bool smartRTL);
 

@@ -79,7 +79,7 @@
     "type":             "uint32",
     "enumStrings":      "mkv,mov,mp4",
     "enumValues":       "0,1,2",
-    "default":     0
+    "default":     2
 },
 {
     "name":             "maxVideoSize",
@@ -97,7 +97,7 @@
     "longDesc":  "When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.",
     "type":             "bool",
     "default":     false,
-    "mobileDefault":   true
+    "mobileDefault":   false
 },
 {
     "name":             "rtspTimeout",

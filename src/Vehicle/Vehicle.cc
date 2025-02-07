@@ -2959,6 +2959,7 @@ void Vehicle::_initRC()
     //emit rc8Changed(_rc8High);
 }
 
+
 void Vehicle::toggleRC7()
 {
     qDebug() << "Toggling RC 7";

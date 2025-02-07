@@ -71,6 +71,7 @@ protected slots:
     virtual void    _startVideoRecording    ();
     virtual void    _stopVideoRecording     ();
     virtual void    _toggleVideoRecording   ();
+     virtual void   _toggleEOIR   ();
 
 protected:
     virtual QGCCameraControl* _findCamera   (int id);
