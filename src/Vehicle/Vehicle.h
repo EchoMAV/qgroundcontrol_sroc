@@ -357,6 +357,9 @@ public:
     /// Command vehicle to toggle RC 7
     Q_INVOKABLE void toggleRC7(void);
 
+    /// Toggle EO/IR camera
+    Q_INVOKABLE void toggleEOIR(void);
+
 
     /// Command vehicle to return to launch
     Q_INVOKABLE void guidedModeRTL(bool smartRTL);

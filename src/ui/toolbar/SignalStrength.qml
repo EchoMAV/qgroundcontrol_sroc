@@ -33,24 +33,29 @@ Item {
     }
 
     function getIcon() {
-        if (percent < 20)
+        if (percent < 10)
             return "/qmlimages/Signal0.svg"
-        if (percent < 40)
+        if (percent < 20)
             return "/qmlimages/Signal20.svg"
-        if (percent < 60)
+        if (percent < 40)
             return "/qmlimages/Signal40.svg"
-        if (percent < 80)
+        if (percent < 65)
             return "/qmlimages/Signal60.svg"
-        if (percent < 95)
+        if (percent < 85)
             return "/qmlimages/Signal80.svg"
         return "/qmlimages/Signal100.svg"
     }
 
     function getColor() {
-        if (percent < 26)
+        if (percent < 20) {
             return qgcPal.colorRed
-        if (percent < 71)
+        }
+        if (percent < 40) {
+            return qgcPal.colorOrange
+        }
+        if (percent < 65) {
             return qgcPal.colorYellow
+        }
         return qgcPal.colorGreen
     }
 

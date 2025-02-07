@@ -24,6 +24,7 @@ static constexpr inline char const*const np_groundRadioSuccessStr = "\r\nOK\r\n"
 static constexpr inline char const*const np_droneSuccessStr="'is_success': True";
 static constexpr inline uint16_t const n_defaultGroundTxPower= 20;
 static constexpr inline uint16_t const n_defaultGroundFrequency = 2310;
+static constexpr inline uint16_t const n_maxMonarkID=3;
 
 std::string _getDroneIPAddress(int monarkID)
 {
@@ -692,10 +693,10 @@ void MonarkManager::startScanning()
                 m_updateFailedDrones.clear();
 
                 std::vector<std::future<std::vector<std::string>>> dronePingResponses;
-                for(auto i=0;i<255;++i)
+                for(auto i=0;i<n_maxMonarkID;++i)
                 {
                     dronePingResponses.push_back(std::async(std::launch::async,[i](){
-                        auto const ip = "172.20.2."+std::to_string(i);
+                        auto const ip = "172.20.2."+std::to_string(i+1);
                         return _sendCommands(ip.c_str(), "admin", nullptr, nullptr, true).second;
                     }));
                 }
@@ -707,13 +708,13 @@ void MonarkManager::startScanning()
                 _initializeNetworkId(true);
                 _initializeTxPower(true);
                 _initializeFrequency(true);
-                for(auto i=0;i<255;++i)
+                for(auto i=0;i<n_maxMonarkID;++i)
                 {
                     auto response = dronePingResponses[i].get();
                     if(!response.empty() && response.back() == np_droneSuccessStr)
                     {
-                        m_beforeUpdateDrones.insert(i);
-                        m_allDrones.insert(i);
+                        m_beforeUpdateDrones.insert(i+1);
+                        m_allDrones.insert(i+1);
                     }
                 }
                 emit allDronesChanged();
@@ -744,22 +745,26 @@ void MonarkManager::refreshDroneList()
         auto oldAllDrones=m_allDrones;
         m_allDrones.clear();
         std::vector<std::future<std::vector<std::string>>> dronePingResponses;
-        for(auto i=0;i<255;++i)
+        for(auto i=0;i<n_maxMonarkID;++i)
         {
             dronePingResponses.push_back(std::async(std::launch::async,[i](){
-                auto const ip = "172.20.2."+std::to_string(i);
+                auto const ip = "172.20.2."+std::to_string(i+1);
                 return _sendCommands(ip.c_str(), "admin", nullptr, nullptr, true).second;
             }));
         }
-        for(auto i=0;i<255;++i)
+        for(auto i=0;i<n_maxMonarkID;++i)
         {
             auto response = dronePingResponses[i].get();
             if(!response.empty() && response.back() == np_droneSuccessStr)
             {
-                m_allDrones.insert(i);
+                if(m_allDrones.insert(i+1).second)
+                {
+                    emit allDronesChanged();
+                }
             }
         }
         emit allDronesChanged();
+
         //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::refreshDroneList()";
     }
 }

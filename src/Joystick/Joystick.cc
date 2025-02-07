@@ -780,6 +780,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             disconnect(this, &Joystick::landingGearDeploy,  _activeVehicle, &Vehicle::landingGearDeploy);
             disconnect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
             disconnect(this, &Joystick::toggleRC7,          _activeVehicle, &Vehicle::toggleRC7);
+            //disconnect(this, &Joystick::toggleEOIR,         _activeVehicle, &Vehicle::toggleEOIR);
             disconnect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         }
         // Always set up the new vehicle
@@ -807,6 +808,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::landingGearDeploy,  _activeVehicle, &Vehicle::landingGearDeploy);
             connect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
             connect(this, &Joystick::toggleRC7,          _activeVehicle, &Vehicle::toggleRC7);
+            //connect(this, &Joystick::toggleEOIR,         _activeVehicle, &Vehicle::toggleEOIR);
             connect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         }
     }

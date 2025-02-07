@@ -2854,7 +2854,7 @@ QString Vehicle::vehicleTypeName() const {
 QString Vehicle::_vehicleIdSpeech()
 {
     if (_toolbox->multiVehicleManager()->vehicles()->count() > 1) {
-        return tr("Vehicle %1 ").arg(id());
+        return tr("Monarch %1 ").arg(id());
     } else {
         return QString();
     }
@@ -2957,6 +2957,15 @@ void Vehicle::_initRC()
     emit rc7Changed(_rc7High);
     //_rc8High = false;
     //emit rc8Changed(_rc8High);
+}
+
+void Vehicle::toggleEOIR()
+{
+    qDebug() << "Toggling EO/IR";
+    if(_cameraManager)
+    {
+        _cameraManager->toggleEOIR();
+    }
 }
 
 

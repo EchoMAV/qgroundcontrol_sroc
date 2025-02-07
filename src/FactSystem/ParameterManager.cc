@@ -1252,7 +1252,7 @@ void ParameterManager::_initialRequestTimeout(void)
         _initialRequestTimeoutTimer.start();
     } else {
         if (!_vehicle->genericFirmware()) {
-            QString errorMsg = tr("Vehicle %1 did not respond to request for parameters. "
+            QString errorMsg = tr("MONARK %1 did not respond to request for parameters. "
                                   "This will cause %2 to be unable to display its full user interface.").arg(_vehicle->id()).arg(qgcApp()->applicationName());
             qCDebug(ParameterManagerLog) << errorMsg;
             qgcApp()->showAppMessage(errorMsg);

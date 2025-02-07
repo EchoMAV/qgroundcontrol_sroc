@@ -51,6 +51,9 @@ public:
     //-- Current thermal stream
     virtual QGCVideoStreamInfo* thermalStreamInstance();
 
+    virtual void   toggleEOIR   ();
+
+
 signals:
     void    camerasChanged          ();
     void    cameraLabelsChanged     ();
@@ -71,7 +74,6 @@ protected slots:
     virtual void    _startVideoRecording    ();
     virtual void    _stopVideoRecording     ();
     virtual void    _toggleVideoRecording   ();
-     virtual void   _toggleEOIR   ();
 
 protected:
     virtual QGCCameraControl* _findCamera   (int id);

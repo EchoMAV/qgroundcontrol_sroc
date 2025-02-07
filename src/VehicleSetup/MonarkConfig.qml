@@ -91,7 +91,7 @@ SetupPage {
                           ? qsTr("An EchoLink is detected Please enter its encryption key and click NEXT.") : QGroundControl.monarkManager.monarkState === 5 //ScanFailedNotDetected
                             ? qsTr("Could not find EchoLink. Try again?") : QGroundControl.monarkManager.monarkState === 7 //SaveSettingsFailed
                               ? qsTr("Could not save settings. Try again?") : QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
-                                ? qsTr("Change Tx Power (7-33 dBm)") : QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
+                                ? qsTr("Change Tx Power (7-32 dBm)") : QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
                                   ? qsTr("Change Frequency") : QGroundControl.monarkManager.monarkState === 14 //ChangeEncryptionKey
                                     ? qsTr("Change Encryption Key") : qsTr(
                                           "INVALID Application state. Restart application or contact support.")
@@ -268,6 +268,7 @@ SetupPage {
                                 ///currentIndex = 0
                             }
                         }
+
 
                         /*
                         onCurrentIndexChanged: {
@@ -533,7 +534,7 @@ SetupPage {
                     columns: 2
                     QGCLabel {
                         wrapMode: Text.Wrap
-                        text: qsTr("MONARK ID (1-254)")
+                        text: qsTr("MONARK ID (1-3)")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     FactTextField {
@@ -718,7 +719,8 @@ SetupPage {
                     Layout.alignment: Qt.AlignTop
                     source: "image://MONARKQRCodes/" + networkIdTextField.text + ","
                             + encryptionKeyTextField.text + "," + groundTxPowerTextField.text + ","
-                            + groundFrequencyTextField.currentText + "," + monarkIdTextField.text
+                            + QGroundControl.settingsManager.monarkSettings.groundFrequency.rawValue
+                            + "," + monarkIdTextField.text
                     sourceSize.width: 875
                     sourceSize.height: 875 //TODO is there a way to un-hard-code these
                     cache: false
@@ -1066,7 +1068,7 @@ SetupPage {
             IntValidator {
                 id: monarkIdValidator
                 bottom: 1
-                top: 254
+                top: 3
             }
             IntValidator {
                 id: txPowerValidator

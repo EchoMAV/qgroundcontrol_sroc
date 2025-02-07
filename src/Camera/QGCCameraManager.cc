@@ -427,7 +427,7 @@ QGCCameraManager::_activeJoystickChanged(Joystick* joystick)
         disconnect(_activeJoystick, &Joystick::startVideoRecord,    this, &QGCCameraManager::_startVideoRecording);
         disconnect(_activeJoystick, &Joystick::stopVideoRecord,     this, &QGCCameraManager::_stopVideoRecording);
         disconnect(_activeJoystick, &Joystick::toggleVideoRecord,   this, &QGCCameraManager::_toggleVideoRecording);
-        disconnect(_activeJoystick, &Joystick::toggleEOIR,          this, &QGCCameraManager::_toggleEOIR);
+        disconnect(_activeJoystick, &Joystick::toggleEOIR,          this, &QGCCameraManager::toggleEOIR);
     }
     _activeJoystick = joystick;
     if(_activeJoystick) {
@@ -440,7 +440,7 @@ QGCCameraManager::_activeJoystickChanged(Joystick* joystick)
         connect(_activeJoystick, &Joystick::startVideoRecord,       this, &QGCCameraManager::_startVideoRecording);
         connect(_activeJoystick, &Joystick::stopVideoRecord,        this, &QGCCameraManager::_stopVideoRecording);
         connect(_activeJoystick, &Joystick::toggleVideoRecord,      this, &QGCCameraManager::_toggleVideoRecording);
-        connect(_activeJoystick, &Joystick::toggleEOIR,             this, &QGCCameraManager::_toggleEOIR);
+        connect(_activeJoystick, &Joystick::toggleEOIR,             this, &QGCCameraManager::toggleEOIR);
     }
 }
 
@@ -522,7 +522,7 @@ QGCCameraManager::_stopZoom()
 
 //-----------------------------------------------------------------------------
 void
-QGCCameraManager::_toggleEOIR()
+QGCCameraManager::toggleEOIR()
 {
     qCDebug(CameraManagerLog) << "Toggle EO/IR";
     QGCCameraControl* pCamera = currentCameraInstance();
