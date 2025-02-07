@@ -50,10 +50,7 @@ Item {
 
             PreFlightCheckButton {
                 name:           qsTr("Antenna Orientation")
-                manualText:     qsTr("Orientate antennas down 45deg.")
-
-                need_pic: true
-                pic_name: "/qmlimages/antenna_orientation"
+                manualText:     qsTr("Orientate antennas up 90deg.")
             }
 
             PreFlightSensorsHealthCheck {
