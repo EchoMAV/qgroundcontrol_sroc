@@ -46,7 +46,7 @@ Item {
                 anchors.centerIn: parent
                 QGCLabel {
                     id: telemLabel
-                    text: qsTr("Telemetry RSSI Status")
+                    text: qsTr("EchoLink Signal Status")
                     font.family: ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
@@ -57,11 +57,24 @@ Item {
                     columns: 2
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
-                        text: qsTr("Signal Strength:")
+                        text: qsTr("Strength: ")
                     }
                     QGCLabel {
-                        text: _activeVehicle.telemetryLRSSI + "%"
+                        text: _activeVehicle.telemetryTXBuffer + "%"
                     }
+                    QGCLabel {
+                        text: qsTr("RSSI: ")
+                    }
+                    QGCLabel {
+                        text: _activeVehicle.telemetryLRSSI + " dBm"
+                    }
+                    QGCLabel {
+                        text: qsTr("SNR: ")
+                    }
+                    QGCLabel {
+                        text: _activeVehicle.telemetryLNoise + " dB"
+                    }
+
                     //QGCLabel { text: qsTr("Remote RSSI:") }
                     //QGCLabel { text: _activeVehicle.telemetryRRSSI + " dBm"}
                     //QGCLabel { text: qsTr("RX Errors:") }
