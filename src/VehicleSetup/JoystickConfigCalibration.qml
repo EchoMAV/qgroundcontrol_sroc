@@ -92,7 +92,7 @@ Item {
                         y: (parent.height * controller.stickPositions[3]) - (height * 0.5)
                     }
                     //---------------------------------------------------------
-                    //-- Top Right Stick
+                    //-- Right rocker zoom (Kutta and SRoC)
                     Rectangle {
                         width: parent.width * 0.25
                         height: parent.width * 0.035
@@ -100,7 +100,7 @@ Item {
                         color: qgcPal.window
                         border.color: qgcPal.text
                         border.width: ScreenTools.defaultFontPixelWidth * 0.125
-                        visible: controller.hasTopRightZoom
+                        visible: controller.hasRightRockerZoom
                         x: (parent.width * 0.75) - (width * 0.5)
                         y: -height
                     }
@@ -109,7 +109,7 @@ Item {
                         width: parent.width * 0.035
                         height: width
                         radius: width * 0.5
-                        visible: controller.hasTopRightZoom
+                        visible: controller.hasRightRockerZoom
                                  && parent.hasStickPositions
                         x: (parent.width * controller.stickPositions[4]) - (width * 0.5)
                         y: -height

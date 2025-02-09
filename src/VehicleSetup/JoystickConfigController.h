@@ -60,7 +60,7 @@ public:
     Q_PROPERTY(bool nextEnabled                 READ nextEnabled                NOTIFY nextEnabledChanged)
     Q_PROPERTY(bool skipEnabled                 READ skipEnabled                NOTIFY skipEnabledChanged)
 
-    Q_PROPERTY(bool hasTopRightZoom             READ hasTopRightZoom            NOTIFY hasTopRightZoomChanged)
+    Q_PROPERTY(bool hasRightRockerZoom          READ hasRightRockerZoom         NOTIFY hasRightRockerZoomChanged)
 
     Q_PROPERTY(QList<qreal> stickPositions      READ stickPositions             NOTIFY stickPositionsChanged)
 
@@ -96,7 +96,7 @@ public:
     bool nextEnabled                        ();
     bool skipEnabled                        ();
 
-    bool hasTopRightZoom                        ();
+    bool hasRightRockerZoom                 ();
 
     QList<qreal> stickPositions             () { return _currentStickPositions; }
 
@@ -105,7 +105,7 @@ public:
         qreal   leftY;
         qreal   rightX;
         qreal   rightY;
-        qreal   topRightX;
+        qreal   rightRockerX;
     };
 
 signals:
@@ -125,7 +125,7 @@ signals:
     void transmitterModeChanged             (int mode);
     void calibratingChanged                 ();
     void nextEnabledChanged                 ();
-    void hasTopRightZoomChanged                 ();
+    void hasRightRockerZoomChanged          ();
     void skipEnabledChanged                 ();
     void stickPositionsChanged              ();
     void statusTextChanged                  ();

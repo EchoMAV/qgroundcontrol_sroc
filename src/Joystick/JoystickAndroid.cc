@@ -19,8 +19,10 @@ static void clear_jni_exception()
     }
 }
 
-JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager)
-    : Joystick(name,axisCount,buttonCount,0,multiVehicleManager)
+JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonCount, int hatCount, std::unordered_set<int> const&hatAxes, int id, MultiVehicleManager* multiVehicleManager)
+    : Joystick(name,axisCount,buttonCount,hatCount,multiVehicleManager)
+    , hatCode{hatCount==0?nullptr: new int[2*hatCount]}
+    , hatValue{hatCount==0?nullptr:new int[2*hatCount]}
     , deviceId(id)
 {
     int i;
@@ -53,29 +55,54 @@ JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonC
     axisValue = new int[_axisCount];
     axisCode = new int[_axisCount];
     QAndroidJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
-    for (i = 0; i < _axisCount; i++) {
+    int hatIndex=0;
+    int axisIndex=0;
+    for (i = 0; i < _axisCount + (_hatCount*2); i++) {
         QAndroidJniObject range = rangeListNative.callObjectMethod("get", "(I)Ljava/lang/Object;",i);
-        axisCode[i] = range.callMethod<jint>("getAxis");
-        // Don't allow two axis with the same code
-        for (int j = 0; j < i; j++) {
-            if (axisCode[i] == axisCode[j]) {
-                axisCode[i] = -1;
-                break;
+
+        if(hatAxes.count(i))
+        {
+            hatCode[hatIndex] = range.callMethod<jint>("getAxis");
+
+            // Don't allow two axis with the same code
+            for (int j = 0; j < hatIndex; j++) {
+                if (hatCode[hatIndex] == hatCode[j]) {
+                    hatCode[hatIndex] = -1;
+                    break;
+                }
             }
+            hatValue[hatIndex] = 0;
+            ++hatIndex;
         }
-        axisValue[i] = 0;
+        else
+        {
+            axisCode[axisIndex] = range.callMethod<jint>("getAxis");
+
+            // Don't allow two axis with the same code
+            for (int j = 0; j < axisIndex; j++) {
+                if (axisCode[axisIndex] == axisCode[j]) {
+                    axisCode[axisIndex] = -1;
+                    break;
+                }
+            }
+            axisValue[axisIndex] = 0;
+            ++axisIndex;
+        }
     }
 
-    qCDebug(JoystickLog) << "axis:" <<_axisCount << "buttons:" <<_buttonCount;
+
+    qCDebug(JoystickLog) << "axis:" <<_axisCount << " buttons:" <<_buttonCount<<" hats:"<<_hatCount;
     QtAndroidPrivate::registerGenericMotionEventListener(this);
     QtAndroidPrivate::registerKeyEventListener(this);
 }
 
 JoystickAndroid::~JoystickAndroid() {
-    delete btnCode;
-    delete axisCode;
-    delete btnValue;
-    delete axisValue;
+    delete[] btnCode;
+    delete[] axisCode;
+    delete[] hatCode;
+    delete[] btnValue;
+    delete[] axisValue;
+    delete[] hatValue;
 
     QtAndroidPrivate::unregisterGenericMotionEventListener(this);
     QtAndroidPrivate::unregisterKeyEventListener(this);
@@ -118,6 +145,9 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
         QAndroidJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
         int axisCount = rangeListNative.callMethod<jint>("size");
 
+
+
+
         // get number of buttons
         jintArray a = env->NewIntArray(_androidBtnListCount);
         env->SetIntArrayRegion(a,0,_androidBtnListCount,_androidBtnList);
@@ -131,7 +161,40 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
 
         qCDebug(JoystickLog) << "\t" << name << "id:" << buff[i] << "axes:" << axisCount << "buttons:" << buttonCount;
 
-        ret[name] = new JoystickAndroid(name, axisCount, buttonCount, buff[i], _multiVehicleManager);
+        std::unordered_set<int> hatAxes;
+
+        for(int j=0;j<axisCount;++j)
+        {
+            QAndroidJniObject motionRange = rangeListNative.callObjectMethod("get", "(I)Ljava/lang/Object;",j);
+            jint axis = motionRange.callMethod<jint>("getAxis");
+            jfloat flat = motionRange.callMethod<jfloat>("getFlat");
+            jfloat fuzz = motionRange.callMethod<jfloat>("getFuzz");
+            jfloat max = motionRange.callMethod<jfloat>("getMax");
+            jfloat min = motionRange.callMethod<jfloat>("getMin");
+            jfloat range = motionRange.callMethod<jfloat>("getRange");
+            jfloat resolution = motionRange.callMethod<jfloat>("getResolution");
+            jint source = motionRange.callMethod<jint>("getSource");
+            qCDebug(JoystickLog)<<"\t\taxis:"<<axis<<" flat:"<<flat<<" fuzz:"<<fuzz<<" max:"<<max<<" min:"<<min<<" range: "<<range<<" resolution: "<<resolution<<" source: "<<source;
+            if(fuzz==0 && flat==0)
+            {
+                hatAxes.insert(j);
+            }
+
+        }
+
+        //currently only support 1 hat-switch
+        int hatCount=1;
+        axisCount-=2;
+        //the Kutta reports the hat switch as both buttons and an axis, so don't do this on that
+        if(hatAxes.size()!=2 || name == "Kutta KTAC GC")
+        {
+            hatAxes.clear();
+            hatCount=0;
+            axisCount+=2;
+        }
+
+
+        ret[name] = new JoystickAndroid(name, axisCount, buttonCount, hatCount, hatAxes, buff[i], _multiVehicleManager);
     }
 
     for (auto i = ret.begin(); i != ret.end();) {
@@ -177,6 +240,26 @@ bool JoystickAndroid::handleGenericMotionEvent(jobject event) {
         const float v = ev.callMethod<jfloat>("getAxisValue", "(I)F",axisCode[i]);
         axisValue[i] = static_cast<int>((v*32767.f));
     }
+    for(int i=0;i<_hatCount;++i)
+    {
+        for(int j=0;j<2;++j)
+        {
+            const float v = ev.callMethod<jfloat>("getAxisValue", "(I)F",hatCode[i*2+j]);
+            if(v>0)
+            {
+                hatValue[i*2+j]=1;
+            }
+            else if(v<0)
+            {
+                hatValue[i*2+j]=-1;
+            }
+            else
+            {
+                hatValue[i*2+j]=0;
+            }
+        }
+
+    }
     return true;
 }
 
@@ -201,8 +284,24 @@ int JoystickAndroid::_getAxis(int i) {
 }
 
 bool JoystickAndroid::_getHat(int hat,int i) {
-    Q_UNUSED(hat);
-    Q_UNUSED(i);
+    if(hat<_hatCount)
+    {
+        switch(i)
+        {
+        case 0:
+            //UP
+            return hatValue[hat*2]<0;
+        case 1:
+            //DOWN
+            return hatValue[hat*2]>0;
+        case 2:
+            //LEFT
+            return hatValue[hat*2+1]<0;
+        default:
+            //RIGHT
+            return hatValue[hat*2+1]>0;
+        }
+    }
     return false;
 }
 

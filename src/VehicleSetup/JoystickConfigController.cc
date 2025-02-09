@@ -62,11 +62,11 @@ static const JoystickConfigController::stateStickPositions stRightStickRight {
     0.25, 0.5, 0.8423, 0.5, 0.75
 };
 
-static const JoystickConfigController::stateStickPositions stSticksTopRightLeft {
+static const JoystickConfigController::stateStickPositions stSticksRightRockerLeft {
     0.25, 0.5, 0.75, 0.5, 0.6542
 };
 
-static const JoystickConfigController::stateStickPositions stSticksTopRightRight {
+static const JoystickConfigController::stateStickPositions stSticksRightRockerRight {
     0.25, 0.5, 0.75, 0.5, 0.8423
 };
 
@@ -75,11 +75,12 @@ JoystickConfigController::JoystickConfigController(void)
 {
     
     connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::_activeJoystickChanged);
-    connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::hasTopRightZoomChanged);
+    connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::hasRightRockerZoomChanged);
+
     _activeJoystickChanged(_joystickManager->activeJoystick());
     _setStickPositions();
     _resetInternalCalibrationValues();
-    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY << _sticksCentered.topRightX;
+    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY << _sticksCentered.rightRockerX;
 }
 
 void JoystickConfigController::start(void)
@@ -145,7 +146,7 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
 
 void JoystickConfigController::_advanceState()
 {
-    if(_currentStep == 9 && !hasTopRightZoom())
+    if(_currentStep == 9 && !hasRightRockerZoom())
     {
         //Skip to end if no zoom function
         _currentStep = 13;
@@ -168,7 +169,7 @@ bool JoystickConfigController::nextEnabled()
 }
 
 
-bool JoystickConfigController::hasTopRightZoom()
+bool JoystickConfigController::hasRightRockerZoom()
 {
     if(_activeJoystick && _activeJoystick->axisCount() > 4 && _joystickManager)
     {
@@ -196,7 +197,7 @@ void JoystickConfigController::_setupCurrentState()
     _stickDetectSettleStarted = false;
     _calSaveCurrentValues();
     _currentStickPositions.clear();
-    _currentStickPositions << state->stickPositions.leftX << state->stickPositions.leftY << state->stickPositions.rightX << state->stickPositions.rightY << state->stickPositions.topRightX;
+    _currentStickPositions << state->stickPositions.leftX << state->stickPositions.leftY << state->stickPositions.rightX << state->stickPositions.rightY << state->stickPositions.rightRockerX;
     emit stickPositionsChanged();
     emit nextEnabledChanged();
     emit skipEnabledChanged();
@@ -597,7 +598,7 @@ void JoystickConfigController::_stopCalibration()
     _setStatusText("");
     emit calibratingChanged();
     _currentStickPositions.clear();
-    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY << _sticksCentered.topRightX;
+    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY << _sticksCentered.rightRockerX;
     emit stickPositionsChanged();
 }
 
@@ -623,8 +624,8 @@ void JoystickConfigController::_setStickPositions()
         _sticksRollRight    = stRightStickRight;
         _sticksPitchUp      = stLeftStickUp;
         _sticksPitchDown    = stLeftStickDown;
-        _sticksZoomIn       = stSticksTopRightRight;
-        _sticksZoomOut      = stSticksTopRightLeft;
+        _sticksZoomIn       = stSticksRightRockerRight;
+        _sticksZoomOut      = stSticksRightRockerLeft;
         break;
     case 2:
         _sticksThrottleUp   = stLeftStickUp;
@@ -635,8 +636,8 @@ void JoystickConfigController::_setStickPositions()
         _sticksRollRight    = stRightStickRight;
         _sticksPitchUp      = stRightStickUp;
         _sticksPitchDown    = stRightStickDown;
-        _sticksZoomIn       = stSticksTopRightRight;
-        _sticksZoomOut      = stSticksTopRightLeft;
+        _sticksZoomIn       = stSticksRightRockerRight;
+        _sticksZoomOut      = stSticksRightRockerLeft;
         break;
     case 3:
         _sticksThrottleUp   = stRightStickUp;
@@ -647,8 +648,8 @@ void JoystickConfigController::_setStickPositions()
         _sticksRollRight    = stLeftStickRight;
         _sticksPitchUp      = stLeftStickUp;
         _sticksPitchDown    = stLeftStickDown;
-        _sticksZoomIn       = stSticksTopRightRight;
-        _sticksZoomOut      = stSticksTopRightLeft;
+        _sticksZoomIn       = stSticksRightRockerRight;
+        _sticksZoomOut      = stSticksRightRockerLeft;
         break;
     case 4:
         _sticksThrottleUp   = stLeftStickUp;
@@ -659,8 +660,8 @@ void JoystickConfigController::_setStickPositions()
         _sticksRollRight    = stLeftStickRight;
         _sticksPitchUp      = stRightStickUp;
         _sticksPitchDown    = stRightStickDown;
-        _sticksZoomIn       = stSticksTopRightRight;
-        _sticksZoomOut      = stSticksTopRightLeft;
+        _sticksZoomIn       = stSticksRightRockerRight;
+        _sticksZoomOut      = stSticksRightRockerLeft;
         break;
     default:
         Q_ASSERT(false);

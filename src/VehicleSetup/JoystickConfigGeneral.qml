@@ -224,13 +224,13 @@ Item {
 
                     QGCLabel {
                         id: zoomLabel
-                        visible: controller.hasTopRightZoom
+                        visible: controller.hasRightRockerZoom
                         width: _attitudeLabelWidth
                         text: qsTr("Zoom")
                     }
                     AxisMonitor {
                         id: zoomAxis
-                        visible: controller.hasTopRightZoom
+                        visible: controller.hasRightRockerZoom
                         height: ScreenTools.defaultFontPixelHeight
                         width: axisMonitorWidth
                         mapped: controller.zoomAxisMapped

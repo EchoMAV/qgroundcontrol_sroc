@@ -10,12 +10,13 @@
 #include <QtCore/private/qjnihelpers_p.h>
 #include <QtAndroidExtras/QtAndroidExtras>
 #include <QtAndroidExtras/QAndroidJniObject>
+#include <unordered_set>
 
 
 class JoystickAndroid : public Joystick, public QtAndroidPrivate::GenericMotionEventListener, public QtAndroidPrivate::KeyEventListener
 {
 public:
-    JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager);
+    JoystickAndroid(const QString& name, int axisCount, int buttonCount, int hatCount, std::unordered_set<int> const& hatAxes, int id, MultiVehicleManager* multiVehicleManager);
 
     ~JoystickAndroid();
 
@@ -39,14 +40,18 @@ private:
 
     int *btnCode;
     int *axisCode;
+    int *hatCode;
     bool *btnValue;
     int *axisValue;
+    int *hatValue;
 
     static int * _androidBtnList; //list of all possible android buttons
     static int _androidBtnListCount;
 
     static int ACTION_DOWN, ACTION_UP;
     static QMutex m_mutex;
+
+    std::set<int> m_hatAxes;
 
     int deviceId;
 };
