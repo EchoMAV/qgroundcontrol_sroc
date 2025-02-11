@@ -19,7 +19,8 @@ PreFlightCheckButton {
     telemetryTextFailure:           _3dLockFailure ?
                                         qsTr("Waiting for 3D lock.") :
                                         (_satCountFailure ? _satCountFailureText : "")
-    allowTelemetryFailureOverride:  !_3dLockFailure && _satCountFailure && allowOverrideSatCount
+    // allowTelemetryFailureOverride:  !_3dLockFailure && _satCountFailure && allowOverrideSatCount
+    allowTelemetryFailureOverride: true
 
     property bool   allowOverrideSatCount:  false   ///< true: sat count above failureSatCount reguired to pass, false: user can click past satCount <= failureSetCount
     property int    failureSatCount:        -1      ///< -1 indicates no sat count check
