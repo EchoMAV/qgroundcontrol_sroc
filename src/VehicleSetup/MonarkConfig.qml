@@ -349,7 +349,7 @@ SetupPage {
                               || QGroundControl.monarkManager.monarkState === 7 //SaveSettingsFailed
                               )
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("Tx Power must be an integer between 7 and 33")
+                    text: qsTr("Tx Power must be an integer between 7 and 32")
                     color: groundTxPowerTextField.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
@@ -897,7 +897,7 @@ SetupPage {
                     Layout.fillWidth: true
                     visible: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
                     font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr("Tx Power must be an integer between 7 and 33")
+                    text: qsTr("Tx Power must be an integer between 7 and 32")
                     color: desiredTxPower.acceptableInput ? qgcPal.text : qgcPal.warningText
                 }
                 QGCLabel {
