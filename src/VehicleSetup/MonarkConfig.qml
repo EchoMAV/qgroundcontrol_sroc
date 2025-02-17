@@ -903,16 +903,6 @@ SetupPage {
                 QGCLabel {
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
-                    visible: QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
-                    font.pointSize: ScreenTools.mediumFontPointSize
-                    text: qsTr(
-                              "Frequency must be in band for an 8Mhz bandwidth (see documentation)")
-                    color: qgcPal.text
-                    //color: desiredFrequency.acceptableInput ? qgcPal.text : qgcPal.warningText
-                }
-                QGCLabel {
-                    wrapMode: Text.Wrap
-                    Layout.fillWidth: true
                     visible: QGroundControl.monarkManager.monarkState === 14 //ChangeEncryptionKey
                     font.pointSize: ScreenTools.mediumFontPointSize
                     text: qsTr("Encryption Key must be 8 to 16 characters, all ASCII except comma, quotes, and equals.")
