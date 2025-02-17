@@ -94,6 +94,12 @@ JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonC
     qCDebug(JoystickLog) << "axis:" <<_axisCount << " buttons:" <<_buttonCount<<" hats:"<<_hatCount;
     QtAndroidPrivate::registerGenericMotionEventListener(this);
     QtAndroidPrivate::registerKeyEventListener(this);
+
+    if(name == "Kutta KTAC GC" || name == "UXV Technologies SROC" || name == "Scuf Gaming SCUF Envision Controller" || name ==
+        "Scuf Gaming SCUF Envision Pro Controller")
+    {
+         _setDefaultCalibration();
+    }
 }
 
 JoystickAndroid::~JoystickAndroid() {

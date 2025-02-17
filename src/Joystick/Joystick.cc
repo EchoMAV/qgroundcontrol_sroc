@@ -179,13 +179,29 @@ void Joystick::_setDefaultCalibration(void) {
     _rgCalibration[3].reversed = true;
 
     // Default TX Mode 2 axis assignments for gamecontrollers
-    _rgFunctionAxis[rollFunction]       = 2;
-    _rgFunctionAxis[pitchFunction]      = 3;
-    _rgFunctionAxis[yawFunction]        = 0;
-    _rgFunctionAxis[throttleFunction]   = 1;
-    _rgFunctionAxis[zoomFunction]       = 4;
-    _rgFunctionAxis[gimbalPitchFunction]= 5;
-    _rgFunctionAxis[gimbalYawFunction]  = 6;
+    if(_name == "Scuf Gaming SCUF Envision Controller" || _name ==
+                                                              "Scuf Gaming SCUF Envision Pro Controller")
+    {
+        _rgFunctionAxis[rollFunction]       = 3;
+        _rgFunctionAxis[pitchFunction]      = 0;
+        _rgFunctionAxis[yawFunction]        = 5;
+        _rgFunctionAxis[throttleFunction]   = 4;
+        _rgFunctionAxis[zoomFunction]       = 1;
+        _rgFunctionAxis[gimbalPitchFunction]= 2;
+        _rgFunctionAxis[gimbalYawFunction]  = 6;
+    }
+    else
+    {
+        _rgFunctionAxis[rollFunction]       = 2;
+        _rgFunctionAxis[pitchFunction]      = 3;
+        _rgFunctionAxis[yawFunction]        = 0;
+        _rgFunctionAxis[throttleFunction]   = 1;
+        _rgFunctionAxis[zoomFunction]       = 4;
+        _rgFunctionAxis[gimbalPitchFunction]= 5;
+        _rgFunctionAxis[gimbalYawFunction]  = 6;
+    }
+
+
 
     _exponential        = 0;
     _accumulator        = false;
