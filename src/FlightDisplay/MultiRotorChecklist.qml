@@ -95,7 +95,7 @@ Item {
 
             PreFlightCheckButton {
                 name:           qsTr("Wind & weather")
-                manualText:     qsTr("Under 30mph winds? Raining?")
+                manualText:     qsTr("Under 35mph winds? Raining?")
             }
 
             PreFlightCheckButton {
