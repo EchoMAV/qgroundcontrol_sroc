@@ -79,16 +79,8 @@ Item {
             name: qsTr("Please arm the vehicle here")
 
             PreFlightCheckButton {
-                name:            qsTr("Motors")
-                manualText:      qsTr("Propellers free? Then throttle up gently. Working properly?")
-            }
-
-            PreFlightCheckButton {
                 name:           qsTr("Mission")
                 manualText:     qsTr("Please confirm mission is valid (waypoints valid, no terrain collision).")
-            }
-
-            PreFlightSoundCheck {
             }
         }
 
@@ -103,7 +95,7 @@ Item {
 
             PreFlightCheckButton {
                 name:           qsTr("Wind & weather")
-                manualText:     qsTr("Under 30mph winds? Raining?")
+                manualText:     qsTr("Under 35mph winds? Raining?")
             }
 
             PreFlightCheckButton {
