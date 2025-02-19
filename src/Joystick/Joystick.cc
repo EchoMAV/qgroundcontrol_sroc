@@ -178,9 +178,8 @@ void Joystick::_setDefaultCalibration(void) {
     _rgCalibration[1].reversed = true;
     _rgCalibration[3].reversed = true;
 
-    // Default TX Mode 2 axis assignments for gamecontrollers
-    if(_name == "Scuf Gaming SCUF Envision Controller" || _name ==
-                                                              "Scuf Gaming SCUF Envision Pro Controller")
+
+    if(_name == "Scuf Gaming SCUF Envision Controller" || _name == "Scuf Gaming SCUF Envision Pro Controller")
     {
         _rgFunctionAxis[rollFunction]       = 3;
         _rgFunctionAxis[pitchFunction]      = 0;
@@ -189,9 +188,26 @@ void Joystick::_setDefaultCalibration(void) {
         _rgFunctionAxis[zoomFunction]       = 1;
         _rgFunctionAxis[gimbalPitchFunction]= 2;
         _rgFunctionAxis[gimbalYawFunction]  = 6;
+        _deadband           = true;
+        for(int axis=0;axis<_axisCount;++axis)
+        {
+            //add a 17.5 percent deadband to all axes
+            _rgCalibration[axis].deadband = int((_rgCalibration[axis].max - _rgCalibration[axis].center) * 0.175);
+        }
+
+        setButtonAction(0, "Land");
+        setButtonAction(1,_buttonActionToggleRC7);
+        setButtonAction(2, "Loiter");
+        setButtonAction(3, _buttonActionToggleVideoRecord);
+        setButtonAction(5, _buttonActionTriggerCamera);
+        setButtonAction(12, "Altitude hold");
+        setButtonAction(13, _buttonActionContinuousZoomOut);
+        setButtonAction(14, _buttonActionContinuousZoomIn);
+
     }
-    else
+    else if(_name == "Kutta KTAC GC")
     {
+        //TODO remap and find deadbands
         _rgFunctionAxis[rollFunction]       = 2;
         _rgFunctionAxis[pitchFunction]      = 3;
         _rgFunctionAxis[yawFunction]        = 0;
@@ -199,13 +215,38 @@ void Joystick::_setDefaultCalibration(void) {
         _rgFunctionAxis[zoomFunction]       = 4;
         _rgFunctionAxis[gimbalPitchFunction]= 5;
         _rgFunctionAxis[gimbalYawFunction]  = 6;
+        _deadband           = false;
+    }
+    else if(_name == "UXV Technologies SROC")
+    {
+        //TODO remap and find deadbands
+        _rgFunctionAxis[rollFunction]       = 2;
+        _rgFunctionAxis[pitchFunction]      = 3;
+        _rgFunctionAxis[yawFunction]        = 0;
+        _rgFunctionAxis[throttleFunction]   = 1;
+        _rgFunctionAxis[zoomFunction]       = 4;
+        _rgFunctionAxis[gimbalPitchFunction]= 5;
+        _rgFunctionAxis[gimbalYawFunction]  = 6;
+        _deadband           = false;
+    }
+    else
+    {
+         // Default TX Mode 2 axis assignments for gamecontrollers
+        _rgFunctionAxis[rollFunction]       = 2;
+        _rgFunctionAxis[pitchFunction]      = 3;
+        _rgFunctionAxis[yawFunction]        = 0;
+        _rgFunctionAxis[throttleFunction]   = 1;
+        _rgFunctionAxis[zoomFunction]       = 4;
+        _rgFunctionAxis[gimbalPitchFunction]= 5;
+        _rgFunctionAxis[gimbalYawFunction]  = 6;
+        _deadband           = false;
     }
 
 
 
     _exponential        = 0;
     _accumulator        = false;
-    _deadband           = false;
+
     _axisFrequencyHz    = _defaultAxisFrequencyHz;
     _buttonFrequencyHz  = _defaultButtonFrequencyHz;
     _throttleMode       = ThrottleModeDownZero;

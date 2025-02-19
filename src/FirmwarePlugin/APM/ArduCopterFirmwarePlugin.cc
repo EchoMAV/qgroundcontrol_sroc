@@ -75,7 +75,7 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         APMCopterMode(APMCopterMode::GUIDED_NOGPS,  false),
         APMCopterMode(APMCopterMode::SMART_RTL,     false),
         APMCopterMode(APMCopterMode::FLOWHOLD,      true),
-        APMCopterMode(APMCopterMode::FOLLOW,        false),
+        APMCopterMode(APMCopterMode::FOLLOW,        true),
         APMCopterMode(APMCopterMode::ZIGZAG,        false),
         APMCopterMode(APMCopterMode::SYSTEMID,      false),
         APMCopterMode(APMCopterMode::AUTOROTATE,    false),
