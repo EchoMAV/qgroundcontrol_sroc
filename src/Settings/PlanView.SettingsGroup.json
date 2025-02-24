@@ -19,7 +19,7 @@
     "name":         "takeoffItemNotRequired",
     "shortDesc":    "Allow missions to not require a takeoff item",
     "type":         "bool",
-    "default":      false
+    "default":      true
 },
 {
     "name":         "useConditionGate",

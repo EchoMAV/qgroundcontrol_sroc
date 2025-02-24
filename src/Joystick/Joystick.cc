@@ -196,26 +196,50 @@ void Joystick::_setDefaultCalibration(void) {
         }
 
         setButtonAction(0, "Land");
-        setButtonAction(1,_buttonActionToggleRC7);
+        setButtonAction(1, "Flow Hold");
         setButtonAction(2, "Loiter");
-        setButtonAction(3, _buttonActionToggleVideoRecord);
-        setButtonAction(5, _buttonActionTriggerCamera);
-        setButtonAction(12, "Altitude hold");
+        setButtonAction(3, _buttonActionEmergencyStop);
+        setButtonAction(4, _buttonActionTriggerCamera);
+        setButtonAction(5, _buttonActionEmergencyStop);
+        setButtonAction(6, _buttonActionToggleVideoRecord);
+        setButtonAction(12, "Altitude Hold");
         setButtonAction(13, _buttonActionContinuousZoomOut);
         setButtonAction(14, _buttonActionContinuousZoomIn);
+        setButtonAction(15, _buttonActionToggleEOIR);
+        setButtonAction(16, "RTL");
+
+        _buttonActionArray[13]->repeat = true;
+        _buttonActionArray[14]->repeat = true;
+
 
     }
     else if(_name == "Kutta KTAC GC")
     {
-        //TODO remap and find deadbands
-        _rgFunctionAxis[rollFunction]       = 2;
-        _rgFunctionAxis[pitchFunction]      = 3;
-        _rgFunctionAxis[yawFunction]        = 0;
-        _rgFunctionAxis[throttleFunction]   = 1;
-        _rgFunctionAxis[zoomFunction]       = 4;
-        _rgFunctionAxis[gimbalPitchFunction]= 5;
-        _rgFunctionAxis[gimbalYawFunction]  = 6;
-        _deadband           = false;
+        _rgFunctionAxis[rollFunction]       = 5;
+        _rgFunctionAxis[pitchFunction]      = 2;
+        _rgFunctionAxis[yawFunction]        = 7;
+        _rgFunctionAxis[throttleFunction]   = 6;
+        _rgFunctionAxis[zoomFunction]       = 3;
+        _rgFunctionAxis[gimbalPitchFunction]= 1;
+        _rgFunctionAxis[gimbalYawFunction]  = 4;
+        _deadband           = true;
+        for(int axis=0;axis<_axisCount;++axis)
+        {
+            //add a 20 percent deadband to all axes
+            _rgCalibration[axis].deadband = int((_rgCalibration[axis].max - _rgCalibration[axis].center) * 0.2);
+        }
+
+
+        setButtonAction(1, "Land");
+        setButtonAction(2, "Flow Hold");
+        setButtonAction(3, "RTL");
+        setButtonAction(4, _buttonActionEmergencyStop);
+        setButtonAction(6, _buttonActionEmergencyStop);
+        setButtonAction(7, "Loiter");
+        setButtonAction(9, _buttonActionToggleEOIR);
+        setButtonAction(10, _buttonActionToggleVideoRecord);
+        setButtonAction(11, "Altitude Hold");
+        setButtonAction(13, _buttonActionTriggerCamera);
     }
     else if(_name == "UXV Technologies SROC")
     {

@@ -74,10 +74,10 @@
     "shortDesc": "Default value for altitude",
     "longDesc":  "This value specifies the default altitude for new items added to a mission.",
     "type":             "double",
-    "default":     50.0,
-    "min":              0.0,
+    "default":     45.72,
+    "min":              0.00,
     "units":            "m",
-    "decimalPlaces":    1
+    "decimalPlaces":    2
 },
 {
     "name":             "telemetrySave",

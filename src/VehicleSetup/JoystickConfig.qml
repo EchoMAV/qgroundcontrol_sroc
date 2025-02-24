@@ -84,7 +84,8 @@ SetupPage {
                 }
                 QGCTabButton {
                     text: qsTr("Calibration")
-                    visible: _activeJoystick.axisCount != 0
+                    visible: QGroundControl.corePlugin.showAdvancedUI
+                             && _activeJoystick.axisCount != 0
                 }
                 QGCTabButton {
                     text: qsTr("Advanced")

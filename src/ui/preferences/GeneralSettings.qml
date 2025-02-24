@@ -452,10 +452,14 @@ Rectangle {
                                     fact:                   QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
                                 }
 
-                                QGCLabel { text: qsTr("VTOL TransitionDistance") }
+                                QGCLabel {
+                                    text: qsTr("VTOL TransitionDistance")
+                                    visible: QGroundControl.corePlugin.showAdvancedUI
+                                }
                                 FactTextField {
                                     Layout.preferredWidth:  _valueFieldWidth
                                     fact:                   QGroundControl.settingsManager.planViewSettings.vtolTransitionDistance
+                                    visible: QGroundControl.corePlugin.showAdvancedUI
                                 }
                             }
 
