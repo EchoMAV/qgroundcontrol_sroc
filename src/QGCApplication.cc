@@ -87,6 +87,7 @@
 #include "CameraCalc.h"
 #include "VisualMissionItem.h"
 #include "EditPositionDialogController.h"
+#include "GPSUnitsController.h"
 #include "FactValueSliderListModel.h"
 #include "ShapeFileHelper.h"
 #include "QGCFileDownload.h"
@@ -520,6 +521,7 @@ void QGCApplication::_initCommon()
     qmlRegisterType<SyslinkComponentController>     (kQGCControllers,                       1, 0, "SyslinkComponentController");
     qmlRegisterType<EditPositionDialogController>   (kQGCControllers,                       1, 0, "EditPositionDialogController");
     qmlRegisterType<RCToParamDialogController>      (kQGCControllers,                       1, 0, "RCToParamDialogController");
+    qmlRegisterType<GPSUnitsController>             (kQGCControllers,                       1, 0, "GPSUnitsController");
     qmlRegisterType<CustomAction>                   (kQGCControllers,                       1, 0, "CustomAction");
     qmlRegisterType<CustomActionManager>            (kQGCControllers,                       1, 0, "CustomActionManager");
 

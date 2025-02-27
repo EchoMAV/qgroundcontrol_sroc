@@ -62,6 +62,11 @@
         <file>resources/icons/qgroundcontrol.ico</file>
         <file alias="monark_logo_blue.svg">resources/monark_logo_blue.svg</file>
         <file alias="monark_logo_gray.svg">resources/monark_logo_gray.svg</file>
+        <file alias="distance-to-wp.svg">resources/distance-to-wp.svg</file>
+        <file alias="distance-to-home.svg">resources/distance-to-home.svg</file>
+        <file alias="flight_timer.svg">resources/flight_timer.svg</file>
+        <file alias="menu.svg">resources/menu.svg</file>
+        <file alias="content_copy.svg">resources/content_copy.svg</file>
     </qresource>
     <qresource prefix="/res/firmware">
         <file alias="3drradio.png">resources/firmware/3drradio.png</file>

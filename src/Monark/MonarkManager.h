@@ -44,7 +44,7 @@ public:
         BeforeScan=0,
         ScanInProgress=1,
         ScanSuccessPairingRequired=2,
-        ScanSuccessBadCredentials=3,
+        ScanSuccessBadCredentials=3, //deprecated
         ScanSuccessAndPaired=4,
         ScanFailedNotDetected=5,
         SaveSettingsInProgress=6,
@@ -109,7 +109,7 @@ public:
     Q_INVOKABLE void refreshDroneList();
     Q_INVOKABLE void removeDrone(int monarkID);
     Q_INVOKABLE void saveFlutterManagementSettings(QString const& frequency);
-    Q_INVOKABLE void saveFlutterManagementSettings();
+    //Q_INVOKABLE void saveFlutterManagementSettings();
     Q_INVOKABLE void resetActiveVehicle();
     Q_INVOKABLE void rebootActiveVehicle();
 
@@ -135,7 +135,7 @@ public:
 
     Q_INVOKABLE void changeTxPower(QString const& desiredTxPower);
     Q_INVOKABLE void changeFrequencies(QString const& desiredFrequency);
-    Q_INVOKABLE void changeEncryptionKey(QString const& desiredEncryptionKey);
+    Q_INVOKABLE void changeEncryptionKey();
 
 
 
@@ -163,7 +163,11 @@ private:
     void _initializeFrequency(bool paired);
     void _initializeTxPower(bool paired);
 
+    void _openSerialConnectionToGcsRadio();
+
     void _sendEncryptionKeyToGcsRadio(char const*const p_password);
+
+    std::string _getEncryptionKeyFromGcsRadio();
 
 
     void _pingAllDrones();

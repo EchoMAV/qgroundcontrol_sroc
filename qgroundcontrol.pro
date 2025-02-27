@@ -431,12 +431,12 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 #
 
 HEADERS += \
-    src/Monark/MonarkDrone.h \
     src/Monark/MonarkManager.h \
     src/Monark/MonarkQRCodeProvider.h \
     src/Monark/qrcodegen.h \
     src/QmlControls/CustomAction.h \
     src/QmlControls/CustomActionManager.h \
+    src/QmlControls/GPSUnitsController.h \
     src/QmlControls/QmlUnitsConversion.h \
     src/Settings/MonarkSettings.h \
     src/Vehicle/VehicleEscStatusFactGroup.h \
@@ -452,11 +452,11 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 }
 
 SOURCES += \
-    src/Monark/MonarkDrone.cpp \
     src/Monark/MonarkManager.cc \
     src/Monark/MonarkQRCodeProvider.cc \
     src/Monark/qrcodegen.cc \
     src/QmlControls/CustomActionManager.cc \
+    src/QmlControls/GPSUnitsController.cc \
     src/Settings/MonarkSettings.cc \
     src/Vehicle/VehicleEscStatusFactGroup.cc \
     src/api/QGCCorePlugin.cc \
