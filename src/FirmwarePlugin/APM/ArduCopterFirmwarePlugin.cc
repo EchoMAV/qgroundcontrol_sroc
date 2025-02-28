@@ -28,7 +28,7 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
         { ALT_HOLD,     "Altitude Hold"},
         { AUTO,         "Auto"},
         { GUIDED,       "Guided"},
-        { LOITER,       "Loiter"},
+        { LOITER,       "GPS Loiter"},
         { RTL,          "RTL"},
         { CIRCLE,       "Circle"},
         { LAND,         "Land"},

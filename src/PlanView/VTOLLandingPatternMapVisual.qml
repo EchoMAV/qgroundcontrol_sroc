@@ -235,7 +235,7 @@ Item {
             sourceItem:
                 MissionItemIndexLabel {
                 index:      _missionItem.sequenceNumber
-                label:      _useLoiterToAlt ? qsTr("Loiter") : qsTr("Approach")
+                label:      _useLoiterToAlt ? qsTr("GPS Loiter") : qsTr("Approach")
                 checked:    _missionItem.isCurrentItem
 
                 onClicked: _root.clicked(_missionItem.sequenceNumber)

@@ -21,7 +21,7 @@ APMRoverMode::APMRoverMode(uint32_t mode, bool settable)
         {ACRO,           "Acro"},
         {STEERING,       "Steering"},
         {HOLD,           "Hold"},
-        {LOITER,         "Loiter"},
+        {LOITER,         "GPS Loiter"},
         {FOLLOW,         "Follow"},
         {SIMPLE,         "Simple"},
         {AUTO,           "Auto"},

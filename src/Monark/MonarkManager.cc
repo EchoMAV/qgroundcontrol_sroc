@@ -893,9 +893,9 @@ void MonarkManager::_initializeNetworkId(bool paired)
             macAddress = response.back().substr(macStart, macEnd-macStart);
             macAddress.erase(std::remove(std::begin(macAddress), std::end(macAddress),':'), std::end(macAddress));
         }
-        if(macAddress.length()>4)
+        if(macAddress.length()>6)
         {
-            macAddress=macAddress.substr(macAddress.length()-4,4);
+            macAddress=macAddress.substr(macAddress.length()-6,6);
         }
     }
     if(!macAddress.empty())

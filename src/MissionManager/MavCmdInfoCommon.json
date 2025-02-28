@@ -63,12 +63,12 @@
         {
             "id":                   17,
             "rawName":              "MAV_CMD_NAV_LOITER_UNLIM",
-            "friendlyName":         "Loiter",
+            "friendlyName":         "GPS Loiter",
             "description":          "Travel to a position and Loiter around the specified position indefinitely.",
             "specifiesCoordinate":  true,
             "isLoiterCommand":      true,
             "friendlyEdit":         true,
-            "category":             "Loiter",
+            "category":             "GPS Loiter",
             "param3": {
                 "label":            "Radius",
                 "units":            "m",
@@ -91,7 +91,7 @@
             "specifiesCoordinate":  true,
             "isLoiterCommand":      true,
             "friendlyEdit":         true,
-            "category":             "Loiter",
+            "category":             "GPS Loiter",
             "param1": {
                 "label":            "Turns",
                 "default":          1,
@@ -127,7 +127,7 @@
             "specifiesCoordinate":  true,
             "isLoiterCommand":      true,
             "friendlyEdit":         true,
-            "category":             "Loiter",
+            "category":             "GPS Loiter",
             "param1": {
                 "label":            "Loiter Time",
                 "units":            "secs",
@@ -233,7 +233,7 @@
             "specifiesCoordinate":  true,
             "isLoiterCommand":      true,
             "friendlyEdit":         true,
-            "category":             "Loiter",
+            "category":             "GPS Loiter",
             "param1": {
                 "label":            "Leave Loiter",
                 "enumStrings":      "Direction of next waypoint,Any direction",

@@ -197,7 +197,7 @@ void Joystick::_setDefaultCalibration(void) {
 
         setButtonAction(0, "Land");
         setButtonAction(1, "Flow Hold");
-        setButtonAction(2, "Loiter");
+        setButtonAction(2, "GPS Loiter");
         setButtonAction(3, _buttonActionEmergencyStop);
         setButtonAction(4, _buttonActionTriggerCamera);
         setButtonAction(5, _buttonActionEmergencyStop);
@@ -235,7 +235,7 @@ void Joystick::_setDefaultCalibration(void) {
         setButtonAction(3, "RTL");
         setButtonAction(4, _buttonActionEmergencyStop);
         setButtonAction(6, _buttonActionEmergencyStop);
-        setButtonAction(7, "Loiter");
+        setButtonAction(7, "GPS Loiter");
         setButtonAction(9, _buttonActionToggleEOIR);
         setButtonAction(10, _buttonActionToggleVideoRecord);
         setButtonAction(11, "Altitude Hold");
