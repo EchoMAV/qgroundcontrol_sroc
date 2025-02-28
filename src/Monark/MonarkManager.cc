@@ -593,36 +593,58 @@ std::string MonarkManager::_getEncryptionKeyFromGcsRadio()
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_getEncryptionKeyFromGcsRadio()";
     _openSerialConnectionToGcsRadio();
     std::string command="AT+GETENCRYPTION\r\n";
-    for(auto p_openPort: m_openPorts)
-    {
-        p_openPort->write(command.c_str(),command.size());
-        p_openPort->waitForBytesWritten(10000);
-        std::stringstream ss;
-        auto const start = std::chrono::system_clock::now();
-        for(;;)
-        {
+    std::atomic_bool finished=false;
 
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            if(p_openPort->waitForReadyRead(2000))
+    std::vector<std::future<std::string>> jobs;
+    for(auto p_openPort : m_openPorts)
+    {
+        jobs.push_back(std::async(std::launch::async,[&command, p_openPort,&finished]()-> std::string{
+            p_openPort->write(command.c_str(),command.size());
+            p_openPort->waitForBytesWritten(10000);
+            std::stringstream ss;
+            auto const start = std::chrono::system_clock::now();
+            for(;;)
             {
-                ss<<QString(p_openPort->readAll()).toStdString();
-                auto data = ss.str();
-                auto beginIndex=data.find("Password: ");
-                if(beginIndex!=std::string::npos)
+                if(finished)
                 {
-                    beginIndex+=10;
-                    auto endIndex=data.find("\r\r\n",beginIndex);
-                    if(endIndex!=std::string::npos)
+                    break;
+                }
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                if(finished)
+                {
+                    break;
+                }
+                if(p_openPort->waitForReadyRead(2000))
+                {
+                    ss<<QString(p_openPort->readAll()).toStdString();
+                    auto data = ss.str();
+                    auto beginIndex=data.find("Password: ");
+                    if(beginIndex!=std::string::npos)
                     {
-                        result = data.substr(beginIndex,endIndex-beginIndex);
-                        break;
+                        beginIndex+=10;
+                        auto endIndex=data.find("\r\r\n",beginIndex);
+                        if(endIndex!=std::string::npos)
+                        {
+                            finished=true;
+                            return data.substr(beginIndex,endIndex-beginIndex);
+                        }
                     }
                 }
+                if(std::chrono::system_clock::now() - start > std::chrono::seconds(30))
+                {
+                    break;
+                }
             }
-            if(std::chrono::system_clock::now() - start > std::chrono::seconds(30))
-            {
-                break;
-            }
+            return "";
+        }));
+    }
+
+    for(auto&& job: jobs)
+    {
+        auto str = job.get();
+        if(!str.empty())
+        {
+            result=str;
         }
     }
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_getEncryptionKeyFromGcsRadio()";
@@ -893,9 +915,10 @@ void MonarkManager::_initializeNetworkId(bool paired)
             macAddress = response.back().substr(macStart, macEnd-macStart);
             macAddress.erase(std::remove(std::begin(macAddress), std::end(macAddress),':'), std::end(macAddress));
         }
-        if(macAddress.length()>6)
+        constexpr size_t const networkIDLength=4;
+        if(macAddress.length()>networkIDLength)
         {
-            macAddress=macAddress.substr(macAddress.length()-6,6);
+            macAddress=macAddress.substr(macAddress.length()-networkIDLength,networkIDLength);
         }
     }
     if(!macAddress.empty())

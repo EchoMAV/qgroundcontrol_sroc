@@ -65,7 +65,7 @@ Rectangle {
             columns: 3
             Layout.bottomMargin: ScreenTools.defaultFontPixelHeight * .5
             QGCLabel {
-                text: qsTr("Vehicle Coordinates: ")
+                text: qsTr("Vehicle: ")
                 font.family: ScreenTools.demiboldFontFamily
                 font.pointSize: ScreenTools.mediumFontPointSize
                 Layout.fillWidth: false
@@ -101,7 +101,7 @@ Rectangle {
                 }
             }
             QGCLabel {
-                text: qsTr("GCS Coordinates: ")
+                text: qsTr("GCS: ")
                 font.family: ScreenTools.demiboldFontFamily
                 font.pointSize: ScreenTools.mediumFontPointSize
                 Layout.fillWidth: false

@@ -310,7 +310,7 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSet
         QmlObjectListModel* column      = factValueGrid.columns()->value<QmlObjectListModel*>(columnIndex++);
         InstrumentValueData* value = column->value<InstrumentValueData*>(0);
         value->setFact("Vehicle", "DistanceToHome");
-        value->setIcon("home.svg");
+        value->setIcon("drone_distance.svg");
         value->setText(value->fact()->shortDescription());
         value->setShowUnits(true);
     }

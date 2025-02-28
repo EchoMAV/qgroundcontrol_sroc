@@ -194,7 +194,7 @@ ApplicationWindow {
     }
 
     function showSetupTool() {
-        showTool(qsTr("Vehicle Setup"), "SetupView.qml",
+        showTool(qsTr("MONARK Setup"), "SetupView.qml",
                  "/res/monark_logo_gray")
     }
 
@@ -349,7 +349,7 @@ ApplicationWindow {
                         id: setupButton
                         height: toolSelectDialog._toolButtonHeight
                         Layout.fillWidth: true
-                        text: qsTr("Vehicle Setup")
+                        text: qsTr("MONARK Setup")
                         imageColor: "transparent"
 
                         imageResource: "/res/monark_logo_gray"
