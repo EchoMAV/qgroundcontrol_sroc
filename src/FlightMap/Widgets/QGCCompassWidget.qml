@@ -175,7 +175,7 @@ Item {
             QGCLabel {
                 text:               _headingString3
                 font.family:        vehicle ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
-                font.pointSize:     _fontSize < 8 ? 8 : _fontSize;
+                font.pointSize:     _fontSize < 14 ? 14 : _fontSize;
                 color:              qgcPal.text
                 anchors.centerIn:   parent
 
