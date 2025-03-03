@@ -58,7 +58,7 @@ public:
     ArduPlaneFirmwarePlugin(void);
 
     // Overrides from FirmwarePlugin
-    QString pauseFlightMode                         (void) const override { return QString("Loiter"); }
+    QString pauseFlightMode                         (void) const override { return QString("GPS Loiter"); }
     QString offlineEditingParamFile                 (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Plane.OfflineEditing.params"); }
     QString autoDisarmParameter                     (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral("LAND_DISARMDELAY"); }
     int     remapParamNameHigestMinorVersionNumber  (int majorVersionNumber) const final;    

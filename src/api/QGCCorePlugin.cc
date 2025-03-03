@@ -292,10 +292,38 @@ QString QGCCorePlugin::showAdvancedUIMessage() const
 void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSettingsGroup)
 {
     HorizontalFactValueGrid factValueGrid(defaultSettingsGroup);
-
-    bool        includeFWValues = factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassVTOL || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassAirship;
-
     factValueGrid.setFontSize(FactValueGrid::LargeFontSize);
+#if 1
+    factValueGrid.appendColumn();
+    factValueGrid.appendColumn();
+    factValueGrid.appendColumn();
+    int columnIndex=0;
+    {
+        QmlObjectListModel* column      = factValueGrid.columns()->value<QmlObjectListModel*>(columnIndex++);
+        InstrumentValueData* value = column->value<InstrumentValueData*>(0);
+        value->setFact("Vehicle", "FlightTime");
+        value->setIcon("timer.svg");
+        value->setText(value->fact()->shortDescription());
+        value->setShowUnits(false);
+    }
+    {
+        QmlObjectListModel* column      = factValueGrid.columns()->value<QmlObjectListModel*>(columnIndex++);
+        InstrumentValueData* value = column->value<InstrumentValueData*>(0);
+        value->setFact("Vehicle", "DistanceToHome");
+        value->setIcon("drone_distance.svg");
+        value->setText(value->fact()->shortDescription());
+        value->setShowUnits(true);
+    }
+    {
+        QmlObjectListModel* column      = factValueGrid.columns()->value<QmlObjectListModel*>(columnIndex++);
+        InstrumentValueData* value = column->value<InstrumentValueData*>(0);
+        value->setFact("Vehicle", "AltitudeRelative");
+        value->setIcon("arrow-thick-up.svg");
+        value->setText(value->fact()->shortDescription());
+        value->setShowUnits(true);
+    }
+#else
+    bool        includeFWValues = factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassVTOL || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassAirship;
 
     factValueGrid.appendColumn();
     factValueGrid.appendColumn();
@@ -365,6 +393,8 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSet
     value->setIcon("travel-walk.svg");
     value->setText(value->fact()->shortDescription());
     value->setShowUnits(true);
+
+#endif
 }
 
 QQmlApplicationEngine* QGCCorePlugin::createQmlApplicationEngine(QObject* parent)

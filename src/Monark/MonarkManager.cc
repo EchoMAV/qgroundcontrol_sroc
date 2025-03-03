@@ -26,6 +26,33 @@ static constexpr inline uint16_t const n_defaultGroundTxPower= 20;
 static constexpr inline uint16_t const n_defaultGroundFrequency = 2310;
 static constexpr inline uint16_t const n_maxMonarkID=3;
 
+
+std::string _generateRandomKey()
+{
+    std::random_device rd;
+    std::mt19937 generator(rd());
+    std::uniform_int_distribution<int> dist(int('!'), int('~')-3);
+    std::stringstream ss;
+    for(int i=0;i<16;++i)
+    {
+        int val=dist(generator);
+        if(val>=int('"'))
+        {
+            ++val;
+        }
+        if(val>=int(','))
+        {
+            ++val;
+        }
+        if(val>=int('='))
+        {
+            ++val;
+        }
+        ss<<char(val);
+    }
+    return ss.str();
+}
+
 std::string _getDroneIPAddress(int monarkID)
 {
     return "172.20.3."+std::to_string(monarkID);
@@ -521,9 +548,8 @@ QStringList MonarkManager::validFrequencies       () const
 }
 
 
-void MonarkManager::_sendEncryptionKeyToGcsRadio(char const*const p_password)
+void MonarkManager::_openSerialConnectionToGcsRadio()
 {
-    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_sendEncryptionKeyToGcsRadio()";
     for (auto const& port : QSerialPortInfo::availablePorts())
     {
         m_openPorts.emplace_back(new QSerialPort(this));
@@ -559,6 +585,76 @@ void MonarkManager::_sendEncryptionKeyToGcsRadio(char const*const p_password)
             qDebug(MonarkManagerLog) << "Port" << serialPort.portName() << "is not active.";
         }
     }
+}
+
+std::string MonarkManager::_getEncryptionKeyFromGcsRadio()
+{
+    std::string result;
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_getEncryptionKeyFromGcsRadio()";
+    _openSerialConnectionToGcsRadio();
+    std::string command="AT+GETENCRYPTION\r\n";
+    std::atomic_bool finished=false;
+
+    std::vector<std::future<std::string>> jobs;
+    for(auto p_openPort : m_openPorts)
+    {
+        jobs.push_back(std::async(std::launch::async,[&command, p_openPort,&finished]()-> std::string{
+            p_openPort->write(command.c_str(),command.size());
+            p_openPort->waitForBytesWritten(10000);
+            std::stringstream ss;
+            auto const start = std::chrono::system_clock::now();
+            for(;;)
+            {
+                if(finished)
+                {
+                    break;
+                }
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                if(finished)
+                {
+                    break;
+                }
+                if(p_openPort->waitForReadyRead(2000))
+                {
+                    ss<<QString(p_openPort->readAll()).toStdString();
+                    auto data = ss.str();
+                    auto beginIndex=data.find("Password: ");
+                    if(beginIndex!=std::string::npos)
+                    {
+                        beginIndex+=10;
+                        auto endIndex=data.find("\r\r\n",beginIndex);
+                        if(endIndex!=std::string::npos)
+                        {
+                            finished=true;
+                            return data.substr(beginIndex,endIndex-beginIndex);
+                        }
+                    }
+                }
+                if(std::chrono::system_clock::now() - start > std::chrono::seconds(30))
+                {
+                    break;
+                }
+            }
+            return "";
+        }));
+    }
+
+    for(auto&& job: jobs)
+    {
+        auto str = job.get();
+        if(!str.empty())
+        {
+            result=str;
+        }
+    }
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_getEncryptionKeyFromGcsRadio()";
+    return result;
+}
+
+void MonarkManager::_sendEncryptionKeyToGcsRadio(char const*const p_password)
+{
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_sendEncryptionKeyToGcsRadio()";
+    _openSerialConnectionToGcsRadio();
     std::string command="AT+SETADMIN="+std::string{p_password}+"\r";
     for(auto p_openPort: m_openPorts)
     {
@@ -649,12 +745,23 @@ void MonarkManager::startScanning()
     }
     else
     {
-        //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::startScanning()";
+        qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::startScanning()";
         _setMonarkState(MonarkState::ScanInProgress);
         auto scanningResult=MonarkState::ScanFailedNotDetected;
-        auto pingPairedResponseFuture = std::async(std::launch::async,[this](){
-            auto password = this->mp_monarkSettings->encryptionKey()->cookedValueString();
-            return _sendCommands(np_srmPairedIp, "admin", password.toStdString().c_str(), nullptr, false);
+        auto password = _getEncryptionKeyFromGcsRadio();
+        bool sendPassword=false;
+        if(password.empty())
+        {
+            sendPassword=true;
+            password = this->mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
+        }
+        else
+        {
+            this->mp_monarkSettings->encryptionKey()->setCookedValue(QString::fromStdString(password));
+            mp_monarkSettings->onSaveSettings();
+        }
+        auto pingPairedResponseFuture = std::async(std::launch::async,[&password](){
+            return _sendCommands(np_srmPairedIp, "admin", password.c_str(), nullptr, false);
         });
         auto const pingDefaultResponse=_sendCommands(np_srmDefaultIp, "admin", nullptr, nullptr, false).second;
         if(!pingDefaultResponse.empty() && pingDefaultResponse.back() == np_groundRadioSuccessStr)
@@ -670,66 +777,54 @@ void MonarkManager::startScanning()
         }
         else
         {
-            auto const pingPairedResponse = pingPairedResponseFuture.get().second;
-            //for(auto const& str: pingPairedResponse)
-            //{
-            //    qCDebug(MonarkManagerLog)<<"ping paired responseStr="<<str.c_str();
-            //}
-            if(!pingPairedResponse.empty() && pingPairedResponse.back() == "ssh_userauth_password failed")
+            auto pingPairedResponse = pingPairedResponseFuture.get().second;
+            if(!pingPairedResponse.empty() && pingPairedResponse.back() ==np_groundRadioSuccessStr)
             {
-                qCDebug(MonarkManagerLog)<<"ScanSuccessBadCredentials";
-                scanningResult = MonarkState::ScanSuccessBadCredentials;
-                _initializeNetworkId(true);
-                //_initializeTxPower(true);
-                //_initializeFrequency(true);
-            }
-            else if(!pingPairedResponse.empty() && pingPairedResponse.back() ==np_groundRadioSuccessStr)
-            {
-
-                m_allDrones.clear();
-                m_beforeUpdateDrones.clear();
-                m_updateInProgressDrones.clear();
-                m_updateSuccessfulDrones.clear();
-                m_updateFailedDrones.clear();
-
-                std::vector<std::future<std::vector<std::string>>> dronePingResponses;
-                for(auto i=0;i<n_maxMonarkID;++i)
-                {
-                    dronePingResponses.push_back(std::async(std::launch::async,[i](){
-                        auto const ip = "172.20.2."+std::to_string(i+1);
-                        return _sendCommands(ip.c_str(), "admin", nullptr, nullptr, true).second;
-                    }));
-                }
-
-                qCDebug(MonarkManagerLog)<<"ScanSuccessAndPaired";
-                scanningResult=MonarkState::ScanSuccessAndPaired;
-                _sendEncryptionKeyToGcsRadio( this->mp_monarkSettings->encryptionKey()->cookedValueString().toStdString().c_str());
-
-                _initializeNetworkId(true);
-                _initializeTxPower(true);
-                _initializeFrequency(true);
-                for(auto i=0;i<n_maxMonarkID;++i)
-                {
-                    auto response = dronePingResponses[i].get();
-                    if(!response.empty() && response.back() == np_droneSuccessStr)
+                    m_allDrones.clear();
+                    m_beforeUpdateDrones.clear();
+                    m_updateInProgressDrones.clear();
+                    m_updateSuccessfulDrones.clear();
+                    m_updateFailedDrones.clear();
+                    std::vector<std::future<std::vector<std::string>>> dronePingResponses;
+                    for(auto i=0;i<n_maxMonarkID;++i)
                     {
-                        m_beforeUpdateDrones.insert(i+1);
-                        m_allDrones.insert(i+1);
+                        dronePingResponses.push_back(std::async(std::launch::async,[i](){
+                            auto const ip = "172.20.2."+std::to_string(i+1);
+                            return _sendCommands(ip.c_str(), "admin", nullptr, nullptr, true).second;
+                        }));
                     }
+
+                    qCDebug(MonarkManagerLog)<<"ScanSuccessAndPaired";
+                    scanningResult=MonarkState::ScanSuccessAndPaired;
+                    if(sendPassword)
+                    {
+                        _sendEncryptionKeyToGcsRadio( password.c_str());
+                    }
+                    _initializeNetworkId(true);
+                    _initializeTxPower(true);
+                    _initializeFrequency(true);
+                    for(auto i=0;i<n_maxMonarkID;++i)
+                    {
+                        auto response = dronePingResponses[i].get();
+                        if(!response.empty() && response.back() == np_droneSuccessStr)
+                        {
+                            m_beforeUpdateDrones.insert(i+1);
+                            m_allDrones.insert(i+1);
+                        }
+                    }
+                    emit allDronesChanged();
+                    emit beforeUpdateDronesChanged();
+                    emit updateInProgressDronesChanged();
+                    emit updateSuccessfulDronesChanged();
+                    emit updateFailedDronesChanged();
                 }
-                emit allDronesChanged();
-                emit beforeUpdateDronesChanged();
-                emit updateInProgressDronesChanged();
-                emit updateSuccessfulDronesChanged();
-                emit updateFailedDronesChanged();
-            }
             else
             {
                 qCDebug(MonarkManagerLog)<<"ScanFailedNotDetected";
             }
         }
         _setMonarkState(scanningResult);
-        //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::startScanning()";
+        qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::startScanning()";
     }
 }
 
@@ -820,9 +915,10 @@ void MonarkManager::_initializeNetworkId(bool paired)
             macAddress = response.back().substr(macStart, macEnd-macStart);
             macAddress.erase(std::remove(std::begin(macAddress), std::end(macAddress),':'), std::end(macAddress));
         }
-        if(macAddress.length()>4)
+        constexpr size_t const networkIDLength=4;
+        if(macAddress.length()>networkIDLength)
         {
-            macAddress=macAddress.substr(macAddress.length()-4,4);
+            macAddress=macAddress.substr(macAddress.length()-networkIDLength,networkIDLength);
         }
     }
     if(!macAddress.empty())
@@ -1060,36 +1156,6 @@ void MonarkManager::restartApplication()
 
 }
 
-void MonarkManager::saveFlutterManagementSettings()
-{
-    if(mp_slotHandler->needDispatch())
-    {
-        mp_slotHandler->dispatch([this](){saveFlutterManagementSettings();});
-    }
-    else
-    {
-        //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::saveFlutterManagementSettings()";
-        _setMonarkState(MonarkState::SaveSettingsInProgress);
-        std::vector<std::string> commands;
-        auto encryptionKey=mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
-
-        auto saveResult=MonarkState::ScanSuccessBadCredentials;
-        auto const& response = _sendCommands(np_srmPairedIp,"admin", encryptionKey.c_str(), &commands, false).second;
-        if(!response.empty() && response.back().find(np_groundRadioSuccessStr)!= std::string::npos)
-        {
-            saveResult=MonarkState::ScanSuccessAndPaired;
-            mp_monarkSettings->onSaveSettings();
-            // also send the encryption key to the radio microcontroller over serial so it can reset the microhard natively. 
-            _sendEncryptionKeyToGcsRadio(encryptionKey.c_str());
-        }
-        _initializeNetworkId(true);
-        _initializeFrequency(true);
-        _initializeTxPower(true);
-        _setMonarkState(saveResult);
-        //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::saveFlutterManagementSettings()";
-    }
-}
-
 void MonarkManager::saveFlutterManagementSettings(QString const& frequency)
 {
     if(mp_slotHandler->needDispatch())
@@ -1099,11 +1165,17 @@ void MonarkManager::saveFlutterManagementSettings(QString const& frequency)
     }
     else
     {
-        //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::saveFlutterManagementSettings(frequency="<<frequency<<")";
         _setMonarkState(MonarkState::SaveSettingsInProgress);
         std::vector<std::string> commands;
         auto encryptionKey=mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
 
+        bool settingsChanged=false;
+        if(encryptionKey.empty())
+        {
+            encryptionKey=_generateRandomKey();
+            settingsChanged=true;
+
+        }
         using namespace std::string_literals;
         auto txPower=mp_monarkSettings->groundTxPower()->cookedValueString().toStdString();
         mp_monarkSettings->groundFrequency()->setCookedValue(frequency);
@@ -1125,8 +1197,12 @@ void MonarkManager::saveFlutterManagementSettings(QString const& frequency)
         if(!response.empty() && response.back().find(np_groundRadioSuccessStr)!= std::string::npos)
         {
             saveResult=MonarkState::ScanSuccessAndPaired;
-            mp_monarkSettings->onSaveSettings();
             // also send the encryption key to the radio microcontroller over serial so it can reset the microhard natively.
+            if(settingsChanged)
+            {
+                 mp_monarkSettings->encryptionKey()->setCookedValue(QString::fromStdString(encryptionKey));
+                 mp_monarkSettings->onSaveSettings();
+            }
             _sendEncryptionKeyToGcsRadio(encryptionKey.c_str());
         }
         _setMonarkState(saveResult);
@@ -1675,19 +1751,18 @@ void MonarkManager::changeFrequencies(QString const& desiredFrequency)
     }
 }
 
-void MonarkManager::changeEncryptionKey(QString const& desiredEncryptionKey)
+void MonarkManager::changeEncryptionKey()
 {
     if(mp_slotHandler->needDispatch())
     {
-        mp_slotHandler->dispatch([this,desiredEncryptionKey](){changeEncryptionKey(desiredEncryptionKey );});
+        mp_slotHandler->dispatch([this](){changeEncryptionKey();});
     }
     else
     {
         //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::changeEncryptionKey()";
         _resetToBeforeUpdate();
         auto const currentEncryptionKey=            mp_monarkSettings->encryptionKey()->rawValueString().toStdString();
-
-        auto const desiredStdString=desiredEncryptionKey.toStdString();
+        auto const desiredStdString=_generateRandomKey();
         std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> droneResponses=_sendDroneEncryptionKeyChangeCommands(desiredStdString,m_beforeUpdateDrones,m_updateInProgressDrones);
         emit beforeUpdateDronesChanged();
         emit updateInProgressDronesChanged();
@@ -1828,7 +1903,7 @@ void MonarkManager::changeEncryptionKey(QString const& desiredEncryptionKey)
         }
         if(m_groundRadioUpdateState == (int)UpdateState::UpdateSuccessful)
         {
-            mp_monarkSettings->encryptionKey()->setRawValue(desiredEncryptionKey);
+            mp_monarkSettings->encryptionKey()->setRawValue(QString::fromStdString(desiredStdString));
             mp_monarkSettings->onSaveSettings();
             _sendEncryptionKeyToGcsRadio(desiredStdString.c_str());
         }

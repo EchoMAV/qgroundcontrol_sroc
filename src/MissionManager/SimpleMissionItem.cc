@@ -421,7 +421,7 @@ QString SimpleMissionItem::abbreviation() const
     case MAV_CMD_NAV_LOITER_TURNS:
     case MAV_CMD_NAV_LOITER_UNLIM:
     case MAV_CMD_NAV_LOITER_TO_ALT:
-        return tr("Loiter");
+        return tr("GPS Loiter");
     default:
         return QString();
     }

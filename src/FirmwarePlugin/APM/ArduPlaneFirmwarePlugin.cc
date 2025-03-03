@@ -27,7 +27,7 @@ APMPlaneMode::APMPlaneMode(uint32_t mode, bool settable)
         { AUTOTUNE,         "Autotune" },
         { AUTO,             "Auto" },
         { RTL,              "RTL" },
-        { LOITER,           "Loiter" },
+        { LOITER,           "GPS Loiter" },
         { TAKEOFF,          "Takeoff" },
         { AVOID_ADSB,       "Avoid ADSB" },
         { GUIDED,           "Guided" },

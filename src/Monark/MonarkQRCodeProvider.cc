@@ -27,7 +27,7 @@ void MonarkQRCodeProvider::setToolbox(QGCToolbox *p_toolbox)
 
 QImage MonarkQRCodeProvider::requestImage(QString const &id, QSize *p_size,  QSize const &requestedSize)
 {
-    qCDebug(MonarkManagerLog)<<"ENTER: MonarkQRCodeProvider::requestImage("<<id<<")";
+    //qCDebug(MonarkManagerLog)<<"ENTER: MonarkQRCodeProvider::requestImage("<<id<<")";
     //"image://MONARKQRCodes/networkID,encryptionKey,power,freq,monarkID"
     auto dashIndex=id.indexOf("-");
     QString cleanId;
@@ -52,15 +52,15 @@ QImage MonarkQRCodeProvider::requestImage(QString const &id, QSize *p_size,  QSi
     {
         *p_size=requestedSize;
     }
-    qCDebug(MonarkManagerLog)<<"EXIT : MonarkQRCodeProvider::requestImage("<<id<<")";
+    //qCDebug(MonarkManagerLog)<<"EXIT : MonarkQRCodeProvider::requestImage("<<id<<")";
     return image;
 }
 
 QPixmap MonarkQRCodeProvider::requestPixmap(QString const &id, QSize *p_size,  QSize const &requestedSize)
 {
-    qCDebug(MonarkManagerLog)<<"ENTER: MonarkQRCodeProvider::requestPixmap("<<id<<")";
+    //qCDebug(MonarkManagerLog)<<"ENTER: MonarkQRCodeProvider::requestPixmap("<<id<<")";
     auto const pixMap= QPixmap::fromImage(requestImage(id,p_size,requestedSize));
-    qCDebug(MonarkManagerLog)<<"EXIT : MonarkQRCodeProvider::requestPixmap("<<id<<")";
+    //qCDebug(MonarkManagerLog)<<"EXIT : MonarkQRCodeProvider::requestPixmap("<<id<<")";
     return pixMap;
 }
 
