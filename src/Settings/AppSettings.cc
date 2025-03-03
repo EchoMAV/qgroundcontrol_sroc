@@ -37,6 +37,7 @@ const char* AppSettings::telemetryDirectory =       QT_TRANSLATE_NOOP("AppSettin
 const char* AppSettings::missionDirectory =         QT_TRANSLATE_NOOP("AppSettings", "Missions");
 const char* AppSettings::logDirectory =             QT_TRANSLATE_NOOP("AppSettings", "Logs");
 const char* AppSettings::videoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Video");
+const char* AppSettings::firmwareDirectory =        QT_TRANSLATE_NOOP("AppSettings", "Firmware");
 const char* AppSettings::photoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Photo");
 const char* AppSettings::crashDirectory =           QT_TRANSLATE_NOOP("AppSettings", "CrashLogs");
 const char* AppSettings::customActionsDirectory =   QT_TRANSLATE_NOOP("AppSettings", "CustomActions");
@@ -242,6 +243,7 @@ void AppSettings::_checkSavePathDirectories(void)
         savePathDir.mkdir(missionDirectory);
         savePathDir.mkdir(logDirectory);
         savePathDir.mkdir(videoDirectory);
+        savePathDir.mkdir(firmwareDirectory);
         savePathDir.mkdir(photoDirectory);
         savePathDir.mkdir(crashDirectory);
         savePathDir.mkdir(customActionsDirectory);
@@ -299,6 +301,16 @@ QString AppSettings::videoSavePath(void)
     if (!path.isEmpty() && QDir(path).exists()) {
         QDir dir(path);
         return dir.filePath(videoDirectory);
+    }
+    return QString();
+}
+
+QString AppSettings::firmwareSavePath(void)
+{
+    QString path = savePath()->rawValue().toString();
+    if (!path.isEmpty() && QDir(path).exists()) {
+        QDir dir(path);
+        return dir.filePath(firmwareDirectory);
     }
     return QString();
 }

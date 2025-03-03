@@ -45,10 +45,31 @@ ApplicationWindow {
         }
     }
 
+    MessageDialog {
+        id: downloadGCSUpdateDialog
+        title: qsTr("GCS UPDATE AVAILABLE")
+        text: "An update is available for your GCS." + "\nDo you want to download it?"
+        detailedText: "Version:" + QGroundControl.monarkManager.newGcsVersion
+                      + "\nRelease Date: " + QGroundControl.monarkManager.newGcsReleaseDate
+                      + "\nDescription: " + QGroundControl.monarkManager.newGcsDescription
+        standardButtons: StandardButton.Yes | StandardButton.No
+
+        onYes: {
+            QGroundControl.monarkManager.openGcsDownload()
+        }
+    }
+
     Connections {
         target: QGroundControl.monarkManager
-        onDisplayRestartMessageChanged: {
+        onDisplayRestartMessage: {
             restartApplicationConfirmation.open()
+        }
+    }
+
+    Connections {
+        target: QGroundControl.monarkManager
+        onDisplayGcsUpdateMessage: {
+            downloadGCSUpdateDialog.open()
         }
     }
 
@@ -194,8 +215,7 @@ ApplicationWindow {
     }
 
     function showSetupTool() {
-        showTool(qsTr("MONARK Setup"), "SetupView.qml",
-                 "/res/monark_logo_gray")
+        showTool(qsTr("MONARK Setup"), "SetupView.qml", "/res/monark_logo_gray")
     }
 
     function showSettingsTool() {

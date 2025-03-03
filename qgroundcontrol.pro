@@ -265,6 +265,12 @@ QT += \
 }
 
 AndroidBuild || iOSBuild {
+TARGET.CAPABILITY += SwEvent
+
+}
+
+
+AndroidBuild || iOSBuild {
     # Android and iOS don't unclude these
 } else {
     QT += \

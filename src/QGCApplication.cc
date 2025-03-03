@@ -373,7 +373,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
    }
 #endif /* __mobile__ */
 
-    _checkForNewVersion();
+    //_checkForNewVersion();
 }
 
 void QGCApplication::_exitWithError(QString errorMessage)

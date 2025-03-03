@@ -77,13 +77,15 @@ public:
     Q_PROPERTY(QString updateFailedDrones READ updateFailedDrones NOTIFY updateFailedDronesChanged);
     Q_PROPERTY(int newDroneId READ newDroneId NOTIFY newDroneIdChanged);
     Q_PROPERTY(int newSysId READ newSysId NOTIFY newSysIdChanged);
-    Q_PROPERTY(bool displayRestartMessage READ displayRestartMessage NOTIFY displayRestartMessageChanged);
     Q_PROPERTY(QStringList          validFrequencies READ    validFrequencies NOTIFY validFrequenciesChanged)
-
-    //Q_PROPERTY(QList<QString> connectedDroneListNames READ connectedDroneListNames NOTIFY connectedDroneListNamesChanged)
-    //Q_PROPERTY(QList<QString> connectedDroneListStatuses READ connectedDroneListStatuses NOTIFY connectedDroneListStatusesChanged)
-
-
+    Q_PROPERTY(QString newGcsVersion     READ newGcsVersion     NOTIFY newGcsVersionChanged);
+    Q_PROPERTY(QString newGcsDescription READ newGcsDescription NOTIFY newGcsDescriptionChanged);
+    Q_PROPERTY(QString newGcsURL         READ newGcsURL         NOTIFY newGcsURLChanged);
+    Q_PROPERTY(QString newGcsReleaseDate READ newGcsReleaseDate NOTIFY newGcsReleaseDateChanged);
+    Q_PROPERTY(QString newDroneVersion     READ newDroneVersion     NOTIFY newDroneVersionChanged);
+    Q_PROPERTY(QString newDroneDescription READ newDroneDescription NOTIFY newDroneDescriptionChanged);
+    Q_PROPERTY(QString newDroneURL         READ newDroneURL         NOTIFY newDroneURLChanged);
+    Q_PROPERTY(QString newDroneReleaseDate READ newDroneReleaseDate NOTIFY newDroneReleaseDateChanged);
 
     int monarkState() const { return m_monarkState;}
     int groundRadioUpdateState() const { return m_groundRadioUpdateState;}
@@ -98,8 +100,15 @@ public:
 
     int newDroneId() const{return m_newDroneId;}
     int newSysId() const{return m_newSysId;}
+    QString newGcsVersion()     const{return m_newGcsVersion;}
+    QString newGcsDescription() const{return m_newGcsDescription;}
+    QString newGcsURL()         const{return m_newGcsURL;}
+    QString newGcsReleaseDate() const{return m_newGcsReleaseDate;}
+    QString newDroneVersion()     const{return m_newDroneVersion;}
+    QString newDroneDescription() const{return m_newDroneDescription;}
+    QString newDroneURL()         const{return m_newDroneURL;}
+    QString newDroneReleaseDate() const{return m_newDroneReleaseDate;}
 
-    bool displayRestartMessage() const{return m_displayRestartMessage;}
 
     void invalidateNewSysId();
 
@@ -121,6 +130,8 @@ public:
     Q_INVOKABLE void detect();
 
     Q_INVOKABLE void restartApplication();
+
+    Q_INVOKABLE void openGcsDownload();
 
     Q_INVOKABLE void showRestartMessage();
 
@@ -152,12 +163,24 @@ signals:
     void updateFailedDronesChanged();
     void newDroneIdChanged();
     void newSysIdChanged();
-    void displayRestartMessageChanged();
+    void displayRestartMessage();
+    void displayGcsUpdateMessage();
     void validFrequenciesChanged();
-
+    void newGcsVersionChanged();
+    void newGcsDescriptionChanged();
+    void newGcsURLChanged();
+    void newGcsReleaseDateChanged();
+    void newDroneVersionChanged();
+    void newDroneDescriptionChanged();
+    void newDroneURLChanged();
+    void newDroneReleaseDateChanged();
 
 
 private:
+
+    void _checkForUpdates();
+    void _gcsVersionCheck(QString /*remoteFile*/, QString localFile, QString errorMsg);
+    void _renameFirmwareFile(QString /*remoteFile*/, QString localFile, QString errorMsg);
 
     void _initializeNetworkId(bool paired);
     void _initializeFrequency(bool paired);
@@ -200,8 +223,15 @@ private:
     std::condition_variable m_monarkStateCondition;
     int m_newDroneId;
     int m_newSysId;
-    bool m_displayRestartMessage;
     std::vector<QSerialPort*> m_openPorts;
+    QString m_newGcsVersion;
+    QString m_newGcsDescription;
+    QString m_newGcsURL;
+    QString m_newGcsReleaseDate;
+    QString m_newDroneVersion;
+    QString m_newDroneDescription;
+    QString m_newDroneURL;
+    QString m_newDroneReleaseDate;
 
     //std::set<std::string> m_serialPorts;
 

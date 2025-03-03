@@ -77,6 +77,7 @@ public:
     Q_PROPERTY(QString telemetrySavePath        READ telemetrySavePath          NOTIFY savePathsChanged)
     Q_PROPERTY(QString logSavePath              READ logSavePath                NOTIFY savePathsChanged)
     Q_PROPERTY(QString videoSavePath            READ videoSavePath              NOTIFY savePathsChanged)
+    Q_PROPERTY(QString firmwareSavePath         READ firmwareSavePath           NOTIFY savePathsChanged)
     Q_PROPERTY(QString photoSavePath            READ photoSavePath              NOTIFY savePathsChanged)
     Q_PROPERTY(QString crashSavePath            READ crashSavePath              NOTIFY savePathsChanged)
     Q_PROPERTY(QString customActionsSavePath    READ customActionsSavePath      NOTIFY savePathsChanged)
@@ -96,6 +97,7 @@ public:
     QString telemetrySavePath     ();
     QString logSavePath           ();
     QString videoSavePath         ();
+    QString firmwareSavePath      ();
     QString photoSavePath         ();
     QString crashSavePath         ();
     QString customActionsSavePath ();
@@ -124,6 +126,7 @@ public:
     static const char* missionDirectory;
     static const char* logDirectory;
     static const char* videoDirectory;
+    static const char* firmwareDirectory;
     static const char* photoDirectory;
     static const char* crashDirectory;
     static const char* customActionsDirectory;

@@ -784,11 +784,11 @@ SetupPage {
                 bottom: 7
                 top: 32
             }
-            RegExpValidator {
-                id: encryptionKeyValidator
-                //8 to 16 characters, all ASCII except comma, quotes, and equals
-                regExp: /^[!#-+\--<>-~]{8,16}$/
-            }
+            //RegExpValidator {
+            //    id: encryptionKeyValidator
+            //    //8 to 16 characters, all ASCII except comma, quotes, and equals
+            //    regExp: /^[!#-+\--<>-~]{8,16}$/
+            //}
             RegExpValidator {
                 id: frequencyValidator
                 //I'm really sorry about this

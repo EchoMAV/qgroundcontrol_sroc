@@ -7,10 +7,12 @@
 #include <QtSerialPort/QSerialPortInfo>
 #include "qtandroidserialport/src/qserialport_android_p.h"
 #include <QQmlEngine>
+#include <QDesktopServices>
 #include <sstream>
 #include <future>
 #include <QtAndroidExtras/QAndroidJniObject>
 #include "QGCCorePlugin.h"
+#include "QGCFileDownload.h"
 
 QGC_LOGGING_CATEGORY(MonarkManagerLog, "MonarkManagerLog")
 
@@ -25,7 +27,6 @@ static constexpr inline char const*const np_droneSuccessStr="'is_success': True"
 static constexpr inline uint16_t const n_defaultGroundTxPower= 20;
 static constexpr inline uint16_t const n_defaultGroundFrequency = 2310;
 static constexpr inline uint16_t const n_maxMonarkID=3;
-
 
 std::string _generateRandomKey()
 {
@@ -339,7 +340,6 @@ std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>
     return droneResponses;
 }
 
-
 std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> _sendDroneTxPowerChangeCommands(std::string const& desiredTxPower, std::set<int>& beforeSet, std::set<int>& inProgressSet)
 {
     //qCDebug(MonarkManagerLog)<<"ENTER: _sendDroneTxPowerChangeCommands(desiredTxPower="<<desiredTxPower.c_str()<<")";
@@ -407,13 +407,6 @@ std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>
     return pingDroneResponses;
 }
 
-
-//void _closeSerialPort(QSerialPort& serialPort)
-//{
-//     serialPort.close();
-//}
-
-
 }
 
 MonarkManagerWorkerWorker::MonarkManagerWorkerWorker()
@@ -480,14 +473,120 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , m_monarkStateCondition{}
     , m_newDroneId{0}
     , m_newSysId{0}
-    , m_displayRestartMessage{false}
     , m_openPorts{}
+    , m_newGcsVersion{}
+    , m_newGcsDescription{}
+    , m_newGcsURL{}
+    , m_newGcsReleaseDate{}
+    , m_newDroneVersion{}
+    , m_newDroneDescription{}
+    , m_newDroneURL{}
+    , m_newDroneReleaseDate{}
 {
     //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::MonarkManager()()";
     //connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &MonarkManager::validFrequenciesChanged);
 
     mp_slotHandler->start();
+
+    _checkForUpdates();
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::MonarkManager()()";
+}
+
+void MonarkManager::_checkForUpdates()
+{
+    if(mp_slotHandler->needDispatch())
+    {
+        mp_slotHandler->dispatch([this](){_checkForUpdates();});
+    }
+    else
+    {
+        QString const versionCheckJSONFileURL = "https://echomav.com/versioning/monark.json";
+        QGCFileDownload* p_download = new QGCFileDownload(this);
+        connect(p_download, &QGCFileDownload::downloadComplete, this, &MonarkManager::_gcsVersionCheck);
+        p_download->download(versionCheckJSONFileURL);
+    }
+}
+
+void MonarkManager::_renameFirmwareFile(QString /*remoteFile*/, QString localFile, QString errorMsg)
+{
+    if(errorMsg.isEmpty())
+    {
+        auto const index=m_newDroneURL.lastIndexOf("/");
+        if(index>=0)
+        {
+            QFile firmwareFile = QDir(qgcApp()->toolbox()->settingsManager()->appSettings()->firmwareSavePath()).absoluteFilePath(m_newDroneURL.mid(index+1));
+            QFile::rename(localFile,QFileInfo(firmwareFile).absoluteFilePath());
+        }
+    }
+    else
+    {
+        qCCritical(MonarkManagerLog) << "Download firmware file failed: " << errorMsg;
+    }
+}
+
+void MonarkManager::_gcsVersionCheck(QString /*remoteFile*/, QString localFile, QString errorMsg)
+{
+    if(errorMsg.isEmpty())
+    {
+        QFile versionFile(localFile);
+        if (versionFile.open(QIODevice::ReadOnly)) {
+            QTextStream textStream(&versionFile);
+            auto const updateFileJSON=textStream.readAll();
+            auto const jsonResponse = QJsonDocument::fromJson(updateFileJSON.toUtf8());
+            auto const documentObject=jsonResponse.object();
+            auto const monarkGcsObject=documentObject["monark_gcs"].toObject();
+            m_newGcsVersion = monarkGcsObject["version"].toString();
+            emit newGcsVersionChanged();
+            m_newGcsDescription = monarkGcsObject["description"].toString();
+            emit newGcsDescriptionChanged();
+            m_newGcsURL = monarkGcsObject["url"].toString();
+            emit newGcsURLChanged();
+            m_newGcsReleaseDate = monarkGcsObject["release_date"].toString();
+            emit newGcsReleaseDateChanged();
+            auto const monarkCpuObject=documentObject["monark_firmware"].toObject();
+            m_newDroneVersion = monarkCpuObject["version"].toString();
+            emit newDroneVersionChanged();
+            m_newDroneDescription = monarkCpuObject["description"].toString();
+            emit newDroneDescriptionChanged();
+            m_newDroneURL = monarkCpuObject["url"].toString();
+            emit newDroneURLChanged();
+            m_newDroneReleaseDate = monarkCpuObject["release_date"].toString();
+            emit newDroneReleaseDateChanged();
+            auto const currentVersionString = QGCApplication::applicationVersion();
+            QRegularExpression regExp("(\\d+)\\.(\\d+)\\.(\\d+)");
+            auto const currentMatch = regExp.match(currentVersionString);
+            auto const stableMatch = regExp.match(m_newGcsVersion);
+            if (   currentMatch.hasMatch() && currentMatch.lastCapturedIndex() == 3
+                && stableMatch.hasMatch()  && stableMatch.lastCapturedIndex()  == 3) {
+                auto const currentMajorVersion = currentMatch.captured(1).toInt();
+                auto const currentMinorVersion = currentMatch.captured(2).toInt();
+                auto const currentBuildVersion = currentMatch.captured(3).toInt();
+                auto const stableMajorVersion = stableMatch.captured(1).toInt();
+                auto const stableMinorVersion = stableMatch.captured(2).toInt();
+                auto const stableBuildVersion = stableMatch.captured(3).toInt();
+                if(currentMajorVersion < stableMajorVersion || (currentMajorVersion == stableMajorVersion && (currentMinorVersion < stableMinorVersion || (currentMinorVersion == stableMinorVersion && currentBuildVersion < stableBuildVersion))))
+                {
+                    emit displayGcsUpdateMessage();
+                }
+            }
+            {
+                auto const index=m_newDroneURL.lastIndexOf("/");
+                if(index>=0)
+                {
+                    if(!QFile(QDir(qgcApp()->toolbox()->settingsManager()->appSettings()->firmwareSavePath()).absoluteFilePath(m_newDroneURL.mid(index+1))).exists())
+                    {
+                        QGCFileDownload* p_download = new QGCFileDownload(this);
+                        connect(p_download, &QGCFileDownload::downloadComplete, this, &MonarkManager::_renameFirmwareFile);
+                        p_download->download(m_newDroneURL);
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        qCCritical(MonarkManagerLog) << "Download update check file failed: " << errorMsg;
+    }
 }
 
 QStringList MonarkManager::validFrequencies       () const
@@ -547,7 +646,6 @@ QStringList MonarkManager::validFrequencies       () const
     return list;
 }
 
-
 void MonarkManager::_openSerialConnectionToGcsRadio()
 {
     for (auto const& port : QSerialPortInfo::availablePorts())
@@ -557,7 +655,7 @@ void MonarkManager::_openSerialConnectionToGcsRadio()
         serialPort.setPort(port);
         if (serialPort.open(QIODevice::ReadWrite))
         {
-            qDebug(MonarkManagerLog) << "Active Port:" << serialPort.portName();
+            qCDebug(MonarkManagerLog) << "Active Port:" << serialPort.portName();
             if(!serialPort.setBaudRate(QSerialPort::Baud115200))
             {
                 qCWarning(MonarkManagerLog) << "Failed to set baud rate";
@@ -582,7 +680,7 @@ void MonarkManager::_openSerialConnectionToGcsRadio()
         else
         {
             m_openPorts.pop_back();
-            qDebug(MonarkManagerLog) << "Port" << serialPort.portName() << "is not active.";
+            qCDebug(MonarkManagerLog) << "Port" << serialPort.portName() << "is not active.";
         }
     }
 }
@@ -664,7 +762,7 @@ void MonarkManager::_sendEncryptionKeyToGcsRadio(char const*const p_password)
         {
             p_openPort->waitForBytesWritten(100);
         }
-        qDebug(MonarkManagerLog) << "Wrote "<<numBytesWritten<<" bytes to port "<<p_openPort->portName();
+        qCDebug(MonarkManagerLog) << "Wrote "<<numBytesWritten<<" bytes to port "<<p_openPort->portName();
     }
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_sendEncryptionKeyToGcsRadio()";
 }
@@ -703,7 +801,6 @@ void MonarkManager::setToolbox(QGCToolbox *const p_toolbox)
     mp_monarkQRCodeProvider = p_toolbox->monarkQRCodeProvider();
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::setToolbox()";
 }
-
 
 QString MonarkManager::allDrones() const
 {
@@ -1126,8 +1223,7 @@ void MonarkManager::invalidateNewSysId()
 
 void MonarkManager::showRestartMessage()
 {
-    m_displayRestartMessage=true;
-    emit displayRestartMessageChanged();
+    emit displayRestartMessage();
 }
 
 void MonarkManager::restartApplication()
@@ -1154,6 +1250,14 @@ void MonarkManager::restartApplication()
     //                                                                     "()V;");
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::restartApplication()";
 
+}
+
+void MonarkManager::openGcsDownload()
+{
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::openGcsDownload()";
+    qCDebug(MonarkManagerLog)<<"opening URL "<<m_newGcsURL;
+    QDesktopServices::openUrl(m_newGcsURL);
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::openGcsDownload()";
 }
 
 void MonarkManager::saveFlutterManagementSettings(QString const& frequency)
@@ -1255,7 +1359,6 @@ void MonarkManager::resetActiveVehicle()
     }
 }
 
-
 void MonarkManager::rebootActiveVehicle()
 {
     if(mp_slotHandler->needDispatch())
@@ -1292,7 +1395,8 @@ void MonarkManager::detect()
         std::string ip = _getDroneIPAddress(monarkID);
         auto const startTime = std::chrono::system_clock::now();
         std::vector<std::string> commands;
-        commands.push_back("microhard --action=info --monark_id="+std::to_string(monarkID)+"\n");
+        //commands.push_back("microhard --action=info --monark_id="+std::to_string(monarkID)+"\n");
+        commands.push_back("monark-updater --version\n");
         for(;;)
         {
             if((std::chrono::system_clock::now()-startTime) > std::chrono::minutes(3))
@@ -1304,10 +1408,10 @@ void MonarkManager::detect()
                 qgcApp()->toolbox()->audioOutput()->say("Beep");
             }
             auto const& response = _sendCommands(ip.c_str(),"monark", "monark", &commands, true).second;
-            //for(auto const& responseStr: response)
-            //{
-            //    qCDebug(MonarkManagerLog)<<"returnStr = '"<<responseStr.c_str()<<"'";
-            //}
+            for(auto const& responseStr: response)
+            {
+                qCDebug(MonarkManagerLog)<<"returnStr = '"<<responseStr.c_str()<<"'";
+            }
             if(!response.empty() && response.back().find(np_droneSuccessStr)!= std::string::npos)
             {
                 qCDebug(MonarkManagerLog)<<"found drone";
@@ -1510,7 +1614,6 @@ void MonarkManager::_waitForPingResponses(std::vector<std::pair<int,std::future<
     }
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_waitForPingResponses()";
 }
-
 
 void MonarkManager::changeTxPower(QString const& desiredTxPower)
 {
