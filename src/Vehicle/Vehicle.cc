@@ -456,7 +456,6 @@ void Vehicle::_setSysId()
                             auto const errorString = p_sysIdFact->validate(QString::number(newSysId),false);
                             if(errorString.isEmpty())
                             {
-                                //p_monarkManager->invalidateNewSysId();
                                 _needToSetSysId=false;
 
                                 p_sysIdFact->setCookedValue(newSysId);

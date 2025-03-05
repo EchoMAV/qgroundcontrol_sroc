@@ -44,7 +44,7 @@ QGC_ORG_NAME        = "EchoMAV"
 QGC_ORG_DOMAIN      = "org.echomav"
 QGC_ANDROID_PACKAGE = "org.echomav.monarkgcs"
 QGC_APP_DESCRIPTION = "MONARK GCS"
-QGC_APP_COPYRIGHT   = "Copyright (C) 2024 EchoMAV, LLC. All rights reserved."
+QGC_APP_COPYRIGHT   = "Copyright (C) 2025 EchoMAV, LLC. All rights reserved."
 
 # Remove code which the Herelink doesn't need
 DEFINES += \

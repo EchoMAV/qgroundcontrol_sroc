@@ -27,7 +27,7 @@ Item {
         PreFlightCheckGroup {
             name: qsTr("Multirotor Initial Checks")
             PreFlightJoystickCheck {
-                allowTelemetryFailureOverride:    !QGroundControl.settingsManager.appSettings.enforceJoystickRequired.value
+                allowTelemetryFailureOverride:    false//!QGroundControl.settingsManager.appSettings.enforceJoystickRequired.value
             }
 
 

@@ -110,8 +110,6 @@ public:
     QString newDroneReleaseDate() const{return m_newDroneReleaseDate;}
 
 
-    void invalidateNewSysId();
-
     virtual void setToolbox(QGCToolbox* p_toolbox) override;
 
     Q_INVOKABLE void startScanning();
@@ -122,16 +120,13 @@ public:
     Q_INVOKABLE void resetActiveVehicle();
     Q_INVOKABLE void rebootActiveVehicle();
 
-#if 0
-    Q_INVOKABLE void saveEncryptionKey();
-#endif
-
 
     Q_INVOKABLE void detect();
 
     Q_INVOKABLE void restartApplication();
 
     Q_INVOKABLE void openGcsDownload();
+    Q_INVOKABLE void pushMonarkDownload(int monarkID);
 
     Q_INVOKABLE void showRestartMessage();
 
@@ -163,6 +158,7 @@ signals:
     void updateFailedDronesChanged();
     void newDroneIdChanged();
     void newSysIdChanged();
+    void displayMonarkUpdateMessage(int monarkId);
     void displayRestartMessage();
     void displayGcsUpdateMessage();
     void validFrequenciesChanged();
@@ -181,6 +177,7 @@ private:
     void _checkForUpdates();
     void _gcsVersionCheck(QString /*remoteFile*/, QString localFile, QString errorMsg);
     void _renameFirmwareFile(QString /*remoteFile*/, QString localFile, QString errorMsg);
+    bool _checkIfDroneNeedsUpdate(int monarkId);
 
     void _initializeNetworkId(bool paired);
     void _initializeFrequency(bool paired);
