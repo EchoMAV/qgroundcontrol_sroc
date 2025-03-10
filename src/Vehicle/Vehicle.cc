@@ -444,42 +444,46 @@ void Vehicle::_setSysId()
             {
                 auto const newSysId=p_monarkManager->newSysId();
                 //qCDebug(VehicleLog)<<"newSysId="<<newSysId<<" id="<<_id;
-                if(newSysId>0 && _id>0)
+                if(_id>0)
                 {
-                    if(_parameterManager->parameterExists(_defaultComponentId,"SYSID_THISMAV"))
+                    if(newSysId>0 )
                     {
-
-                        auto const p_sysIdFact=_parameterManager->getParameter(_defaultComponentId,"SYSID_THISMAV");
-                        if(p_sysIdFact)
+                        if(_parameterManager->parameterExists(_defaultComponentId,"SYSID_THISMAV"))
                         {
 
-                            auto const errorString = p_sysIdFact->validate(QString::number(newSysId),false);
-                            if(errorString.isEmpty())
+                            auto const p_sysIdFact=_parameterManager->getParameter(_defaultComponentId,"SYSID_THISMAV");
+                            if(p_sysIdFact)
                             {
-                                _needToSetSysId=false;
 
-                                p_sysIdFact->setCookedValue(newSysId);
-                                p_monarkManager->showRestartMessage();
-
-
+                                auto const errorString = p_sysIdFact->validate(QString::number(newSysId),false);
+                                if(errorString.isEmpty())
+                                {
 
 
-                                //qgcApp()->showAppMessage(QString("MONARK-%1 added. Rebooting in 10 seconds").arg(newSysId));
-                                //p_monarkManager->restartApplication();
+                                    p_sysIdFact->setCookedValue(newSysId);
+                                    p_monarkManager->showRestartMessage();
 
+
+
+
+                                    //qgcApp()->showAppMessage(QString("MONARK-%1 added. Rebooting in 10 seconds").arg(newSysId));
+                                    //p_monarkManager->restartApplication();
+
+                                }
+                                else
+                                {
+                                    qCCritical(VehicleLog)<<"Unable to set SYSID_THISMAV to "<<newSysId<<" because: "<<errorString;
+                                }
                             }
                             else
                             {
-                                qCCritical(VehicleLog)<<"Unable to set SYSID_THISMAV to "<<newSysId<<" because: "<<errorString;
+                                qCCritical(VehicleLog)<<"SYSID_THISMAV fact was not found";
                             }
-                        }
-                        else
-                        {
-                            qCCritical(VehicleLog)<<"SYSID_THISMAV fact was not found";
+
                         }
 
                     }
-
+                    _needToSetSysId=false;
                 }
             }
         }
@@ -1692,8 +1696,8 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
         } else {
             batteryIdStr = batteryIdStr.arg("");
         }
-        _say(tr("warning"));
-        _say(QStringLiteral("%1 %2 ").arg(_vehicleIdSpeech()).arg(batteryMessage.arg(batteryIdStr)));
+        say(tr("warning"));
+        say(QStringLiteral("%1 %2 ").arg(_vehicleIdSpeech()).arg(batteryMessage.arg(batteryIdStr)));
     }
 }
 
@@ -2662,6 +2666,14 @@ void Vehicle::_parametersReady(bool parametersReady)
         _setupAutoDisarmSignalling();
         _initialConnectStateMachine->advance();
         qgcApp()->toolbox()->monarkManager()->refreshDroneList();
+        _sysIdMut.lock();
+        bool doCheckUpdate=!_needToSetSysId;
+        _sysIdMut.unlock();
+        if(doCheckUpdate)
+        {
+            qgcApp()->toolbox()->monarkManager()->tryDroneUpdate(_id);
+        }
+
     }
 
     _multirotor_speed_limits_available = _firmwarePlugin->mulirotorSpeedLimitsAvailable(this);
@@ -2760,7 +2772,7 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
     }
 }
 
-void Vehicle::_say(const QString& text)
+void Vehicle::say(const QString& text)
 {
     _toolbox->audioOutput()->say(text.toLower());
 }
@@ -2872,13 +2884,13 @@ QString Vehicle::_vehicleIdSpeech()
 
 void Vehicle::_handleFlightModeChanged(const QString& flightMode)
 {
-    _say(tr("%1 %2 flight mode").arg(_vehicleIdSpeech()).arg(flightMode));
+    say(tr("%1 %2 flight mode").arg(_vehicleIdSpeech()).arg(flightMode));
     emit guidedModeChanged(_firmwarePlugin->isGuidedMode(this));
 }
 
 void Vehicle::_announceArmedChanged(bool armed)
 {
-    _say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? tr("armed") : tr("disarmed")));
+    say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? tr("armed") : tr("disarmed")));
     if(armed) {
         //-- Keep track of armed coordinates
         _armedPosition = _coordinate;

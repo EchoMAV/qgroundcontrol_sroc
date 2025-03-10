@@ -290,6 +290,22 @@ VideoManager::stopVideo()
 }
 
 void
+VideoManager::toggleRecording()
+{
+    if (qgcApp()->runningUnitTests()) {
+        return;
+    }
+    if(_recording)
+    {
+        stopRecording();
+    }
+    else
+    {
+        startRecording();
+    }
+}
+
+void
 VideoManager::startRecording(const QString& videoFile)
 {
     if (qgcApp()->runningUnitTests()) {

@@ -1184,11 +1184,22 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
     } else if(action == _buttonActionTriggerCamera) {
         if (buttonDown) emit triggerCamera();
     } else if(action == _buttonActionStartVideoRecord) {
-        if (buttonDown) emit startVideoRecord();
+        if (buttonDown)
+        {
+            emit startVideoRecord();
+            qgcApp()->toolbox()->videoManager()->startRecording();
+        }
     } else if(action == _buttonActionStopVideoRecord) {
-        if (buttonDown) emit stopVideoRecord();
+        if (buttonDown)
+        {
+            emit stopVideoRecord();
+            qgcApp()->toolbox()->videoManager()->stopRecording();
+        }
     } else if(action == _buttonActionToggleVideoRecord) {
-        if (buttonDown) emit toggleVideoRecord();
+        if (buttonDown)
+        {   emit toggleVideoRecord();
+            qgcApp()->toolbox()->videoManager()->toggleRecording();
+        }
     } else if(action == _buttonActionGimbalUp) {
         if (buttonDown) emit gimbalPitchStep(1);
     } else if(action == _buttonActionGimbalDown) {

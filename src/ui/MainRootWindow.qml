@@ -34,9 +34,10 @@ ApplicationWindow {
     visible: true
 
     MessageDialog {
+        property var monarkId: 0
         id: restartApplicationConfirmation
         title: qsTr("READ CAREFULLY")
-        text: "MONARK-" + QGroundControl.monarkManager.newSysId + " has been added."
+        text: "MONARK-" + monarkId + " has been added."
         detailedText: "Press OK, wait 5 seconds, and the application will automatically close. Then power cycle the drone and relaunch MONARK GCS App."
         standardButtons: StandardButton.Ok
         onAccepted: {
@@ -47,21 +48,28 @@ ApplicationWindow {
     MessageDialog {
         id: monarkUpdateAvailableDialog
         property var monarkId: 0
+        property bool restartAfter: false
         title: qsTr("MONARK UPDATE AVAILABLE")
-        text: "An update is available for MONARK-"+monarkId+". Would you like to push it to the MONARK?"
+        text: "An update is available for MONARK-" + monarkId
+              + ". Would you like to push it to the MONARK?"
         detailedText: "Version:" + QGroundControl.monarkManager.newDroneVersion
                       + "\nRelease Date: " + QGroundControl.monarkManager.newDroneReleaseDate
                       + "\nDescription: " + QGroundControl.monarkManager.newDroneDescription
         standardButtons: StandardButton.Yes | StandardButton.No
         onYes: {
             QGroundControl.monarkManager.pushMonarkDownload(monarkId)
-            restartApplicationConfirmation.open()
+            if (restartAfter) {
+                restartApplicationConfirmation.monarkId = monarkId
+                restartApplicationConfirmation.open()
+            }
         }
         onNo: {
-           restartApplicationConfirmation.open()
+            if (restartAfter) {
+                restartApplicationConfirmation.monarkId = monarkId
+                restartApplicationConfirmation.open()
+            }
         }
     }
-
 
     MessageDialog {
         id: downloadGCSUpdateDialog
@@ -79,14 +87,16 @@ ApplicationWindow {
     Connections {
         target: QGroundControl.monarkManager
         onDisplayRestartMessage: {
+            restartApplicationConfirmation.monarkId = QGroundControl.monarkManager.newSysId
             restartApplicationConfirmation.open()
         }
     }
 
     Connections {
         target: QGroundControl.monarkManager
-        function onDisplayMonarkUpdateMessage(monarkId) {
+        function onDisplayMonarkUpdateMessage(monarkId, restartAfter) {
             monarkUpdateAvailableDialog.monarkId = monarkId
+            monarkUpdateAvailableDialog.restartAfter = restartAfter
             monarkUpdateAvailableDialog.open()
         }
     }

@@ -358,6 +358,7 @@ QGCCameraControl::toggleMode()
 bool
 QGCCameraControl::toggleVideo()
 {
+      qCDebug(CameraControlLog) << "toggleVideo";
     if(!_resetting) {
         if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
             return stopVideo();
@@ -380,10 +381,10 @@ QGCCameraControl::takePhoto()
         qCWarning(CameraControlLog) << "Camera does not handle image capture";
         return false;
     }
-    if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING){
-        qCWarning(CameraControlLog) << "Can't take a picture while you're recording video";
-        return false;
-    }
+    //if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING){
+    //    qCWarning(CameraControlLog) << "Can't take a picture while you're recording video";
+    //    return false;
+    //}
 
 
     if(cameraMode() == CAM_MODE_VIDEO && !photosInVideoMode()) {
@@ -809,8 +810,8 @@ QGCCameraControl::_setVideoStatus(VideoStatus status)
         } else {
              _recTimer.stop();
              _recordTime = 0;
-             emit recordTimeChanged();
         }
+         emit recordTimeChanged();
     }
 }
 

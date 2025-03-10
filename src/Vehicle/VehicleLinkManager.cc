@@ -70,10 +70,10 @@ void VehicleLinkManager::_commRegainedOnLink(LinkInterface* link)
     }
 
     if (!commRegainedMessage.isEmpty()) {
-        _vehicle->_say(commRegainedMessage);
+        _vehicle->say(commRegainedMessage);
     }
     if (!primarySwitchMessage.isEmpty()) {
-        _vehicle->_say(primarySwitchMessage);
+        _vehicle->say(primarySwitchMessage);
         qgcApp()->showAppMessage(primarySwitchMessage);
     }
 
@@ -113,7 +113,7 @@ void VehicleLinkManager::_commLostCheck(void)
             bool isPrimaryLink = linkInfo.link.get() == _primaryLink.lock().get();
             if (_rgLinkInfo.count() > 1) {
                 QString msg = tr("%1Communication lost on %2 link.").arg(_vehicle->_vehicleIdSpeech()).arg(isPrimaryLink ? tr("primary") : tr("secondary"));
-                _vehicle->_say(msg);
+                _vehicle->say(msg);
             }
         }
     }
@@ -124,7 +124,7 @@ void VehicleLinkManager::_commLostCheck(void)
     // Switch to better primary link if needed
     if (_updatePrimaryLink()) {
         QString msg = tr("%1Switching communication to secondary link.").arg(_vehicle->_vehicleIdSpeech());
-        _vehicle->_say(msg);
+        _vehicle->say(msg);
         qgcApp()->showAppMessage(msg);
     }
 
@@ -143,7 +143,7 @@ void VehicleLinkManager::_commLostCheck(void)
                 closeVehicle();
                 return;
             }
-            _vehicle->_say(tr("%1Communication lost").arg(_vehicle->_vehicleIdSpeech()));
+            _vehicle->say(tr("%1Communication lost").arg(_vehicle->_vehicleIdSpeech()));
 
             _communicationLost = true;
             emit communicationLostChanged(true);

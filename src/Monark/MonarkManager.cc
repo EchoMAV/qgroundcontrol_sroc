@@ -31,26 +31,14 @@ static constexpr inline uint16_t const n_maxMonarkID=3;
 
 std::string _generateRandomKey()
 {
+    std::string validChars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     std::random_device rd;
     std::mt19937 generator(rd());
-    std::uniform_int_distribution<int> dist(int('!'), int('~')-3);
+    std::uniform_int_distribution<int> dist(0,validChars.length()-1);
     std::stringstream ss;
     for(int i=0;i<16;++i)
     {
-        int val=dist(generator);
-        if(val>=int('"'))
-        {
-            ++val;
-        }
-        if(val>=int(','))
-        {
-            ++val;
-        }
-        if(val>=int('='))
-        {
-            ++val;
-        }
-        ss<<char(val);
+        ss<<validChars[dist(generator)];
     }
     return ss.str();
 }
@@ -562,9 +550,11 @@ std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>
 
 bool _shouldUpdate(QString const& currentVersionString, QString const& newVersionString)
 {
+    qCDebug(MonarkManagerLog)<<"ENTER: _shouldUpdate(currentVersionString="<<currentVersionString<<", newVersionString="<<newVersionString<<")";
     QRegularExpression regExp("(\\d+)\\.(\\d+)\\.(\\d+)");
     auto const currentMatch = regExp.match(currentVersionString);
     auto const stableMatch = regExp.match(newVersionString);
+    bool shouldUpdate=false;
     if (   currentMatch.hasMatch() && currentMatch.lastCapturedIndex() == 3
         && stableMatch.hasMatch()  && stableMatch.lastCapturedIndex()  == 3) {
         auto const currentMajorVersion = currentMatch.captured(1).toInt();
@@ -573,9 +563,10 @@ bool _shouldUpdate(QString const& currentVersionString, QString const& newVersio
         auto const stableMajorVersion = stableMatch.captured(1).toInt();
         auto const stableMinorVersion = stableMatch.captured(2).toInt();
         auto const stableBuildVersion = stableMatch.captured(3).toInt();
-        return (currentMajorVersion < stableMajorVersion || (currentMajorVersion == stableMajorVersion && (currentMinorVersion < stableMinorVersion || (currentMinorVersion == stableMinorVersion && currentBuildVersion < stableBuildVersion))));
+        shouldUpdate= (currentMajorVersion < stableMajorVersion || (currentMajorVersion == stableMajorVersion && (currentMinorVersion < stableMinorVersion || (currentMinorVersion == stableMinorVersion && currentBuildVersion < stableBuildVersion))));
     }
-    return false;
+    qCDebug(MonarkManagerLog)<<"EXIT : _shouldUpdate(currentVersionString="<<currentVersionString<<", newVersionString="<<newVersionString<<") -> return "<<shouldUpdate;
+    return shouldUpdate;
 }
 
 }
@@ -665,27 +656,27 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
 
 void MonarkManager::_checkForUpdates()
 {
-    if(mp_slotHandler->needDispatch())
-    {
-        mp_slotHandler->dispatch([this](){_checkForUpdates();});
-    }
-    else
-    {
-        QString const versionCheckJSONFileURL = "https://echomav.com/versioning/monark.json";
-        QGCFileDownload* p_download = new QGCFileDownload(this);
-        connect(p_download, &QGCFileDownload::downloadComplete, this, &MonarkManager::_gcsVersionCheck);
-        p_download->download(versionCheckJSONFileURL);
-    }
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_checkForUpdates()";
+    QString const versionCheckJSONFileURL = "https://echomav.com/versioning/monark.json";
+    QGCFileDownload* p_download = new QGCFileDownload(this);
+    connect(p_download, &QGCFileDownload::downloadComplete, this, &MonarkManager::_gcsVersionCheck);
+    p_download->download(versionCheckJSONFileURL);
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_checkForUpdates()";
 }
 
 void MonarkManager::_renameFirmwareFile(QString /*remoteFile*/, QString localFile, QString errorMsg)
 {
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_renameFirmwareFile(localFile="<<localFile<<", errorMsg="<<errorMsg<<")";
     if(errorMsg.isEmpty())
     {
         auto const index=m_newDroneURL.lastIndexOf("/");
         if(index>=0)
         {
-            QFile firmwareFile = QDir(qgcApp()->toolbox()->settingsManager()->appSettings()->firmwareSavePath()).absoluteFilePath("monark_updates.zip");
+            QFile firmwareFile = QDir(qgcApp()->toolbox()->settingsManager()->appSettings()->firmwareSavePath()).absoluteFilePath(m_newDroneURL.mid(index+1));
+            if(firmwareFile.exists())
+            {
+                firmwareFile.remove();
+            }
             QFile::rename(localFile,QFileInfo(firmwareFile).absoluteFilePath());
         }
     }
@@ -693,10 +684,12 @@ void MonarkManager::_renameFirmwareFile(QString /*remoteFile*/, QString localFil
     {
         qCCritical(MonarkManagerLog) << "Download firmware file failed: " << errorMsg;
     }
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_renameFirmwareFile(localFile="<<localFile<<", errorMsg="<<errorMsg<<")";
 }
 
 void MonarkManager::_gcsVersionCheck(QString /*remoteFile*/, QString localFile, QString errorMsg)
 {
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_gcsVersionCheck(localFile="<<localFile<<", errorMsg="<<errorMsg<<")";
     if(errorMsg.isEmpty())
     {
         QFile versionFile(localFile);
@@ -733,8 +726,10 @@ void MonarkManager::_gcsVersionCheck(QString /*remoteFile*/, QString localFile, 
                 auto const index=m_newDroneURL.lastIndexOf("/");
                 if(index>=0)
                 {
-                    if(!QFile(QDir(qgcApp()->toolbox()->settingsManager()->appSettings()->firmwareSavePath()).absoluteFilePath(m_newDroneURL.mid(index+1))).exists())
+                    QFile firmwareFile = QDir(qgcApp()->toolbox()->settingsManager()->appSettings()->firmwareSavePath()).absoluteFilePath(m_newDroneURL.mid(index+1));
+                    if(!firmwareFile.exists())
                     {
+                        qCDebug(MonarkManagerLog)<<"starting firmware download from "<<m_newDroneURL;
                         QGCFileDownload* p_download = new QGCFileDownload(this);
                         connect(p_download, &QGCFileDownload::downloadComplete, this, &MonarkManager::_renameFirmwareFile);
                         p_download->download(m_newDroneURL);
@@ -747,6 +742,7 @@ void MonarkManager::_gcsVersionCheck(QString /*remoteFile*/, QString localFile, 
     {
         qCCritical(MonarkManagerLog) << "Download update check file failed: " << errorMsg;
     }
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_gcsVersionCheck(localFile="<<localFile<<", errorMsg="<<errorMsg<<")";
 }
 
 QStringList MonarkManager::validFrequencies       () const
@@ -1006,6 +1002,7 @@ void MonarkManager::startScanning()
         _setMonarkState(MonarkState::ScanInProgress);
         auto scanningResult=MonarkState::ScanFailedNotDetected;
         auto password = _getEncryptionKeyFromGcsRadio();
+
         bool sendPassword=false;
         if(password.empty())
         {
@@ -1093,7 +1090,7 @@ void MonarkManager::refreshDroneList()
     }
     else
     {
-        //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::refreshDroneList()";
+        qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::refreshDroneList()";
         auto oldAllDrones=m_allDrones;
         m_allDrones.clear();
         std::vector<std::future<std::vector<std::string>>> dronePingResponses;
@@ -1117,7 +1114,7 @@ void MonarkManager::refreshDroneList()
         }
         emit allDronesChanged();
 
-        //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::refreshDroneList()";
+        qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::refreshDroneList()";
     }
 }
 
@@ -1372,8 +1369,27 @@ void MonarkManager::gotoDetectionFailed()
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::gotoDetectionFailed()";
 }
 
+
+void MonarkManager::tryDroneUpdate(int monarkId)
+{
+    if(mp_slotHandler->needDispatch())
+    {
+        mp_slotHandler->dispatch([this,monarkId](){tryDroneUpdate(monarkId);});
+    }
+    else
+    {
+        auto const needsUpdate=_checkIfDroneNeedsUpdate(monarkId);
+        if(needsUpdate)
+        {
+
+            emit displayMonarkUpdateMessage(monarkId, false);
+        }
+    }
+}
 bool MonarkManager::_checkIfDroneNeedsUpdate(int monarkId)
 {
+     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_checkIfDroneNeedsUpdate(monarkId="<<monarkId<<")";
+    bool needsUpdate=false;
     if(monarkId>0)
     {
         std::vector<std::string> commands;
@@ -1381,43 +1397,50 @@ bool MonarkManager::_checkIfDroneNeedsUpdate(int monarkId)
         std::string ip = _getDroneIPAddress(monarkId);
 
         auto const& response = _sendCommands(ip.c_str(),"monark", "monark", &commands, true).second;
-        for(auto const& responseStr: response)
+        if(!response.empty())
         {
-            //TODO remove
-            qCDebug(MonarkManagerLog)<<"returnStr = '"<<responseStr.c_str()<<"'";
+            auto const currentVersionString = response.back();
+            needsUpdate= _shouldUpdate(QString::fromStdString(currentVersionString),m_newDroneVersion);
         }
-
-
-
-        //TODO
-        auto const currentVersionString = "";
-        return _shouldUpdate(currentVersionString,m_newDroneVersion);
     }
-    return false;
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_checkIfDroneNeedsUpdate(monarkId="<<monarkId<<") -> return "<<needsUpdate;
+    return needsUpdate;
 }
 
 void MonarkManager::pushMonarkDownload(int monarkID)
 {
-    QFile firmwareFile = QDir(qgcApp()->toolbox()->settingsManager()->appSettings()->firmwareSavePath()).absoluteFilePath("monark_updates.zip");
-    if(firmwareFile.exists())
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::pushMonarkDownload(monarkID="<<monarkID<<")";
+    auto const index=m_newDroneURL.lastIndexOf("/");
+    if(index>=0)
     {
-        std::string ip = _getDroneIPAddress(monarkID);
-        _sendFile(ip.c_str(),"monark", "monark",firmwareFile,"/home/monark/monark_updates.zip",true,false);
+        QFile firmwareFile = QDir(qgcApp()->toolbox()->settingsManager()->appSettings()->firmwareSavePath()).absoluteFilePath(m_newDroneURL.mid(index+1));
+        if(firmwareFile.exists())
+        {
+            std::string ip = _getDroneIPAddress(monarkID);
+            _sendFile(ip.c_str(),"monark", "monark",firmwareFile,"/home/monark/monark-updates.zip",true,false);
+        }
     }
+    //auto const p_vehicle = qgcApp()->toolbox()->multiVehicleManager()->getVehicleById(monarkID);
+    //if(p_vehicle)
+    //{
+    //    p_vehicle->rebootVehicle();
+    //}
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::pushMonarkDownload(monarkID="<<monarkID<<")";
 }
 
 void MonarkManager::showRestartMessage()
 {
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::showRestartMessage()";
     auto const needsUpdate=_checkIfDroneNeedsUpdate(m_newSysId);
     if(needsUpdate)
     {
-        emit displayMonarkUpdateMessage(m_newSysId);
+        emit displayMonarkUpdateMessage(m_newSysId, true);
     }
     else
     {
          emit displayRestartMessage();
     }
-
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::showRestartMessage()";
 }
 
 void MonarkManager::restartApplication()
@@ -1516,14 +1539,14 @@ void MonarkManager::resetActiveVehicle()
     }
     else
     {
-        //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::resetActiveVehicle()";
+        qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::resetActiveVehicle()";
         auto const activeVehicleId = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id();
         if(activeVehicleId>0)
         {
             auto const ip=_getDroneIPAddress(activeVehicleId);
             std::vector<std::string> droneCommands;
             droneCommands.push_back("microhard --action=reset --monark_id="+std::to_string(activeVehicleId)+"\n");
-            auto const response= _sendCommands(ip.c_str(),"monark", "monark", &droneCommands,true).second;
+            auto const response= _sendCommands(ip.c_str(),"monark", "monark", &droneCommands,true,false).second;
             if(!response.empty() && response.back().find(np_droneSuccessStr)!= std::string::npos)
             {
                 m_allDrones.erase(activeVehicleId);
@@ -1549,7 +1572,7 @@ void MonarkManager::resetActiveVehicle()
             }
 
         }
-        //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::resetActiveVehicle()";
+        qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::resetActiveVehicle()";
     }
 }
 
@@ -1561,13 +1584,13 @@ void MonarkManager::rebootActiveVehicle()
     }
     else
     {
-        //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::rebootActiveVehicle()";
+        qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::rebootActiveVehicle()";
         auto const p_activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
         if(p_activeVehicle)
         {
             p_activeVehicle->rebootVehicle();
         }
-        //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::rebootActiveVehicle()";
+        qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::rebootActiveVehicle()";
     }
 }
 
@@ -1579,7 +1602,7 @@ void MonarkManager::detect()
     }
     else
     {
-        //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::detect()";
+        qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::detect()";
         auto monarkID = mp_monarkSettings->monarkID()->cookedValue().toUInt();
         m_newSysId=monarkID;
         emit newSysIdChanged();
@@ -1630,7 +1653,7 @@ void MonarkManager::detect()
             }
         }
         _setMonarkState(detectionResult);
-        //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::detect()";
+        qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::detect()";
     }
 
 }

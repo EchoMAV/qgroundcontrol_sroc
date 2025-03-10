@@ -143,6 +143,7 @@ public:
     Q_INVOKABLE void changeFrequencies(QString const& desiredFrequency);
     Q_INVOKABLE void changeEncryptionKey();
 
+    Q_INVOKABLE void tryDroneUpdate(int monarkId);
 
 
 
@@ -158,7 +159,7 @@ signals:
     void updateFailedDronesChanged();
     void newDroneIdChanged();
     void newSysIdChanged();
-    void displayMonarkUpdateMessage(int monarkId);
+    void displayMonarkUpdateMessage(int monarkId, bool restartAfter);
     void displayRestartMessage();
     void displayGcsUpdateMessage();
     void validFrequenciesChanged();
