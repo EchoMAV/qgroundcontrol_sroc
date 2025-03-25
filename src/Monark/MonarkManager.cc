@@ -853,6 +853,7 @@ std::string MonarkManager::_getEncryptionKeyFromGcsRadio()
     for(auto p_openPort : m_openPorts)
     {
         jobs.push_back(std::async(std::launch::async,[&command, p_openPort,&finished]()-> std::string{
+            qCDebug(MonarkManagerLog)<<"Requesting password from "<<p_openPort->portName();
             p_openPort->write(command.c_str(),command.size());
             p_openPort->waitForBytesWritten(10000);
             std::stringstream ss;
@@ -880,6 +881,7 @@ std::string MonarkManager::_getEncryptionKeyFromGcsRadio()
                         if(endIndex!=std::string::npos)
                         {
                             finished=true;
+                            qCDebug(MonarkManagerLog)<<"Got password from "<<p_openPort->portName();
                             return data.substr(beginIndex,endIndex-beginIndex);
                         }
                     }
@@ -1389,6 +1391,15 @@ void MonarkManager::tryDroneUpdate(int monarkId)
 bool MonarkManager::_checkIfDroneNeedsUpdate(int monarkId)
 {
      qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_checkIfDroneNeedsUpdate(monarkId="<<monarkId<<")";
+    auto const p_vehicles=qgcApp()->toolbox()->multiVehicleManager()->vehicles();
+    auto const numVehicles=p_vehicles->count();
+    for(int i=0;i<numVehicles;++i)
+    {
+        if(((Vehicle*)p_vehicles->get(i))->armed())
+        {
+            return false;
+        }
+    }
     bool needsUpdate=false;
     if(monarkId>0)
     {
@@ -1418,6 +1429,9 @@ void MonarkManager::pushMonarkDownload(int monarkID)
         {
             std::string ip = _getDroneIPAddress(monarkID);
             _sendFile(ip.c_str(),"monark", "monark",firmwareFile,"/home/monark/monark-updates.zip",true,false);
+            std::vector<std::string> droneCommands;
+            droneCommands.push_back("microhard --action=reboot_rpi\n");
+            _sendCommands(ip.c_str(),"monark", "monark", &droneCommands, true,false);
         }
     }
     //auto const p_vehicle = qgcApp()->toolbox()->multiVehicleManager()->getVehicleById(monarkID);
@@ -1431,12 +1445,12 @@ void MonarkManager::pushMonarkDownload(int monarkID)
 void MonarkManager::showRestartMessage()
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::showRestartMessage()";
-    auto const needsUpdate=_checkIfDroneNeedsUpdate(m_newSysId);
-    if(needsUpdate)
-    {
-        emit displayMonarkUpdateMessage(m_newSysId, true);
-    }
-    else
+    //auto const needsUpdate=_checkIfDroneNeedsUpdate(m_newSysId);
+    ///if(needsUpdate)
+    //{
+    //    emit displayMonarkUpdateMessage(m_newSysId, true);
+    //}
+    //else
     {
          emit displayRestartMessage();
     }
@@ -1616,7 +1630,7 @@ void MonarkManager::detect()
         //commands.push_back("monark-updater --version\n");
         for(;;)
         {
-            if((std::chrono::system_clock::now()-startTime) > std::chrono::minutes(3))
+            if((std::chrono::system_clock::now()-startTime) > std::chrono::seconds(210))
             {
                 break;
             }

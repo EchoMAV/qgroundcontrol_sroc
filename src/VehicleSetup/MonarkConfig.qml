@@ -302,7 +302,7 @@ SetupPage {
                             title: qsTr("Confirm Reset")
                             text: qsTr("Are you sure you want to unpair active drone ID ")
                                   + QGroundControl.multiVehicleManager.activeVehicle.id + qsTr(
-                                      "? During unpairing you will hear a double beep heartbeat for approximately 2 minutes. Do not interrupt! Once beeping stops, power cycle the drone.")
+                                      "? Warning, do not unpair drone during flight! Unpairing the drone will allow it to be paired to another radio. Once the unpair command is issued, wait for drone to stop beeping before pulling power.")
                             standardButtons: StandardButton.Yes | StandardButton.No
                             onYes: {
                                 QGroundControl.monarkManager.resetActiveVehicle(
@@ -468,8 +468,8 @@ SetupPage {
                         repeat: true
                         triggeredOnStart: true
                         onTriggered: {
-                            pairingProgressBar.value = timeTaken / 180.0
-                            if (timeTaken < 180) {
+                            pairingProgressBar.value = timeTaken / 210.0
+                            if (timeTaken < 210) {
                                 ++timeTaken
                             }
                         }

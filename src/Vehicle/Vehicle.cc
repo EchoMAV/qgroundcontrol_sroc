@@ -443,29 +443,26 @@ void Vehicle::_setSysId()
             if(p_monarkManager)
             {
                 auto const newSysId=p_monarkManager->newSysId();
-                //qCDebug(VehicleLog)<<"newSysId="<<newSysId<<" id="<<_id;
+                qCDebug(VehicleLog)<<"newSysId="<<newSysId<<" id="<<_id;
                 if(_id>0)
                 {
                     if(newSysId>0 )
                     {
                         if(_parameterManager->parameterExists(_defaultComponentId,"SYSID_THISMAV"))
                         {
-
+                            qCDebug(VehicleLog)<<"parameter exists";
                             auto const p_sysIdFact=_parameterManager->getParameter(_defaultComponentId,"SYSID_THISMAV");
                             if(p_sysIdFact)
                             {
+                                qCDebug(VehicleLog)<<"p_sysIdFact";
 
                                 auto const errorString = p_sysIdFact->validate(QString::number(newSysId),false);
                                 if(errorString.isEmpty())
                                 {
-
-
+                                    qCDebug(VehicleLog)<<"errorString.isEmpty()";
+                                    _needToSetSysId=false;
                                     p_sysIdFact->setCookedValue(newSysId);
                                     p_monarkManager->showRestartMessage();
-
-
-
-
                                     //qgcApp()->showAppMessage(QString("MONARK-%1 added. Rebooting in 10 seconds").arg(newSysId));
                                     //p_monarkManager->restartApplication();
 
@@ -479,11 +476,16 @@ void Vehicle::_setSysId()
                             {
                                 qCCritical(VehicleLog)<<"SYSID_THISMAV fact was not found";
                             }
-
                         }
-
+                        else
+                        {
+                             qCDebug(VehicleLog)<<"parameter does not exist";
+                        }
                     }
-                    _needToSetSysId=false;
+                    else
+                    {
+                         _needToSetSysId=false;
+                    }
                 }
             }
         }
@@ -1055,9 +1057,11 @@ void Vehicle::_handleCameraImageCaptured(const mavlink_message_t& message)
 
     QGeoCoordinate imageCoordinate((double)feedback.lat / qPow(10.0, 7.0), (double)feedback.lon / qPow(10.0, 7.0), feedback.alt);
     qCDebug(VehicleLog) << "_handleCameraFeedback coord:index" << imageCoordinate << feedback.image_index << feedback.capture_result;
-    if (feedback.capture_result == 1) {
-        _cameraTriggerPoints.append(new QGCQGeoCoordinate(imageCoordinate, this));
+    //if (feedback.capture_result == 1)
+    {
+
     }
+    _cameraTriggerPoints.append(new QGCQGeoCoordinate(imageCoordinate, this));
 }
 
 void Vehicle::_chunkedStatusTextTimeout(void)

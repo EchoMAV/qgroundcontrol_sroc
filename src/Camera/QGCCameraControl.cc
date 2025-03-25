@@ -726,6 +726,7 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
     }else if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
         switch(command) {
             case MAV_CMD_RESET_CAMERA_SETTINGS:
+                qCDebug(CameraControlLog) << "MAV_CMD_RESET_CAMERA_SETTINGS result=MAV_RESULT_ACCEPTED noReponseFromVehicle=false";
                 _resetting = false;
                 if(isBasic()) {
                     _requestCameraSettings();
@@ -735,20 +736,25 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                 }
                 break;
             case MAV_CMD_VIDEO_START_CAPTURE:
+                 qCDebug(CameraControlLog) << "MAV_CMD_VIDEO_START_CAPTURE result=MAV_RESULT_ACCEPTED noReponseFromVehicle=false";
                 _setVideoStatus(VIDEO_CAPTURE_STATUS_RUNNING);
                 _captureStatusTimer.start(1000);
                 break;
             case MAV_CMD_VIDEO_STOP_CAPTURE:
+                qCDebug(CameraControlLog) << "MAV_CMD_VIDEO_STOP_CAPTURE result=MAV_RESULT_ACCEPTED noReponseFromVehicle=false";
                 _setVideoStatus(VIDEO_CAPTURE_STATUS_STOPPED);
                 _captureStatusTimer.start(1000);
                 break;
             case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
+                qCDebug(CameraControlLog) << "MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS result=MAV_RESULT_ACCEPTED noReponseFromVehicle=false";
                 _captureInfoRetries = 0;
                 break;
             case MAV_CMD_REQUEST_STORAGE_INFORMATION:
+                qCDebug(CameraControlLog) << "MAV_CMD_REQUEST_STORAGE_INFORMATION result=MAV_RESULT_ACCEPTED noReponseFromVehicle=false";
                 _storageInfoRetries = 0;
                 break;
             case MAV_CMD_IMAGE_START_CAPTURE:
+                qCDebug(CameraControlLog) << "MAV_CMD_IMAGE_START_CAPTURE result=MAV_RESULT_ACCEPTED noReponseFromVehicle=false";
                 _captureStatusTimer.start(1000);
                 break;
         }
@@ -777,6 +783,7 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                     break;
                 case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
                     if(++_captureInfoRetries < 5) {
+                         qCDebug(CameraControlLog) << "Retrying MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS";
                         _captureStatusTimer.start(500);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up requesting capture status";
@@ -788,6 +795,12 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                     } else {
                         qCDebug(CameraControlLog) << "Giving up requesting storage status";
                     }
+                    break;
+                case MAV_CMD_VIDEO_START_CAPTURE:
+                    qCDebug(CameraControlLog) << "MAV_CMD_VIDEO_START_CAPTURE result="<<result<<" noReponseFromVehicle="<<noReponseFromVehicle;
+                    break;
+                case MAV_CMD_VIDEO_STOP_CAPTURE:
+                    qCDebug(CameraControlLog) << "MAV_CMD_VIDEO_STOP_CAPTURE result="<<result<<" noReponseFromVehicle="<<noReponseFromVehicle;
                     break;
             }
         } else {
@@ -801,6 +814,8 @@ void
 QGCCameraControl::_setVideoStatus(VideoStatus status)
 {
     if(_video_status != status) {
+        qCDebug(CameraControlLog) << "_setVideoStatus("<<status<<")";
+
         _video_status = status;
         emit videoStatusChanged();
         if(status == VIDEO_CAPTURE_STATUS_RUNNING) {

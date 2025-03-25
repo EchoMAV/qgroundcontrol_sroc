@@ -175,12 +175,13 @@ void Joystick::_setDefaultCalibration(void) {
         _rgCalibration[axis] = calibration;
     }
 
-    _rgCalibration[1].reversed = true;
-    _rgCalibration[3].reversed = true;
 
 
     if(_name == "Scuf Gaming SCUF Envision Controller" || _name == "Scuf Gaming SCUF Envision Pro Controller")
     {
+        _rgCalibration[pitchFunction].reversed = true;
+        _rgCalibration[throttleFunction].reversed = true;
+
         _rgFunctionAxis[rollFunction]       = 3;
         _rgFunctionAxis[pitchFunction]      = 0;
         _rgFunctionAxis[yawFunction]        = 5;
@@ -215,6 +216,9 @@ void Joystick::_setDefaultCalibration(void) {
     }
     else if(_name == "Kutta KTAC GC")
     {
+        _rgCalibration[pitchFunction].reversed = true;
+        //_rgCalibration[throttleFunction].reversed = true;
+
         _rgFunctionAxis[rollFunction]       = 5;
         _rgFunctionAxis[pitchFunction]      = 2;
         _rgFunctionAxis[yawFunction]        = 7;
@@ -243,6 +247,9 @@ void Joystick::_setDefaultCalibration(void) {
     }
     else if(_name == "UXV Technologies SROC")
     {
+        _rgCalibration[pitchFunction].reversed = true;
+        _rgCalibration[throttleFunction].reversed = true;
+
         //TODO remap and find deadbands
         _rgFunctionAxis[rollFunction]       = 2;
         _rgFunctionAxis[pitchFunction]      = 3;
@@ -255,6 +262,9 @@ void Joystick::_setDefaultCalibration(void) {
     }
     else
     {
+        _rgCalibration[pitchFunction].reversed = true;
+        _rgCalibration[throttleFunction].reversed = true;
+
          // Default TX Mode 2 axis assignments for gamecontrollers
         _rgFunctionAxis[rollFunction]       = 2;
         _rgFunctionAxis[pitchFunction]      = 3;

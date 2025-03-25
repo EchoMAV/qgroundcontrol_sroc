@@ -271,6 +271,8 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: ScreenTools.defaultFontPixelHeight / 2
 
+
+        /*
         // Photo/Video Mode Selector
         // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
         // using the unified properties/functions.
@@ -335,6 +337,7 @@ Rectangle {
             }
         }
 
+        */
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
             spacing: 0
@@ -353,6 +356,8 @@ Rectangle {
             }
         }
 
+
+        /*
         // Take Photo, Start/Stop Video button
         // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
         // using the unified properties/functions.
@@ -379,6 +384,7 @@ Rectangle {
                 onClicked: toggleShooting()
             }
         }
+        */
 
         // Tracking button
         Rectangle {
@@ -429,20 +435,21 @@ Rectangle {
             }
             QGCLabel {
                 Layout.alignment: Qt.AlignHCenter
-                text: (_mavlinkCameraInVideoMode && _mavlinkCamera.videoStatus
-                       === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _mavlinkCamera.recordTimeStr : "00:00:00"
+                text: qsTr("Video: ")+((_mavlinkCameraInVideoMode && _mavlinkCamera.videoStatus
+                       === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _mavlinkCamera.recordTimeStr : "00:00:00")
                 font.pointSize: ScreenTools.largeFontPointSize
-                visible: _mavlinkCameraInVideoMode
-                         && _mavlinkCamera.capturesVideo
+                //visible: _mavlinkCameraInVideoMode
+                //         && _mavlinkCamera.capturesVideo
             }
             QGCLabel {
                 Layout.alignment: Qt.AlignHCenter
-                text: _activeVehicle ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(
-                                           -5) : "00000"
+                text: qsTr("Photo No.: ") + (_activeVehicle ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(
+                                                              -5) : "00000")
                 font.pointSize: ScreenTools.largeFontPointSize
-                visible: _modeIndicatorPhotoMode
+                //visible: _modeIndicatorPhotoMode
             }
             QGCButton {
+                Layout.alignment: Qt.AlignHCenter
                 enabled: true
                 text: qsTr("EO/IR")
                 width: 100
