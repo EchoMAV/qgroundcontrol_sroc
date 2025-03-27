@@ -1231,7 +1231,12 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
     } else if(action == _buttonActionGimbalYawFollow) {
         if (buttonDown) emit gimbalYawLock(false);
     } else if(action == _buttonActionEmergencyStop) {
-        if (buttonDown) emit emergencyStop();
+        if (buttonDown)
+        {
+            emit emergencyStop();
+            emit startVideoRecord();
+            qgcApp()->toolbox()->videoManager()->startRecording();
+        }
     } else if(action == _buttonActionGripperGrab) {
         if(buttonDown) {
             emit gripperAction(GRIPPER_ACTION_GRAB);

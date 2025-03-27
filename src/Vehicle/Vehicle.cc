@@ -3279,6 +3279,7 @@ void Vehicle::setGuidedMode(bool guidedMode)
 
 void Vehicle::emergencyStop()
 {
+    qCCritical(VehicleLog) << "EMERGENCY STOP TRIGGERED on MONARK-"<<_id<<"!!!";
     sendMavCommand(
                 _defaultComponentId,
                 MAV_CMD_COMPONENT_ARM_DISARM,
