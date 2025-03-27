@@ -444,7 +444,7 @@ Rectangle {
             QGCLabel {
                 Layout.alignment: Qt.AlignHCenter
                 text: qsTr("Photo No.: ") + (_activeVehicle ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(
-                                                              -5) : "00000")
+                                                                  -5) : "00000")
                 font.pointSize: ScreenTools.largeFontPointSize
                 //visible: _modeIndicatorPhotoMode
             }
@@ -517,7 +517,7 @@ Rectangle {
                     flow: GridLayout.TopToBottom
                     rows: dynamicRows + (_mavlinkCamera ? _mavlinkCamera.activeSettings.length : 0)
 
-                    property int dynamicRows: 10
+                    property int dynamicRows: 11
 
                     // First column
                     QGCLabel {

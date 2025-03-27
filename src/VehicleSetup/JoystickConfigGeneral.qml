@@ -108,6 +108,7 @@ Item {
                     }
                 }
             }
+            /*
             //---------------------------------------------------------------------
             //-- RC Mode
             QGCLabel {
@@ -147,6 +148,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
+            */
         }
         Row {
             spacing: ScreenTools.defaultFontPixelWidth

@@ -230,7 +230,7 @@ protected:
     void    _saveSettings           ();
     void    _saveButtonSettings     ();
     void    _loadSettings           ();
-    float   _adjustRange            (int value, Calibration_t calibration, bool withDeadbands);
+    float   _adjustRange            (int value, Calibration_t calibration, bool withDeadbands, bool reversed);
     void    _executeButtonAction    (const QString& action, bool buttonDown);
     int     _findAssignableButtonAction(const QString& action);
     bool    _validAxis              (int axis) const;

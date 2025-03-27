@@ -345,7 +345,8 @@ void Joystick::_loadSettings()
     Vehicle* activeVehicle = _multiVehicleManager->activeVehicle();
 
     if(_txModeSettingsKey && activeVehicle)
-        _transmitterMode = settings.value(_txModeSettingsKey, activeVehicle->firmwarePlugin()->defaultJoystickTXMode()).toInt();
+        _transmitterMode = 2;
+        //_transmitterMode = settings.value(_txModeSettingsKey, activeVehicle->firmwarePlugin()->defaultJoystickTXMode()).toInt();
 
     settings.beginGroup(_name);
 
@@ -537,7 +538,7 @@ void Joystick::setTXMode(int mode) {
 }
 
 /// Adjust the raw axis value to the -1:1 range given calibration information
-float Joystick::_adjustRange(int value, Calibration_t calibration, bool withDeadbands)
+float Joystick::_adjustRange(int value, Calibration_t calibration, bool withDeadbands, bool reversed)
 {
     float valueNormalized;
     float axisLength;
@@ -570,9 +571,14 @@ float Joystick::_adjustRange(int value, Calibration_t calibration, bool withDead
 
     float correctedValue = axisBasis * axisPercent;
 
-    if (calibration.reversed) {
+    if(reversed)
+    {
         correctedValue *= -1.0f;
     }
+
+    //if (calibration.reversed) {
+    //    correctedValue *= -1.0f;
+    //}
 
 #if 0
     qCDebug(JoystickLog) << "_adjustRange corrected:value:min:max:center:reversed:deadband:basis:normalized:length"
@@ -728,22 +734,22 @@ void Joystick::_handleAxis()
         }
         if (_activeVehicle->joystickEnabled() && !_calibrationMode && _calibrated) {
             int     axis = _rgFunctionAxis[rollFunction];
-            float   roll = _adjustRange(_rgAxisValues[axis],    _rgCalibration[axis], _deadband);
+            float   roll = _adjustRange(_rgAxisValues[axis],    _rgCalibration[axis], _deadband, false);
 
                     axis = _rgFunctionAxis[pitchFunction];
-            float   pitch = _adjustRange(_rgAxisValues[axis],   _rgCalibration[axis], _deadband);
+            float   pitch = _adjustRange(_rgAxisValues[axis],   _rgCalibration[axis], _deadband, true);
 
                     axis = _rgFunctionAxis[yawFunction];
-            float   yaw = _adjustRange(_rgAxisValues[axis],     _rgCalibration[axis],_deadband);
+            float   yaw = _adjustRange(_rgAxisValues[axis],     _rgCalibration[axis],_deadband, false);
 
                     axis = _rgFunctionAxis[throttleFunction];
-            float   throttle = _adjustRange(_rgAxisValues[axis],_rgCalibration[axis], _throttleMode==ThrottleModeDownZero?false:_deadband);
+            float   throttle = _adjustRange(_rgAxisValues[axis],_rgCalibration[axis], _throttleMode==ThrottleModeDownZero?false:_deadband, true);
 
             float zoom = 0.0f;
 
             if(_axisCount > 4) {
                 axis = _rgFunctionAxis[zoomFunction];
-                zoom = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband);
+                zoom = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband, false);
             }
 
 
@@ -753,12 +759,12 @@ void Joystick::_handleAxis()
 
             if(_axisCount > 5) {
                 axis = _rgFunctionAxis[gimbalPitchFunction];
-                gimbalPitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband);
+                gimbalPitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband, false);
             }
 
             if(_axisCount > 6) {
                 axis = _rgFunctionAxis[gimbalYawFunction];
-                gimbalYaw = _adjustRange(_rgAxisValues[axis],   _rgCalibration[axis],_deadband);
+                gimbalYaw = _adjustRange(_rgAxisValues[axis],   _rgCalibration[axis],_deadband, false);
             }
 
             if (_accumulator) {
