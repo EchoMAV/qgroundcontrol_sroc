@@ -588,7 +588,7 @@ void MonarkManagerWorkerWorker::dispatch(std::function<void()> t)
 {
     QMutexLocker lock(&m_taskQueueMut);
     m_taskQueue.enqueue(t);
-    m_taskQueueCondition.wakeOne();
+    m_taskQueueCondition.wakeAll();
 }
 
 void MonarkManagerWorkerWorker::shutdown()
@@ -1122,11 +1122,11 @@ void MonarkManager::refreshDroneList()
 
 void MonarkManager::removeDrone(int monarkID)
 {
-    if(mp_slotHandler->needDispatch())
-    {
-        mp_slotHandler->dispatch([this,monarkID](){removeDrone(monarkID);});
-    }
-    else
+    //if(mp_slotHandler->needDispatch())
+    //{
+    //    mp_slotHandler->dispatch([this,monarkID](){removeDrone(monarkID);});
+    //}
+    //else
     {
         qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::removeDrone(monarkID="<<monarkID<<")";
         m_allDrones.erase(monarkID);
@@ -1260,11 +1260,11 @@ void MonarkManager::_initializeTxPower(bool paired)
 
 void MonarkManager::gotoBeforePairNewDrone()
 {
-    if(mp_slotHandler->needDispatch())
-    {
-        mp_slotHandler->dispatch([this](){gotoBeforePairNewDrone();});
-    }
-    else
+    //if(mp_slotHandler->needDispatch())
+    //{
+    //    mp_slotHandler->dispatch([this](){gotoBeforePairNewDrone();});
+    //}
+    //else
     {
         //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::gotoBeforePairNewDrone()";
         _setMonarkState(MonarkState::BeforePairNewDrone);
@@ -1293,11 +1293,11 @@ void MonarkManager::_resetToBeforeUpdate()
 
 void MonarkManager::gotoChangeEncryptionKey()
 {
-    if(mp_slotHandler->needDispatch())
-    {
-        mp_slotHandler->dispatch([this](){gotoChangeEncryptionKey();});
-    }
-    else
+    //if(mp_slotHandler->needDispatch())
+    //{
+    //    mp_slotHandler->dispatch([this](){gotoChangeEncryptionKey();});
+    //}
+    //else
     {
         //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::gotoChangeEncryptionKey()";
         _resetToBeforeUpdate();
@@ -1308,11 +1308,11 @@ void MonarkManager::gotoChangeEncryptionKey()
 
 void MonarkManager::gotoChangeFrequencies()
 {
-    if(mp_slotHandler->needDispatch())
-    {
-        mp_slotHandler->dispatch([this](){gotoChangeFrequencies();});
-    }
-    else
+    //if(mp_slotHandler->needDispatch())
+    //{
+    //    mp_slotHandler->dispatch([this](){gotoChangeFrequencies();});
+    //}
+    //else
     {
         //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::gotoChangeFrequencies()";
         _resetToBeforeUpdate();
@@ -1323,11 +1323,11 @@ void MonarkManager::gotoChangeFrequencies()
 
 void MonarkManager::gotoChangeTxPower()
 {
-    if(mp_slotHandler->needDispatch())
-    {
-        mp_slotHandler->dispatch([this](){gotoChangeTxPower();});
-    }
-    else
+    //if(mp_slotHandler->needDispatch())
+    //{
+    //    mp_slotHandler->dispatch([this](){gotoChangeTxPower();});
+    //}
+    //else
     {
         //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::gotoChangeTxPower()";
         _resetToBeforeUpdate();
@@ -1338,11 +1338,11 @@ void MonarkManager::gotoChangeTxPower()
 
 void MonarkManager::gotoResetUnpairMonark()
 {
-    if(mp_slotHandler->needDispatch())
-    {
-        mp_slotHandler->dispatch([this](){gotoResetUnpairMonark();});
-    }
-    else
+    //if(mp_slotHandler->needDispatch())
+    //{
+    //    mp_slotHandler->dispatch([this](){gotoResetUnpairMonark();});
+    //}
+    //else
     {
         //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::gotoResetUnpairMonark()";
         _setMonarkState(MonarkState::ResetUnpairMonark);
@@ -1352,11 +1352,11 @@ void MonarkManager::gotoResetUnpairMonark()
 
 void MonarkManager::gotoScanSuccessAndPaired()
 {
-    if(mp_slotHandler->needDispatch())
-    {
-        mp_slotHandler->dispatch([this](){gotoScanSuccessAndPaired();});
-    }
-    else
+    //if(mp_slotHandler->needDispatch())
+    //{
+    //    mp_slotHandler->dispatch([this](){gotoScanSuccessAndPaired();});
+    //}
+    //else
     {
         //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::gotoScanSuccessAndPaired()";
         _setMonarkState(MonarkState::ScanSuccessAndPaired);
