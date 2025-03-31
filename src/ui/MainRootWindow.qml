@@ -509,6 +509,12 @@ ApplicationWindow {
                                     text: QGroundControl.corePlugin.showAdvancedUIMessage
                                     standardButtons: StandardButton.Yes | StandardButton.No
                                     onYes: {
+                                        console.log(typeof QGroundControl.multiVehicleManager.activeVehicle.flightModes)
+                                        for (var i; i < QGroundControl.multiVehicleManager.activeVehicle.flightModes.length; i++)
+                                        {
+                                            QGroundControl.multiVehicleManager.activeVehicle.flightModes.append("Auto Tune")
+                                        }
+
                                         QGroundControl.corePlugin.showAdvancedUI = true
                                         advancedModeOnConfirmation.close()
                                     }

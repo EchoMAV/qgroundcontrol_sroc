@@ -2444,10 +2444,37 @@ bool Vehicle::flightModeSetAvailable()
 
 QStringList Vehicle::flightModes()
 {
+    QStringList charles;
 	if (_standardModes->supported()) {
-		return _standardModes->flightModes();
-	}
-    return _firmwarePlugin->flightModes(this);
+        charles = _standardModes->flightModes();
+    }
+    else
+    {
+        charles = _firmwarePlugin->flightModes(this);
+    }
+
+    // for (int i = 0; i < charles.size(); ) {
+    //     qCDebug(VehicleLog) << "charles list:" << charles[i];
+    //     if (charles[i] == "RTL") {
+    //         charles.removeAt(i);  // Don't increment i
+    //     } else {
+    //         ++i;
+    //     }
+    // }
+
+    QGCCorePlugin* corePlugin = qgcApp()->toolbox()->corePlugin();
+    if (!corePlugin->showAdvancedUI())
+    {
+        for (int i = 0; i < charles.size(); )
+        {
+            if (charles[i] == "Autotune") {
+                charles.removeAt(i);  // Don't increment i
+            } else {
+                ++i;
+            }
+        }
+    }
+    return charles;
 }
 
 QString Vehicle::flightMode() const
