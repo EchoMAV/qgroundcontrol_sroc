@@ -189,12 +189,13 @@ void Joystick::_setDefaultCalibration(void) {
         _rgFunctionAxis[zoomFunction]       = 1;
         _rgFunctionAxis[gimbalPitchFunction]= 2;
         _rgFunctionAxis[gimbalYawFunction]  = 6;
-        _deadband           = true;
-        for(int axis=0;axis<_axisCount;++axis)
-        {
-            //add a 17.5 percent deadband to all axes
-            _rgCalibration[axis].deadband = int((_rgCalibration[axis].max - _rgCalibration[axis].center) * 0.175);
-        }
+        _deadband = false;
+        //_deadband           = true;
+        //for(int axis=0;axis<_axisCount;++axis)
+        //{
+        //    //add a 17.5 percent deadband to all axes
+        //    _rgCalibration[axis].deadband = int((_rgCalibration[axis].max - _rgCalibration[axis].center) * 0.175);
+        //}
 
         setButtonAction(0, "Land");
         setButtonAction(1, "Flow Hold");
@@ -226,12 +227,13 @@ void Joystick::_setDefaultCalibration(void) {
         _rgFunctionAxis[zoomFunction]       = 3;
         _rgFunctionAxis[gimbalPitchFunction]= 1;
         _rgFunctionAxis[gimbalYawFunction]  = 4;
-        _deadband           = true;
-        for(int axis=0;axis<_axisCount;++axis)
-        {
-            //add a 20 percent deadband to all axes
-            _rgCalibration[axis].deadband = int((_rgCalibration[axis].max - _rgCalibration[axis].center) * 0.2);
-        }
+        _deadband = false;
+        //_deadband           = true;
+        //for(int axis=0;axis<_axisCount;++axis)
+        //{
+        //    //add a 20 percent deadband to all axes
+        //    _rgCalibration[axis].deadband = int((_rgCalibration[axis].max - _rgCalibration[axis].center) * 0.2);
+        //}
 
 
         setButtonAction(1, "Land");

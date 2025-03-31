@@ -2712,21 +2712,22 @@ void Vehicle::_parametersReady(bool parametersReady)
 
     emit haveMRSpeedLimChanged();
     emit haveFWSpeedLimChanged();
-
-    if(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id() != _id) {
-        qDebug() << "Sending STOP VIDEO STREAM (paramsready) since this is not the current vehicle to Vehicle " << _id;
+    auto p_activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    if(p_activeVehicle && p_activeVehicle->id() == _id)
+    {
+        qDebug() << "Sending START VIDEO STREAM (paramsready) to the active Vehicle " << _id;
         sendMavCommand(
             MAV_COMP_ID_CAMERA,                     // Target component
-            MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
+            MAV_CMD_VIDEO_START_STREAMING,           // Command id
             false,                                  // ShowError
             0);
     }
     else
     {
-	qDebug() << "Sending START VIDEO STREAM (paramsready) to the active Vehicle " << _id;
+        qDebug() << "Sending STOP VIDEO STREAM (paramsready) since this is not the current vehicle to Vehicle " << _id;
         sendMavCommand(
             MAV_COMP_ID_CAMERA,                     // Target component
-            MAV_CMD_VIDEO_START_STREAMING,           // Command id
+            MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
             false,                                  // ShowError
             0);
     }
