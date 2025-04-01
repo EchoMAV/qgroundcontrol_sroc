@@ -636,6 +636,7 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , m_newDroneId{0}
     , m_newSysId{0}
     , m_openPorts{}
+    //, mp_echoLinkPort{nullptr}
     , m_newGcsVersion{}
     , m_newGcsDescription{}
     , m_newGcsURL{}
@@ -644,14 +645,141 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , m_newDroneDescription{}
     , m_newDroneURL{}
     , m_newDroneReleaseDate{}
+    , m_echoLinkBatteryVoltage{-1}
+    , m_echoLinkBatteryVoltageTimer{}
+    , m_paired{false}
 {
     //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::MonarkManager()()";
     //connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &MonarkManager::validFrequenciesChanged);
-
+    _echoLinkBatteryVoltageTimerHandler();
+    m_echoLinkBatteryVoltageTimer.setSingleShot(false);
+    m_echoLinkBatteryVoltageTimer.setInterval(1000*45);
+    connect(&m_echoLinkBatteryVoltageTimer, &QTimer::timeout, this, &MonarkManager::_echoLinkBatteryVoltageTimerHandler);
+    m_echoLinkBatteryVoltageTimer.start(45*1000);
     mp_slotHandler->start();
+
 
     _checkForUpdates();
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::MonarkManager()()";
+}
+
+void MonarkManager::_echoLinkBatteryVoltageTimerHandler()
+{
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_echoLinkBatteryVoltageTimerHandler()";
+    _openSerialConnectionToGcsRadio();
+    std::string command="AT+GETVOLTAGE\r\n";
+    std::atomic_bool finished=false;
+    QString result;
+    std::vector<std::future<std::string>> jobs;
+    for(auto p_openPort : m_openPorts)
+    {
+        jobs.push_back(std::async(std::launch::async,[&command, p_openPort,&finished]()-> std::string{
+            qCDebug(MonarkManagerLog)<<"Requesting voltage from "<<p_openPort->portName();
+            p_openPort->write(command.c_str(),command.size());
+            p_openPort->waitForBytesWritten(10000);
+            std::stringstream ss;
+            auto const start = std::chrono::system_clock::now();
+            for(;;)
+            {
+                if(finished)
+                {
+                    break;
+                }
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                if(finished)
+                {
+                    break;
+                }
+                if(p_openPort->waitForReadyRead(2000))
+                {
+                    ss<<QString(p_openPort->readAll()).toStdString();
+                    auto data = ss.str();
+                    //qCDebug(MonarkManagerLog)<<"data='"<<data.c_str()<<"'";
+                    //for(auto c:data)
+                    //{
+                    //    qCDebug(MonarkManagerLog)<<int(c)<<"="<<c;
+                    //}
+
+                    if(data.find("ERROR: Command Not Recognized")!= std::string::npos)
+                    {
+                         finished=true;
+                        return "";
+                    }
+                    else
+                    {
+                        auto beginIndex=data.find("\n");
+                        if(beginIndex!=std::string::npos)
+                        {
+                            ++beginIndex;
+                            auto endIndex=data.find("\r",beginIndex);
+                            if(endIndex!=std::string::npos)
+                            {
+                                finished=true;
+                                qCDebug(MonarkManagerLog)<<"Got voltage from "<<p_openPort->portName();
+                                return data.substr(beginIndex,endIndex-beginIndex);
+                            }
+                        }
+                    }
+
+
+                }
+                if(std::chrono::system_clock::now() - start > std::chrono::seconds(5))
+                {
+                    break;
+                }
+            }
+            return "";
+        }));
+    }
+
+    for(auto&& job: jobs)
+    {
+        auto str = job.get();
+        if(!str.empty())
+        {
+            result=QString::fromStdString(str);
+        }
+    }
+
+
+    if(finished)
+    {
+        if(!result.isEmpty())
+        {
+            bool okay=false;
+            float newVoltage=result.toFloat(&okay);
+            if(okay && newVoltage == newVoltage)
+            {
+                if(newVoltage != m_echoLinkBatteryVoltage)
+                {
+                    m_echoLinkBatteryVoltage=newVoltage;
+                    emit echoLinkBatteryVoltageChanged();
+                }
+            }
+            else if(m_echoLinkBatteryVoltage!=-1)
+            {
+                m_echoLinkBatteryVoltage=-1;
+                emit echoLinkBatteryVoltageChanged();
+            }
+        }
+        else if(m_echoLinkBatteryVoltage!=-1)
+        {
+            m_echoLinkBatteryVoltage=-1;
+            emit echoLinkBatteryVoltageChanged();
+        }
+    }
+    else
+    {
+        //this probably indicates that the battery is dead, since we didn't even get back "Command not recognized"
+        if(0 != m_echoLinkBatteryVoltage)
+        {
+            m_echoLinkBatteryVoltage=0;
+            emit echoLinkBatteryVoltageChanged();
+        }
+    }
+
+
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_echoLinkBatteryVoltageTimerHandler()";
 }
 
 void MonarkManager::_checkForUpdates()
@@ -850,6 +978,7 @@ std::string MonarkManager::_getEncryptionKeyFromGcsRadio()
     std::atomic_bool finished=false;
 
     std::vector<std::future<std::string>> jobs;
+
     for(auto p_openPort : m_openPorts)
     {
         jobs.push_back(std::async(std::launch::async,[&command, p_openPort,&finished]()-> std::string{
@@ -997,6 +1126,7 @@ void MonarkManager::startScanning()
     if(mp_slotHandler->needDispatch())
     {
         mp_slotHandler->dispatch([this](){startScanning();});
+
     }
     else
     {
@@ -1027,9 +1157,10 @@ void MonarkManager::startScanning()
             this->mp_monarkSettings->encryptionKey()->setCookedValue("");
             this->mp_monarkSettings->groundFrequency()->setCookedValue(n_defaultGroundFrequency);
             this->mp_monarkSettings->groundTxPower()->setCookedValue(n_defaultGroundTxPower);
-            _initializeNetworkId(false);
-            _initializeTxPower(false);
-            _initializeFrequency(false);
+            m_paired=false;
+            _initializeNetworkId();
+            _initializeTxPower();
+            _initializeFrequency();
         }
         else
         {
@@ -1056,9 +1187,10 @@ void MonarkManager::startScanning()
                     {
                         _sendEncryptionKeyToGcsRadio( password.c_str());
                     }
-                    _initializeNetworkId(true);
-                    _initializeTxPower(true);
-                    _initializeFrequency(true);
+                    m_paired=true;
+                    _initializeNetworkId();
+                    _initializeTxPower();
+                    _initializeFrequency();
                     for(auto i=0;i<n_maxMonarkID;++i)
                     {
                         auto response = dronePingResponses[i].get();
@@ -1073,6 +1205,7 @@ void MonarkManager::startScanning()
                     emit updateInProgressDronesChanged();
                     emit updateSuccessfulDronesChanged();
                     emit updateFailedDronesChanged();
+
                 }
             else
             {
@@ -1153,14 +1286,14 @@ void MonarkManager::removeDrone(int monarkID)
     }
 }
 
-void MonarkManager::_initializeNetworkId(bool paired)
+void MonarkManager::_initializeNetworkId()
 {
-    //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_initializeNetworkId(paired="<<paired<<")";
+    //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_initializeNetworkId(paired="<<m_paired<<")";
     std::string macAddress="";
     std::vector<std::string> commands;
     commands.emplace_back("AT+MNEMAC\n");
-    auto encryptionKey=paired?mp_monarkSettings->getOldEncryptionKey().toStdString():np_sshUsername;
-    auto const& response = _sendCommands(paired?np_srmPairedIp:np_srmDefaultIp,"admin", encryptionKey.c_str(), &commands, false).second;
+    auto encryptionKey=m_paired?mp_monarkSettings->getOldEncryptionKey().toStdString():np_sshUsername;
+    auto const& response = _sendCommands(m_paired?np_srmPairedIp:np_srmDefaultIp,"admin", encryptionKey.c_str(), &commands, false).second;
     if(!response.empty() && response.back().find(np_groundRadioSuccessStr) != std::string::npos)
     {
         auto macStart = response.back().find_first_of('"',0);
@@ -1181,17 +1314,17 @@ void MonarkManager::_initializeNetworkId(bool paired)
     {
         this->mp_monarkSettings->networkID()->setCookedValue("MONARK-"+QString::fromStdString(macAddress));
     }
-    //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_initializeNetworkId(paired="<<paired<<")";
+    //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_initializeNetworkId(paired="<<m_paired<<")";
 }
 
-void MonarkManager::_initializeFrequency(bool paired)
+void MonarkManager::_initializeFrequency()
 {
     //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_initializeFrequency(paired="<<paired<<")";
     std::string frequency="";
     std::vector<std::string> commands;
     commands.emplace_back("AT+MWFREQ\n");
-    auto encryptionKey=paired?mp_monarkSettings->getOldEncryptionKey().toStdString():np_sshUsername;
-    auto const& response = _sendCommands(paired?np_srmPairedIp:np_srmDefaultIp,"admin", encryptionKey.c_str(), &commands, false).second;
+    auto encryptionKey=m_paired?mp_monarkSettings->getOldEncryptionKey().toStdString():np_sshUsername;
+    auto const& response = _sendCommands(m_paired?np_srmPairedIp:np_srmDefaultIp,"admin", encryptionKey.c_str(), &commands, false).second;
     for(auto const& responseStr: response)
     {
         qCDebug(MonarkManagerLog)<<"Got response "<<responseStr.c_str();
@@ -1221,14 +1354,14 @@ void MonarkManager::_initializeFrequency(bool paired)
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_initializeFrequency(paired="<<paired<<")";
 }
 
-void MonarkManager::_initializeTxPower(bool paired)
+void MonarkManager::_initializeTxPower()
 {
     //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_initializeTxPower(paired="<<paired<<")";
     std::string txPower="";
     std::vector<std::string> commands;
     commands.emplace_back("AT+MWTXPOWER\n");
-    auto encryptionKey=paired?mp_monarkSettings->encryptionKey()->rawValueString().toStdString(): np_sshUsername;//mp_monarkSettings->getOldEncryptionKey().toStdString():np_sshUsername;
-    auto const& response = _sendCommands(paired?np_srmPairedIp:np_srmDefaultIp,"admin", encryptionKey.c_str(), &commands, false).second;
+    auto encryptionKey=m_paired?mp_monarkSettings->encryptionKey()->rawValueString().toStdString(): np_sshUsername;//mp_monarkSettings->getOldEncryptionKey().toStdString():np_sshUsername;
+    auto const& response = _sendCommands(m_paired?np_srmPairedIp:np_srmDefaultIp,"admin", encryptionKey.c_str(), &commands, false).second;
     for(auto const& responseStr: response)
     {
         qCDebug(MonarkManagerLog)<<"Got response "<<responseStr.c_str();

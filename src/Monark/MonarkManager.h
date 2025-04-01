@@ -4,6 +4,7 @@
 #include "QGCToolbox.h"
 #include <QThread>
 #include <QWaitCondition>
+#include <QTimer>
 #include <QMutex>
 #include <QQueue>
 #include <mutex>
@@ -86,6 +87,7 @@ public:
     Q_PROPERTY(QString newDroneDescription READ newDroneDescription NOTIFY newDroneDescriptionChanged);
     Q_PROPERTY(QString newDroneURL         READ newDroneURL         NOTIFY newDroneURLChanged);
     Q_PROPERTY(QString newDroneReleaseDate READ newDroneReleaseDate NOTIFY newDroneReleaseDateChanged);
+    Q_PROPERTY(float   echoLinkBatteryVoltage READ echoLinkBatteryVoltage NOTIFY echoLinkBatteryVoltageChanged);
 
     int monarkState() const { return m_monarkState;}
     int groundRadioUpdateState() const { return m_groundRadioUpdateState;}
@@ -108,6 +110,7 @@ public:
     QString newDroneDescription() const{return m_newDroneDescription;}
     QString newDroneURL()         const{return m_newDroneURL;}
     QString newDroneReleaseDate() const{return m_newDroneReleaseDate;}
+    float echoLinkBatteryVoltage() const {return m_echoLinkBatteryVoltage;}
 
 
     virtual void setToolbox(QGCToolbox* p_toolbox) override;
@@ -171,18 +174,20 @@ signals:
     void newDroneDescriptionChanged();
     void newDroneURLChanged();
     void newDroneReleaseDateChanged();
+    void echoLinkBatteryVoltageChanged();
 
 
 private:
 
+    void _echoLinkBatteryVoltageTimerHandler();
     void _checkForUpdates();
     void _gcsVersionCheck(QString /*remoteFile*/, QString localFile, QString errorMsg);
     void _renameFirmwareFile(QString /*remoteFile*/, QString localFile, QString errorMsg);
     bool _checkIfDroneNeedsUpdate(int monarkId);
 
-    void _initializeNetworkId(bool paired);
-    void _initializeFrequency(bool paired);
-    void _initializeTxPower(bool paired);
+    void _initializeNetworkId();
+    void _initializeFrequency();
+    void _initializeTxPower();
 
     void _openSerialConnectionToGcsRadio();
 
@@ -222,6 +227,7 @@ private:
     int m_newDroneId;
     int m_newSysId;
     std::vector<QSerialPort*> m_openPorts;
+    //QSerialPort* mp_echoLinkPort;
     QString m_newGcsVersion;
     QString m_newGcsDescription;
     QString m_newGcsURL;
@@ -230,6 +236,9 @@ private:
     QString m_newDroneDescription;
     QString m_newDroneURL;
     QString m_newDroneReleaseDate;
+    float m_echoLinkBatteryVoltage;
+    QTimer m_echoLinkBatteryVoltageTimer;
+    bool m_paired;
 
     //std::set<std::string> m_serialPorts;
 

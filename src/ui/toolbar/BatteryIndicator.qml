@@ -29,12 +29,46 @@ Item {
     property bool showIndicator: true
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    function getEchoLinkBatteryVoltageColor() {
+        if (!isNaN(QGroundControl.monarkManager.echoLinkBatteryVoltage)) {
+            if (QGroundControl.monarkManager.echoLinkBatteryVoltage >= 11.1) {
+                return qgcPal.colorGreen
+            }
+            if (QGroundControl.monarkManager.echoLinkBatteryVoltage >= 10.15) {
+                return qgcPal.colorYellow
+            }
+        }
+        return qgcPal.colorRed
+    }
 
     Row {
         id: batteryIndicatorRow
         anchors.top: parent.top
         anchors.bottom: parent.bottom
+        Row {
 
+            visible: QGroundControl.monarkManager.echoLinkBatteryVoltage >= 0
+
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            QGCColoredImage {
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: height
+                sourceSize.width: width
+                source: "/qmlimages/Battery.svg"
+                fillMode: Image.PreserveAspectFit
+                color: getEchoLinkBatteryVoltageColor()
+            }
+
+            QGCLabel {
+                text: (QGroundControl.monarkManager.echoLinkBatteryVoltage).toFixed(
+                          1) + "v"
+                font.pointSize: ScreenTools.mediumFontPointSize
+                color: getEchoLinkBatteryVoltageColor()
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
         Repeater {
             model: _activeVehicle ? _activeVehicle.batteries : 0
 
