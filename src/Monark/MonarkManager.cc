@@ -24,10 +24,58 @@ static constexpr inline char const*const np_srmDefaultIp="192.168.168.1";
 static constexpr inline char const*const np_srmPairedIp="172.20.1.2";
 static constexpr inline char const*const np_srocIp="172.20.1.1";
 static constexpr inline char const*const np_groundRadioSuccessStr = "\r\nOK\r\n";
-static constexpr inline char const*const np_droneSuccessStr="'is_success': True";
+static constexpr inline char const*const np_droneSuccessStr1="'is_success': True";
+static constexpr inline char const*const np_droneSuccessStr2="\"is_success\": true";
 static constexpr inline uint16_t const n_defaultGroundTxPower= 20;
 static constexpr inline uint16_t const n_defaultGroundFrequency = 2310;
 static constexpr inline uint16_t const n_maxMonarkID=3;
+
+
+
+std::unordered_map<QString, std::set<QString>> n_validMicrohardFrequencies =
+    {
+        {"pMDDL2450AES256",{"2410","2415","2420","2425","2430","2435","2440","2445","2450","2455","2460","2465","2470","2475"}},
+        {"pMDDL1624AES256",{"1630","1635","1640","1645","1650","1655","1660","1665","1670","1675","1680","1685","1690","1695","1700","1705","1710","1715","1720","1785","1790","1795","1800","1805","1810","1815","1820","1825","1830","1835","1840","1845","2025","2030","2035","2040","2045","2050","2055","2060","2065","2070","2075","2080","2085","2090","2095","2100","2105",
+                            "2205","2210","2215","2220","2225","2230","2235","2240","2245","2250","2255","2260","2265","2270","2275","2280","2285","2290","2295","2305","2310","2315","2320","2325","2330","2335","2340","2345","2350","2355","2360","2365","2370","2375","2380","2385","2405","2410","2415","2420","2425","2430","2435","2440","2445","2450","2455","2460","2465","2470","2475","2480","2485","2490","2495"}},
+        {"pMDDL2280AES256",{"2205","2210","2215","2220","2225","2230","2235","2240","2245","2250","2255","2260","2265","2270","2275","2280","2285","2290","2295","2300","2305","2310","2315","2320","2325","2330","2335","2340","2345","2350","2355","2360","2365","2370","2375","2380","2385","2390","2395","2400","2405","2410","2415","2420","2425","2430","2435","2440","2445","2450","2455","2460","2465","2470","2475","2480","2485","2490","2495","2500","2505","2510","2515","2520","2525","2530","2535","2540","2545","2550","2555","2560","2565","2570","2575","2580","2585","2590","2595","2600","2605","2610","2615","2620","2625","2630","2635","2640","2645","2650","2655","2660","2665","2670","2675","2680","2685","2690","2695","2700","2705","2710","2715","2720","2725","2730","2735","2740","2745","2750","2755","2760","2765","2770","2775","2780","2785","2790","2795"}}
+};
+
+std::unordered_map<QString, std::pair<int,int>> n_validMicrohardPowers =
+    {
+        {"pMDDL2450AES256",{7,30}},
+        {"pMDDL1624AES256",{7,33}},
+        {"pMDDL2280AES256",{10,38}}
+};
+
+
+
+std::set<QString> _initializeValidEchoLinkFrequencies()
+{
+    //the intersection of all valid sets
+
+
+
+    std::set<QString> intersection;
+    auto itr1=std::begin(n_validMicrohardFrequencies);
+    auto end1=std::end(n_validMicrohardFrequencies);
+    if(itr1!=end1)
+    {
+        intersection=itr1->second;
+        for(;++itr1!=end1;)
+        {
+            std::set<QString> tempIntersection;
+            std::set_intersection(std::begin(itr1->second), std::end(itr1->second), std::begin(intersection), std::end(intersection), std::inserter(tempIntersection,std::end(tempIntersection)));
+            intersection=std::move(tempIntersection);
+        }
+    }
+    return intersection;
+
+
+
+}
+
+
+static inline std::set<QString> const n_defaultValidEchoLinkFreqs=_initializeValidEchoLinkFrequencies();
 
 std::string _generateRandomKey()
 {
@@ -194,7 +242,7 @@ std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char
         }
         if(commandResponses.empty())
         {
-            commandResponses.push_back(toDrone?np_droneSuccessStr:np_groundRadioSuccessStr);
+            commandResponses.push_back(toDrone?np_droneSuccessStr2:np_groundRadioSuccessStr);
         }
     }
     while(false);
@@ -334,7 +382,7 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
                     {
                         //no response is expected
                         commandSuccess=true;
-                        responseStr=np_droneSuccessStr;
+                        responseStr=np_droneSuccessStr2;
                     }
                     else
                     {
@@ -359,11 +407,24 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
                                         //don't put passwords in the logs
                                         qCDebug(MonarkManagerLog)<<"_sendCommands("<<p_host<<") responseStr="<<responseStr.c_str();
                                     }
-                                    if(responseStr.find(toDrone?np_droneSuccessStr:np_groundRadioSuccessStr) != std::string::npos)
+                                    if(toDrone)
                                     {
-                                        commandSuccess=true;
-                                        break;
+                                        if(responseStr.find(np_droneSuccessStr1) != std::string::npos || responseStr.find(np_droneSuccessStr2) != std::string::npos)
+                                        {
+                                            commandSuccess=true;
+                                            break;
+                                        }
                                     }
+                                    else
+                                    {
+                                        if(responseStr.find(np_groundRadioSuccessStr) != std::string::npos)
+                                        {
+                                            commandSuccess=true;
+                                            break;
+                                        }
+                                    }
+
+
 
                                 }
                             }
@@ -388,7 +449,7 @@ std::pair<bool,std::vector<std::string>> _sendCommands(char const*const p_host, 
         }
         if(commandResponses.empty() && (!p_commands || p_commands->empty()))
         {
-            commandResponses.push_back(toDrone?np_droneSuccessStr:np_groundRadioSuccessStr);
+            commandResponses.push_back(toDrone?np_droneSuccessStr2:np_groundRadioSuccessStr);
         }
     }
     while(false);
@@ -420,7 +481,7 @@ void _waitForDroneResponses(std::vector<std::pair<int,std::future<std::pair<bool
     {
         auto id=droneResponses[i].first;
         auto const& response=droneResponses[i].second.get().second;
-        if(response.empty() || response.back().find(np_droneSuccessStr)== std::string::npos)
+        if(response.empty() || (response.back().find(np_droneSuccessStr1)== std::string::npos && response.back().find(np_droneSuccessStr2)== std::string::npos))
         {
             failedDrones.insert(id);
         }
@@ -531,7 +592,7 @@ std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>
                                                             //{
                                                             //    qCDebug(MonarkManagerLog)<<"returnStr = '"<<responseStr.c_str()<<"'";
                                                             //}
-                                                            if(!response.second.empty() && response.second.back().find(np_droneSuccessStr)!= std::string::npos
+                                                            if(!response.second.empty() && (response.second.back().find(np_droneSuccessStr1)!= std::string::npos || response.second.back().find(np_droneSuccessStr2)!= std::string::npos)
                                                                 )
                                                             {
                                                                 break;
@@ -648,6 +709,8 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , m_echoLinkBatteryVoltage{-1}
     , m_echoLinkBatteryVoltageTimer{}
     , m_paired{false}
+    , m_droneRadioModels{}
+    , m_groundRadioModel{}
 {
     //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::MonarkManager()()";
     //connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &MonarkManager::validFrequenciesChanged);
@@ -661,6 +724,107 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
 
     _checkForUpdates();
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::MonarkManager()()";
+}
+
+void MonarkManager::_setEchoLinkRadioModel()
+{
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_getEchoLinkRadioModel()";
+    m_groundRadioModel.clear();
+    _openSerialConnectionToGcsRadio();
+    std::string command="AT+GETRADIOINFO\r\n";
+    std::atomic_bool finished=false;
+    QString result;
+    std::vector<std::future<std::string>> jobs;
+    for(auto p_openPort : m_openPorts)
+    {
+        jobs.push_back(std::async(std::launch::async,[&command, p_openPort,&finished]()-> std::string{
+            qCDebug(MonarkManagerLog)<<"Requesting radio info from "<<p_openPort->portName();
+            p_openPort->write(command.c_str(),command.size());
+            p_openPort->waitForBytesWritten(10000);
+            std::stringstream ss;
+            auto const start = std::chrono::system_clock::now();
+            for(;;)
+            {
+                if(finished)
+                {
+                    break;
+                }
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                if(finished)
+                {
+                    break;
+                }
+                if(p_openPort->waitForReadyRead(2000))
+                {
+                    ss<<QString(p_openPort->readAll()).toStdString();
+                    auto data = ss.str();
+                    qCDebug(MonarkManagerLog)<<"data='"<<data.c_str()<<"'";
+                    //for(auto c:data)
+                    //{
+                    //    qCDebug(MonarkManagerLog)<<int(c)<<"="<<c;
+                    //}
+
+                    if(data.find("ERROR: Command Not Recognized")!= std::string::npos)
+                    {
+                        finished=true;
+                        return "";
+                    }
+                    else
+                    {
+                        auto beginIndex=data.find("Product");
+                        if(beginIndex!=std::string::npos)
+                        {
+                            beginIndex=data.find(": ", beginIndex);
+                            if(beginIndex!= std::string::npos)
+                            {
+                                beginIndex+=2;
+                                auto endIndex=data.find("\r",beginIndex);
+                                if(endIndex!=std::string::npos)
+                                {
+                                    finished=true;
+                                    qCDebug(MonarkManagerLog)<<"Got model from "<<p_openPort->portName();
+                                    return data.substr(beginIndex,endIndex-beginIndex);
+                                }
+                            }
+
+
+                            auto endIndex=data.find("\r",beginIndex);
+                            if(endIndex!=std::string::npos)
+                            {
+                                finished=true;
+                                qCDebug(MonarkManagerLog)<<"Got voltage from "<<p_openPort->portName();
+                                return data.substr(beginIndex,endIndex-beginIndex);
+                            }
+                        }
+                    }
+
+
+                }
+                if(std::chrono::system_clock::now() - start > std::chrono::seconds(5))
+                {
+                    break;
+                }
+            }
+            return "";
+        }));
+    }
+    for(auto&& job: jobs)
+    {
+        auto str = job.get();
+        if(!str.empty())
+        {
+            result=QString::fromStdString(str);
+        }
+    }
+    if(!result.isEmpty())
+    {
+        m_groundRadioModel=result;
+    }
+
+    emit minMaxPowersChanged();
+    emit validFrequenciesChanged();
+
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_getEchoLinkRadioModel()";
 }
 
 void MonarkManager::_echoLinkBatteryVoltageTimerHandler()
@@ -702,7 +866,7 @@ void MonarkManager::_echoLinkBatteryVoltageTimerHandler()
 
                     if(data.find("ERROR: Command Not Recognized")!= std::string::npos)
                     {
-                         finished=true;
+                        finished=true;
                         return "";
                     }
                     else
@@ -855,13 +1019,15 @@ void MonarkManager::_gcsVersionCheck(QString /*remoteFile*/, QString localFile, 
                 if(index>=0)
                 {
                     QFile firmwareFile = QDir(qgcApp()->toolbox()->settingsManager()->appSettings()->firmwareSavePath()).absoluteFilePath(m_newDroneURL.mid(index+1));
-                    if(!firmwareFile.exists())
+                    if(firmwareFile.exists())
                     {
-                        qCDebug(MonarkManagerLog)<<"starting firmware download from "<<m_newDroneURL;
-                        QGCFileDownload* p_download = new QGCFileDownload(this);
-                        connect(p_download, &QGCFileDownload::downloadComplete, this, &MonarkManager::_renameFirmwareFile);
-                        p_download->download(m_newDroneURL);
+                        firmwareFile.remove();
                     }
+
+                    qCDebug(MonarkManagerLog)<<"starting firmware download from "<<m_newDroneURL;
+                    QGCFileDownload* p_download = new QGCFileDownload(this);
+                    connect(p_download, &QGCFileDownload::downloadComplete, this, &MonarkManager::_renameFirmwareFile);
+                    p_download->download(m_newDroneURL);
                 }
             }
         }
@@ -873,61 +1039,73 @@ void MonarkManager::_gcsVersionCheck(QString /*remoteFile*/, QString localFile, 
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_gcsVersionCheck(localFile="<<localFile<<", errorMsg="<<errorMsg<<")";
 }
 
+int MonarkManager::minimumPower() const
+{
+    int minPower=10;
+    auto groundPowerItr=n_validMicrohardPowers.find(m_groundRadioModel);
+    if(groundPowerItr!=std::end(n_validMicrohardPowers))
+    {
+        minPower=groundPowerItr->second.first;
+    }
+
+    for(auto radioModel: m_droneRadioModels)
+    {
+        if(auto dronePowersItr=n_validMicrohardPowers.find(radioModel.second); dronePowersItr!= std::end(n_validMicrohardPowers))
+        {
+            minPower=std::max(dronePowersItr->second.first,minPower);
+        }
+    }
+    return minPower;
+}
+int MonarkManager::maximumPower() const
+{
+    int maxPower=30;
+    auto groundPowerItr=n_validMicrohardPowers.find(m_groundRadioModel);
+    if(groundPowerItr!=std::end(n_validMicrohardPowers))
+    {
+        maxPower=groundPowerItr->second.second;
+    }
+    for(auto radioModel: m_droneRadioModels)
+    {
+        if(auto dronePowersItr=n_validMicrohardPowers.find(radioModel.second); dronePowersItr!= std::end(n_validMicrohardPowers))
+        {
+            maxPower=std::min(dronePowersItr->second.second,maxPower);
+        }
+    }
+    return maxPower;
+}
+
 QStringList MonarkManager::validFrequencies       () const
 {
-    QStringList list;
-    if(qgcApp()->toolbox()->corePlugin()->showAdvancedUI())
+    std::set<QString> intersection;
     {
-        for(auto i=1629;i<=1721;++i)
+        auto groundFreqItr=n_validMicrohardFrequencies.find(m_groundRadioModel);
+        if(groundFreqItr==std::end(n_validMicrohardFrequencies))
         {
-            list.append(QString::number(i));
+            intersection=n_defaultValidEchoLinkFreqs;
         }
-        for(auto i=1784;i<=1846;++i)
+        else
         {
-            list.append(QString::number(i));
-        }
-        for(auto i=2024;i<=2106;++i)
-        {
-            list.append(QString::number(i));
-        }
-        for(auto i=2204;i<=2296;++i)
-        {
-            list.append(QString::number(i));
-        }
-        for(auto i=2305;i<=2386;++i)
-        {
-            list.append(QString::number(i));
-        }
-        for(auto i=2404;i<=2496;++i)
-        {
-            list.append(QString::number(i));
+            intersection=groundFreqItr->second;
         }
     }
-    else
+
+    for(auto radioModel: m_droneRadioModels)
     {
-        list.append("1711");
-        list.append("1813");
-        list.append("1817");
-        list.append("1820");
-        list.append("1825");
-        list.append("1828");
-        list.append("1833");
-        list.append("1838");
-        list.append("1845");
-        list.append("2030");
-        list.append("2070");
-        list.append("2100");
-        list.append("2210");
-        list.append("2250");
-        list.append("2290");
-        list.append("2310");
-        list.append("2350");
-        list.append("2380");
-        list.append("2410");
-        list.append("2450");
-        list.append("2490");
+        if(auto droneFreqsItr=n_validMicrohardFrequencies.find(radioModel.second); droneFreqsItr!= std::end(n_validMicrohardFrequencies))
+        {
+            auto const& droneFreqs=droneFreqsItr->second;
+            std::set<QString> tmpIntersection;
+            std::set_intersection(std::begin(intersection), std::end(intersection), std::begin(droneFreqs), std::end(droneFreqs), std::inserter(tmpIntersection,std::end(tmpIntersection)));
+            intersection=std::move(tmpIntersection);
+        }
     }
-    return list;
+    QStringList returnValue;
+    for(auto str: intersection)
+    {
+        returnValue.append(str);
+    }
+    return returnValue;
 }
 
 void MonarkManager::_openSerialConnectionToGcsRadio()
@@ -1015,7 +1193,7 @@ std::string MonarkManager::_getEncryptionKeyFromGcsRadio()
                         }
                     }
                 }
-                if(std::chrono::system_clock::now() - start > std::chrono::seconds(30))
+                if(std::chrono::system_clock::now() - start > std::chrono::seconds(5))
                 {
                     break;
                 }
@@ -1086,6 +1264,7 @@ void MonarkManager::setToolbox(QGCToolbox *const p_toolbox)
     qmlRegisterUncreatableType<MonarkManager> ("QGroundControl.MonarkManager", 1, 0, "MonarkManager", "Reference only");
     mp_monarkSettings = p_toolbox->settingsManager()->monarkSettings();
     mp_monarkQRCodeProvider = p_toolbox->monarkQRCodeProvider();
+    startScanning();
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::setToolbox()";
 }
 
@@ -1149,6 +1328,8 @@ void MonarkManager::startScanning()
         auto pingPairedResponseFuture = std::async(std::launch::async,[&password](){
             return _sendCommands(np_srmPairedIp, "admin", password.c_str(), nullptr, false);
         });
+        _setEchoLinkRadioModel();
+
         auto const pingDefaultResponse=_sendCommands(np_srmDefaultIp, "admin", nullptr, nullptr, false).second;
         if(!pingDefaultResponse.empty() && pingDefaultResponse.back() == np_groundRadioSuccessStr)
         {
@@ -1167,46 +1348,61 @@ void MonarkManager::startScanning()
             auto pingPairedResponse = pingPairedResponseFuture.get().second;
             if(!pingPairedResponse.empty() && pingPairedResponse.back() ==np_groundRadioSuccessStr)
             {
-                    m_allDrones.clear();
-                    m_beforeUpdateDrones.clear();
-                    m_updateInProgressDrones.clear();
-                    m_updateSuccessfulDrones.clear();
-                    m_updateFailedDrones.clear();
-                    std::vector<std::future<std::vector<std::string>>> dronePingResponses;
-                    for(auto i=0;i<n_maxMonarkID;++i)
-                    {
-                        dronePingResponses.push_back(std::async(std::launch::async,[i](){
-                            auto const ip = "172.20.2."+std::to_string(i+1);
-                            return _sendCommands(ip.c_str(), "admin", nullptr, nullptr, true).second;
-                        }));
-                    }
+                m_droneRadioModels.clear();
+                m_allDrones.clear();
+                m_beforeUpdateDrones.clear();
+                m_updateInProgressDrones.clear();
+                m_updateSuccessfulDrones.clear();
+                m_updateFailedDrones.clear();
+                std::vector<std::future<std::vector<std::string>>> dronePingResponses;
 
-                    qCDebug(MonarkManagerLog)<<"ScanSuccessAndPaired";
-                    scanningResult=MonarkState::ScanSuccessAndPaired;
-                    if(sendPassword)
-                    {
-                        _sendEncryptionKeyToGcsRadio( password.c_str());
-                    }
-                    m_paired=true;
-                    _initializeNetworkId();
-                    _initializeTxPower();
-                    _initializeFrequency();
-                    for(auto i=0;i<n_maxMonarkID;++i)
-                    {
-                        auto response = dronePingResponses[i].get();
-                        if(!response.empty() && response.back() == np_droneSuccessStr)
-                        {
-                            m_beforeUpdateDrones.insert(i+1);
-                            m_allDrones.insert(i+1);
-                        }
-                    }
-                    emit allDronesChanged();
-                    emit beforeUpdateDronesChanged();
-                    emit updateInProgressDronesChanged();
-                    emit updateSuccessfulDronesChanged();
-                    emit updateFailedDronesChanged();
 
+                for(auto i=1;i<=n_maxMonarkID;++i)
+                {
+                    dronePingResponses.push_back(std::async(std::launch::async,[i](){
+                        //auto const ip = "172.20.2."+std::to_string(i);
+                        //return _sendCommands(ip.c_str(), "admin", nullptr, nullptr, true).second;
+
+                        std::vector<std::string> dronePingCommands;
+                        dronePingCommands.push_back("microhard --action=info --monark_id="+std::to_string(i)+"\n");
+                        auto const ip = _getDroneIPAddress(i);
+                        return _sendCommands(ip.c_str(), "monark", "monark", &dronePingCommands, true).second;
+                    }));
                 }
+
+                qCDebug(MonarkManagerLog)<<"ScanSuccessAndPaired";
+                scanningResult=MonarkState::ScanSuccessAndPaired;
+                if(sendPassword)
+                {
+                    _sendEncryptionKeyToGcsRadio( password.c_str());
+                }
+                m_paired=true;
+                _initializeNetworkId();
+                _initializeTxPower();
+                _initializeFrequency();
+                for(auto i=1;i<=n_maxMonarkID;++i)
+                {
+                    auto response = dronePingResponses[i-1].get();
+                    //qCDebug(MonarkManagerLog)<<"START drone response from ID "<<(i);
+                    //for(auto str: response)
+                    //{
+                    //    qCDebug(MonarkManagerLog)<<"'"<<str.c_str()<<"'";
+                    //}
+                    //qCDebug(MonarkManagerLog)<<"END   drone response from ID "<<(i);
+                    if(!response.empty() && _parseInfoJsonResponse(QString::fromStdString(response.back())))
+                    {
+                        m_beforeUpdateDrones.insert(i);
+                        m_allDrones.insert(i);
+                    }
+                }
+                emit allDronesChanged();
+                emit beforeUpdateDronesChanged();
+                emit updateInProgressDronesChanged();
+                emit updateSuccessfulDronesChanged();
+                emit updateFailedDronesChanged();
+                emit validFrequenciesChanged();
+                emit minMaxPowersChanged();
+            }
             else
             {
                 qCDebug(MonarkManagerLog)<<"ScanFailedNotDetected";
@@ -1228,29 +1424,95 @@ void MonarkManager::refreshDroneList()
         qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::refreshDroneList()";
         auto oldAllDrones=m_allDrones;
         m_allDrones.clear();
+        m_droneRadioModels.clear();
         std::vector<std::future<std::vector<std::string>>> dronePingResponses;
-        for(auto i=0;i<n_maxMonarkID;++i)
+        for(auto i=1;i<=n_maxMonarkID;++i)
         {
             dronePingResponses.push_back(std::async(std::launch::async,[i](){
-                auto const ip = "172.20.2."+std::to_string(i+1);
-                return _sendCommands(ip.c_str(), "admin", nullptr, nullptr, true).second;
+                //auto const ip = "172.20.2."+std::to_string(i);
+                //return _sendCommands(ip.c_str(), "admin", nullptr, nullptr, true).second;
+
+                std::vector<std::string> dronePingCommands;
+                dronePingCommands.push_back("microhard --action=info --monark_id="+std::to_string(i)+"\n");
+                auto const ip = _getDroneIPAddress(i);
+                return _sendCommands(ip.c_str(), "monark", "monark", &dronePingCommands, true).second;
             }));
         }
-        for(auto i=0;i<n_maxMonarkID;++i)
+
+        for(auto i=1;i<=n_maxMonarkID;++i)
         {
-            auto response = dronePingResponses[i].get();
-            if(!response.empty() && response.back() == np_droneSuccessStr)
+            auto response = dronePingResponses[i-1].get();
+            //qCDebug(MonarkManagerLog)<<"START drone response from ID "<<(i);
+            //for(auto str: response)
+            //{
+            //    qCDebug(MonarkManagerLog)<<"'"<<str.c_str()<<"'";
+            //}
+            //qCDebug(MonarkManagerLog)<<"END   drone response from ID "<<(i);
+
+            if(!response.empty() &&_parseInfoJsonResponse(QString::fromStdString(response.back())))
             {
-                if(m_allDrones.insert(i+1).second)
+
+
+                if(m_allDrones.insert(i).second)
                 {
                     emit allDronesChanged();
                 }
             }
         }
         emit allDronesChanged();
+        emit validFrequenciesChanged();
+        emit minMaxPowersChanged();
+
 
         qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::refreshDroneList()";
     }
+}
+
+bool MonarkManager::_parseInfoJsonResponse(QString json)
+{
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_parseInfoJsonResponse()";
+    //auto firstIndex=json.indexOf("{");
+    //auto lastIndex=json.lastIndexOf("}");
+    //if(firstIndex>=0 && lastIndex>firstIndex)
+    //{
+    //    json=json.mid(firstIndex,lastIndex-firstIndex);
+    //}
+
+    //json.replace("'", "\"");
+
+
+    qCDebug(MonarkManagerLog)<<"json="<<json;
+
+
+    QJsonParseError error;
+    auto const document = QJsonDocument::fromJson(json.toUtf8(), &error);
+    bool goodResponse=false;
+    if(document.isNull())
+    {
+        qCCritical(MonarkManagerLog)<<"Unable to parse JSON: "<<error.errorString()<<", offset="<<error.offset;
+        //it's probably an older version that isn't putting out up-to-spec JSON.
+        goodResponse=json.contains(np_droneSuccessStr1);
+    }
+    else if(document["is_success"].toBool(false))
+    {
+        goodResponse=true;
+        if(auto const message = document["message"]; message.isObject())
+        {
+            if( auto const monarkIDJson = message["monark_id"]; monarkIDJson.isDouble())
+            {
+                if(auto const monarkId=monarkIDJson.toInt(0);monarkId>0)
+                {
+                    if(auto const droneRadioModelJson=message["product"]; droneRadioModelJson.isString())
+                    {
+                        m_droneRadioModels[monarkId] = droneRadioModelJson.toString();
+
+                    }
+                }
+            }
+        }
+    }
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_parseInfoJsonResponse()";
+    return goodResponse;
 }
 
 void MonarkManager::removeDrone(int monarkID)
@@ -1262,6 +1524,9 @@ void MonarkManager::removeDrone(int monarkID)
     //else
     {
         qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::removeDrone(monarkID="<<monarkID<<")";
+        m_droneRadioModels.erase(monarkID);
+        emit validFrequenciesChanged();
+        emit minMaxPowersChanged();
         m_allDrones.erase(monarkID);
         emit allDronesChanged();
         m_beforeUpdateDrones.erase(monarkID);
@@ -1523,7 +1788,7 @@ void MonarkManager::tryDroneUpdate(int monarkId)
 }
 bool MonarkManager::_checkIfDroneNeedsUpdate(int monarkId)
 {
-     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_checkIfDroneNeedsUpdate(monarkId="<<monarkId<<")";
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_checkIfDroneNeedsUpdate(monarkId="<<monarkId<<")";
     auto const p_vehicles=qgcApp()->toolbox()->multiVehicleManager()->vehicles();
     auto const numVehicles=p_vehicles->count();
     for(int i=0;i<numVehicles;++i)
@@ -1585,7 +1850,7 @@ void MonarkManager::showRestartMessage()
     //}
     //else
     {
-         emit displayRestartMessage();
+        emit displayRestartMessage();
     }
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::showRestartMessage()";
 }
@@ -1668,8 +1933,8 @@ void MonarkManager::saveFlutterManagementSettings(QString const& frequency)
             // also send the encryption key to the radio microcontroller over serial so it can reset the microhard natively.
             if(settingsChanged)
             {
-                 mp_monarkSettings->encryptionKey()->setCookedValue(QString::fromStdString(encryptionKey));
-                 mp_monarkSettings->onSaveSettings();
+                mp_monarkSettings->encryptionKey()->setCookedValue(QString::fromStdString(encryptionKey));
+                mp_monarkSettings->onSaveSettings();
             }
             _sendEncryptionKeyToGcsRadio(encryptionKey.c_str());
         }
@@ -1694,8 +1959,11 @@ void MonarkManager::resetActiveVehicle()
             std::vector<std::string> droneCommands;
             droneCommands.push_back("microhard --action=reset --monark_id="+std::to_string(activeVehicleId)+"\n");
             auto const response= _sendCommands(ip.c_str(),"monark", "monark", &droneCommands,true,false).second;
-            if(!response.empty() && response.back().find(np_droneSuccessStr)!= std::string::npos)
+            if(!response.empty() && (response.back().find(np_droneSuccessStr1)!= std::string::npos || response.back().find(np_droneSuccessStr2)!= std::string::npos))
             {
+                m_droneRadioModels.erase(activeVehicleId);
+                emit validFrequenciesChanged();
+                emit minMaxPowersChanged();
                 m_allDrones.erase(activeVehicleId);
                 emit allDronesChanged();
                 m_beforeUpdateDrones.erase(activeVehicleId);
@@ -1777,7 +2045,7 @@ void MonarkManager::detect()
             //    //TODO remove
             //    qCDebug(MonarkManagerLog)<<"returnStr = '"<<responseStr.c_str()<<"'";
             //}
-            if(!response.empty() && response.back().find(np_droneSuccessStr)!= std::string::npos)
+            if(!response.empty() && _parseInfoJsonResponse(QString::fromStdString(response.back())))
             {
                 qCDebug(MonarkManagerLog)<<"found drone";
                 m_allDrones.insert(monarkID);
@@ -1941,7 +2209,7 @@ bool MonarkManager::_changeGroundRadioTxPower(std::string const& desiredPower)
     std::vector<std::string> groundRadioCommands;
     groundRadioCommands.emplace_back("AT+MWTXPOWER="+desiredPower+"\n");
     groundRadioCommands.emplace_back("AT&W\n");
-    auto const& response = _sendCommands(np_srmPairedIp,"admin", currentEncryptionKey.c_str(), &groundRadioCommands, false);
+    auto const& response = _sendCommands(np_srmPairedIp,"admin", currentEncryptionKey.c_str(), &groundRadioCommands, false,false);
     if(response.second.empty() || response.second.back().find(np_groundRadioSuccessStr)== std::string::npos)
     {
         m_groundRadioUpdateState=(int) UpdateState::UpdateFailed;
@@ -1959,7 +2227,7 @@ bool MonarkManager::_changeGroundRadioTxPower(std::string const& desiredPower)
     return response.first;
 }
 
-void MonarkManager::_waitForPingResponses(std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>>& pingDroneResponses, char const*const p_successStr, std::function<void(int)> const& responseGoodFunc, std::function<void(int)> const& responseBadFunc)
+void MonarkManager::_waitForPingResponses(std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>>& pingDroneResponses, std::function<void(int)> const& responseGoodFunc, std::function<void(int)> const& responseBadFunc)
 {
     //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_waitForPingResponses()";
     for(size_t i=0;i<pingDroneResponses.size();++i)
@@ -1968,7 +2236,7 @@ void MonarkManager::_waitForPingResponses(std::vector<std::pair<int,std::future<
         auto const& response=pingDroneResponses[i].second.get().second;
         m_updateInProgressDrones.erase(id);
         emit updateInProgressDronesChanged();
-        if(response.empty() || response.back().find(p_successStr)== std::string::npos)
+        if(response.empty() || (response.back().find(np_droneSuccessStr1)== std::string::npos && response.back().find(np_droneSuccessStr2)== std::string::npos))
         {
             responseBadFunc(id);
         }
@@ -1996,7 +2264,6 @@ void MonarkManager::changeTxPower(QString const& desiredTxPower)
         emit updateInProgressDronesChanged();
         _changeGroundRadioTxPower(desiredStdString);
         _waitForPingResponses(droneResponses,
-                              np_droneSuccessStr,
                               //("'is_success': True, 'message': {tx_power': '"+desiredTxPower.toStdString()+"'").c_str(),
                               [this](int id){
                                   m_updateSuccessfulDrones.insert(id);
@@ -2040,7 +2307,7 @@ void MonarkManager::changeFrequencies(QString const& desiredFrequency)
             {
                 qCDebug(MonarkManagerLog)<<"EchoLink frequency change successful";
                 std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> pingDroneResponses = _sendDronePingCommands(succeededDrones);
-                _waitForPingResponses(pingDroneResponses,np_droneSuccessStr,
+                _waitForPingResponses(pingDroneResponses,
                                       [this](int id){
                                           m_updateSuccessfulDrones.insert(id);
                                           emit updateSuccessfulDronesChanged();
@@ -2081,7 +2348,7 @@ void MonarkManager::changeFrequencies(QString const& desiredFrequency)
                             qCDebug(MonarkManagerLog)<<"EchoLink reverted. Pinging drones";
                             //try to ping the drones that we reverted
                             std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> revertPingDroneResponses = _sendDronePingCommands(m_updateInProgressDrones);
-                            _waitForPingResponses(revertPingDroneResponses,np_droneSuccessStr,
+                            _waitForPingResponses(revertPingDroneResponses,
                                                   [this](int id){
                                                       m_updateFailedDrones.insert(id);
                                                       emit updateFailedDronesChanged();
@@ -2132,7 +2399,7 @@ void MonarkManager::changeFrequencies(QString const& desiredFrequency)
                 {
                     auto id=pingDroneResponses[i].first;
                     auto const& response=pingDroneResponses[i].second.get().second;
-                    if(response.empty() || response.back().find(np_droneSuccessStr)== std::string::npos)
+                    if(response.empty() || (response.back().find(np_droneSuccessStr1)== std::string::npos && response.back().find(np_droneSuccessStr2)== std::string::npos))
                     {
                         succeededDrones.erase(id);
                         m_updateInProgressDrones.erase(id);
@@ -2162,7 +2429,7 @@ void MonarkManager::changeFrequencies(QString const& desiredFrequency)
                         qCDebug(MonarkManagerLog)<<"EchoLink reverted. Pinging drones";
                         //try to ping the drones that we reverted
                         std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> revertPingDroneResponses = _sendDronePingCommands(failedDrones);
-                        _waitForPingResponses(revertPingDroneResponses,np_droneSuccessStr,
+                        _waitForPingResponses(revertPingDroneResponses,
                                               [this](int id){
                                                   m_updateFailedDrones.insert(id);
                                                   emit updateFailedDronesChanged();
@@ -2242,7 +2509,7 @@ void MonarkManager::changeEncryptionKey()
             if(_changeGroundRadioEncryptionKey(currentEncryptionKey, desiredStdString, false))
             {
                 std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> pingDroneResponses = _sendDronePingCommands(succeededDrones,60);
-                _waitForPingResponses(pingDroneResponses,np_droneSuccessStr,
+                _waitForPingResponses(pingDroneResponses,
                                       [this](int id){
                                           m_updateSuccessfulDrones.insert(id);
                                           emit updateSuccessfulDronesChanged();
@@ -2303,7 +2570,7 @@ void MonarkManager::changeEncryptionKey()
                 qCDebug(MonarkManagerLog)<<"EchoLink changed. Pinging drones";
 
                 std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> pingDroneResponses = _sendDronePingCommands(succeededDrones, 60);
-                _waitForPingResponses(pingDroneResponses,np_droneSuccessStr,
+                _waitForPingResponses(pingDroneResponses,
                                       [this](int id){
                                           m_updateSuccessfulDrones.insert(id);
                                           emit updateSuccessfulDronesChanged();

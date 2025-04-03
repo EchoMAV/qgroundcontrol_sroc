@@ -217,6 +217,9 @@ Item {
                     spacing: ScreenTools.defaultFontPixelWidth
 
                     ColumnLayout {
+                        QGCLabel {
+                            text: qsTr("EchoLink Voltage")
+                        }
                         Repeater {
                             model: _activeVehicle ? _activeVehicle.batteries : 0
 
@@ -248,18 +251,18 @@ Item {
                                 //    text: qsTr("Remaining")
                                 //}
                                 QGCLabel {
-                                    text: qsTr("Voltage")
+                                    text: qsTr("MONARK Voltage")
                                 }
                                 QGCLabel {
-                                    text: qsTr("Consumed")
+                                    text: qsTr("MONARK Consumed")
                                     visible: batteryValuesAvailable.mahConsumedAvailable
                                 }
                                 QGCLabel {
-                                    text: qsTr("Temperature")
+                                    text: qsTr("MONARK Temperature")
                                     visible: batteryValuesAvailable.temperatureAvailable
                                 }
                                 QGCLabel {
-                                    text: qsTr("Function")
+                                    text: qsTr("MONARK Function")
                                     visible: batteryValuesAvailable.functionAvailable
                                 }
                             }
@@ -267,6 +270,10 @@ Item {
                     }
 
                     ColumnLayout {
+                        QGCLabel {
+                            text: (QGroundControl.monarkManager.echoLinkBatteryVoltage).toFixed(
+                                      1) + " v"
+                        }
                         Repeater {
                             model: _activeVehicle ? _activeVehicle.batteries : 0
 

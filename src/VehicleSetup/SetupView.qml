@@ -364,9 +364,9 @@ Rectangle {
             panelLoader.source = ""
             panelLoader.vehicleComponent = vehicleComponent
             panelLoader.source = source
-            if (QGroundControl.monarkManager.monarkState === 0) {
-                QGroundControl.monarkManager.startScanning()
-            }
+            //if (QGroundControl.monarkManager.monarkState === 0) {
+            //    QGroundControl.monarkManager.startScanning()
+            //}
         }
 
         function setSourceComponent(sourceComponent, vehicleComponent) {
@@ -374,9 +374,9 @@ Rectangle {
             panelLoader.vehicleComponent = vehicleComponent
             panelLoader.sourceComponent = sourceComponent
 
-            if (QGroundControl.monarkManager.monarkState === 0) {
-                QGroundControl.monarkManager.startScanning()
-            }
+            //if (QGroundControl.monarkManager.monarkState === 0) {
+            //    QGroundControl.monarkManager.startScanning()
+            //}
         }
 
         property var vehicleComponent

@@ -62,7 +62,11 @@ SetupPage {
                         ? qsTr("Please enter EchoLink settings to begin configuration.") : QGroundControl.monarkManager.monarkState === 5 //ScanFailedNotDetected
                           ? qsTr("Could not find EchoLink. Try again?") : QGroundControl.monarkManager.monarkState === 7 //SaveSettingsFailed
                             ? qsTr("Could not save settings. Try again?") : QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
-                              ? qsTr("Change Tx Power (7-32 dBm)") : QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
+                              ? qsTr(
+                                    "Change Tx Power (") + QGroundControl.monarkManager.minimumPower
+                                + "-" + QGroundControl.monarkManager.maximumPower + qsTr(
+                                    " dBm)") : QGroundControl.monarkManager.monarkState
+                                === 13 //ChangeFrequencies
                                 ? qsTr(
                                       "Change Frequency") : QGroundControl.monarkManager.monarkState
                                   === 14 //ChangeEncryptionKey
@@ -131,7 +135,9 @@ SetupPage {
                     QGCLabel {
                         wrapMode: Text.Wrap
                         //Layout.fillWidth: true
-                        text: qsTr("Tx Power (7-32 dBm):")
+                        text: qsTr("Tx Power (") + QGroundControl.monarkManager.minimumPower + "-"
+                              + QGroundControl.monarkManager.maximumPower + qsTr(
+                                  " dBm):")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     FactTextField {
@@ -610,7 +616,11 @@ SetupPage {
                                  || QGroundControl.monarkManager.monarkState
                                  === 13 //ChangeFrequencies
                         text: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
-                              ? qsTr("Desired Tx Power (7-32dBm)") : QGroundControl.monarkManager.monarkState === 13 //ChangeFrequencies
+                              ? qsTr("Desired Tx Power (")
+                                + QGroundControl.monarkManager.minimumPower + "-"
+                                + QGroundControl.monarkManager.maximumPower + qsTr(
+                                    " dBm)") : QGroundControl.monarkManager.monarkState
+                                === 13 //ChangeFrequencies
                                 ? qsTr("Desired Frequency (MHz)") : qsTr(
                                       "INVALID Application state. Restart application or contact support.")
                         font.pointSize: ScreenTools.mediumFontPointSize
@@ -781,8 +791,8 @@ SetupPage {
             }
             IntValidator {
                 id: txPowerValidator
-                bottom: 7
-                top: 32
+                bottom: QGroundControl.monarkManager.minimumPower
+                top: QGroundControl.monarkManager.maximumPower
             }
             //RegExpValidator {
             //    id: encryptionKeyValidator

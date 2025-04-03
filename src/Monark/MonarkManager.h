@@ -10,6 +10,7 @@
 #include <mutex>
 #include <set>
 #include <future>
+#include <unordered_map>
 Q_DECLARE_LOGGING_CATEGORY(MonarkManagerLog)
 
 class QSerialPort;
@@ -78,7 +79,9 @@ public:
     Q_PROPERTY(QString updateFailedDrones READ updateFailedDrones NOTIFY updateFailedDronesChanged);
     Q_PROPERTY(int newDroneId READ newDroneId NOTIFY newDroneIdChanged);
     Q_PROPERTY(int newSysId READ newSysId NOTIFY newSysIdChanged);
-    Q_PROPERTY(QStringList          validFrequencies READ    validFrequencies NOTIFY validFrequenciesChanged)
+    Q_PROPERTY(QStringList          validFrequencies READ    validFrequencies NOTIFY validFrequenciesChanged);
+    Q_PROPERTY(int minimumPower READ minimumPower NOTIFY minMaxPowersChanged);
+    Q_PROPERTY(int maximumPower READ maximumPower NOTIFY minMaxPowersChanged);
     Q_PROPERTY(QString newGcsVersion     READ newGcsVersion     NOTIFY newGcsVersionChanged);
     Q_PROPERTY(QString newGcsDescription READ newGcsDescription NOTIFY newGcsDescriptionChanged);
     Q_PROPERTY(QString newGcsURL         READ newGcsURL         NOTIFY newGcsURLChanged);
@@ -98,6 +101,8 @@ public:
     QString updateSuccessfulDrones() const;
     QString updateFailedDrones() const;
     QStringList                     validFrequencies       () const;
+    int minimumPower() const;
+    int maximumPower() const;
 
 
     int newDroneId() const{return m_newDroneId;}
@@ -175,10 +180,12 @@ signals:
     void newDroneURLChanged();
     void newDroneReleaseDateChanged();
     void echoLinkBatteryVoltageChanged();
+    void minMaxPowersChanged();
 
 
 private:
 
+    void _setEchoLinkRadioModel();
     void _echoLinkBatteryVoltageTimerHandler();
     void _checkForUpdates();
     void _gcsVersionCheck(QString /*remoteFile*/, QString localFile, QString errorMsg);
@@ -208,7 +215,9 @@ private:
 
     void _resetToBeforeUpdate();
 
-    void _waitForPingResponses(std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>>& pingDroneResponses, char const*const p_successStr, std::function<void(int)> const& responseGoodFunc, std::function<void(int)> const& responseBadFunc);
+    void _waitForPingResponses(std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>>& pingDroneResponses,  std::function<void(int)> const& responseGoodFunc, std::function<void(int)> const& responseBadFunc);
+
+    bool _parseInfoJsonResponse(QString json);
 
 protected:
     std::unique_ptr<MonarkManagerWorkerWorker> mp_slotHandler;
@@ -239,6 +248,8 @@ private:
     float m_echoLinkBatteryVoltage;
     QTimer m_echoLinkBatteryVoltageTimer;
     bool m_paired;
+    std::unordered_map<int,QString> m_droneRadioModels;
+    QString m_groundRadioModel;
 
     //std::set<std::string> m_serialPorts;
 
