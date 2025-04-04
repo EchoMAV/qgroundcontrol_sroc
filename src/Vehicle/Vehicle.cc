@@ -2333,7 +2333,7 @@ void Vehicle::_loadJoystickSettings()
     if (_toolbox->joystickManager()->activeJoystick()) {
         qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified of an active joystick. Loading setting joystickenabled: " << settings.value(_joystickEnabledSettingsKey, false).toBool();
         auto const joystickName=_toolbox->joystickManager()->activeJoystick()->name();
-        if(joystickName=="Scuf Gaming SCUF Envision Controller" || joystickName == "Scuf Gaming SCUF Envision Pro Controller" || joystickName == "Kutta KTAC GC")
+        if(joystickName=="Scuf Gaming SCUF Envision Controller" || joystickName == "Scuf Gaming SCUF Envision Pro Controller" || joystickName == "Kutta KTAC GC v1" || joystickName == "Kutta KTAC GC v2")
         {
 
              setJoystickEnabled(true);

@@ -95,7 +95,7 @@ JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonC
     QtAndroidPrivate::registerGenericMotionEventListener(this);
     QtAndroidPrivate::registerKeyEventListener(this);
 
-    if(name == "Kutta KTAC GC" || name == "UXV Technologies SROC" || name == "Scuf Gaming SCUF Envision Controller" || name ==
+    if(name == "Kutta KTAC GC v2" || name == "Kutta KTAC GC v1" || name == "UXV Technologies SROC" || name == "Scuf Gaming SCUF Envision Controller" || name ==
         "Scuf Gaming SCUF Envision Pro Controller")
     {
          _setDefaultCalibration();
@@ -140,6 +140,18 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
         // get id and name
         QString id = inputDevice.callObjectMethod("getDescriptor", "()Ljava/lang/String;").toString();
         QString name = inputDevice.callObjectMethod("getName", "()Ljava/lang/String;").toString();
+        QString toString = inputDevice.callObjectMethod("toString", "()Ljava/lang/String;").toString();
+        if(name == "Kutta KTAC GC")
+        {
+            if(toString.contains("Descriptor: 1556518c36cc15a5d7cb0cc46112df69681182fb"))
+            {
+                name="Kutta KTAC GC v1";
+            }
+            else
+            {
+                name="Kutta KTAC GC v2";
+            }
+        }
 
         names.push_back(name);
 
@@ -165,7 +177,7 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
             if (supportedButtons[j]) buttonCount++;
         env->ReleaseBooleanArrayElements(jSupportedButtons, supportedButtons, 0);
 
-        qCDebug(JoystickLog) << "\t" << name << "id:" << buff[i] << "axes:" << axisCount << "buttons:" << buttonCount;
+        qCDebug(JoystickLog) << "\t" << name << "id:" << buff[i] << "axes:" << axisCount << "buttons:" << buttonCount<<" toString:"<<toString;
 
         std::unordered_set<int> hatAxes;
 
@@ -191,8 +203,10 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
         //currently only support 1 hat-switch
         int hatCount=1;
         axisCount-=2;
-        //the Kutta reports the hat switch as both buttons and an axis, so don't do this on that
-        if(hatAxes.size()!=2 || name == "Kutta KTAC GC")
+
+
+        //the Kutta v2 reports the hat switch as both buttons and an axis, so don't do this on that
+        if(hatAxes.size()!=2 || name == "Kutta KTAC GC v2" )
         {
             hatAxes.clear();
             hatCount=0;

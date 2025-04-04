@@ -215,7 +215,7 @@ void Joystick::_setDefaultCalibration(void) {
 
 
     }
-    else if(_name == "Kutta KTAC GC")
+    else if(_name == "Kutta KTAC GC v2")
     {
         _rgCalibration[pitchFunction].reversed = true;
         //_rgCalibration[throttleFunction].reversed = true;
@@ -247,6 +247,39 @@ void Joystick::_setDefaultCalibration(void) {
         setButtonAction(11, "Altitude Hold");
         setButtonAction(13, _buttonActionTriggerCamera);
     }
+    else if(_name == "Kutta KTAC GC v1")
+    {
+        _rgCalibration[pitchFunction].reversed = true;
+        //_rgCalibration[throttleFunction].reversed = true;
+
+        _rgFunctionAxis[rollFunction]       = 3;
+        _rgFunctionAxis[pitchFunction]      = 0;
+        _rgFunctionAxis[yawFunction]        = 5;
+        _rgFunctionAxis[throttleFunction]   = 4;
+        _rgFunctionAxis[zoomFunction]       = 1;
+        _rgFunctionAxis[gimbalPitchFunction]= 7;
+        _rgFunctionAxis[gimbalYawFunction]  = 6;
+        _deadband = false;
+        //_deadband           = true;
+        //for(int axis=0;axis<_axisCount;++axis)
+        //{
+        //    //add a 20 percent deadband to all axes
+        //    _rgCalibration[axis].deadband = int((_rgCalibration[axis].max - _rgCalibration[axis].center) * 0.2);
+        //}
+
+
+        setButtonAction(1, "Land");
+        setButtonAction(2, "Flow Hold");
+        setButtonAction(15, "RTL");
+        setButtonAction(8, _buttonActionEmergencyStop);
+        setButtonAction(9, _buttonActionEmergencyStop);
+        setButtonAction(0, "GPS Loiter");
+        setButtonAction(14, _buttonActionToggleEOIR);
+        setButtonAction(12, _buttonActionToggleVideoRecord);
+        setButtonAction(11, "Altitude Hold");
+        setButtonAction(13, _buttonActionTriggerCamera);
+    }
+
     else if(_name == "UXV Technologies SROC")
     {
         _rgCalibration[pitchFunction].reversed = true;
