@@ -216,5 +216,7 @@
         <file alias="antenna_orientation.png">resources/antenna_orientation.png</file>
         <file alias="motor_test.png">resources/motor_test.png</file>
         <file alias="Monark_logo_no_text.svg">src/ui/toolbar/Images/Monark logo_no_text.svg</file>
+        <file alias="battery_radio.svg">src/ui/toolbar/Images/battery_radio.svg</file>
+        <file alias="battery_quad.svg">src/ui/toolbar/Images/battery_quad.svg</file>
     </qresource>
 </RCC>

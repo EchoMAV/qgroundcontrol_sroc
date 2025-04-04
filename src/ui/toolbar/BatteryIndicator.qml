@@ -56,14 +56,14 @@ Item {
                 anchors.bottom: parent.bottom
                 width: height
                 sourceSize.width: width
-                source: "/qmlimages/Battery.svg"
+                source: "/qmlimages/battery_radio.svg"
                 fillMode: Image.PreserveAspectFit
                 color: getEchoLinkBatteryVoltageColor()
             }
 
             QGCLabel {
                 text: (QGroundControl.monarkManager.echoLinkBatteryVoltage).toFixed(
-                          1) + "v"
+                          1) + "V"
                 font.pointSize: ScreenTools.mediumFontPointSize
                 color: getEchoLinkBatteryVoltageColor()
                 anchors.verticalCenter: parent.verticalCenter
@@ -158,7 +158,7 @@ Item {
                 anchors.bottom: parent.bottom
                 width: height
                 sourceSize.width: width
-                source: "/qmlimages/Battery.svg"
+                source: "/qmlimages/battery_quad.svg"
                 fillMode: Image.PreserveAspectFit
                 color: getBatteryVoltageColor()
             }
@@ -272,7 +272,7 @@ Item {
                     ColumnLayout {
                         QGCLabel {
                             text: (QGroundControl.monarkManager.echoLinkBatteryVoltage).toFixed(
-                                      1) + " v"
+                                      1) + " V"
                         }
                         Repeater {
                             model: _activeVehicle ? _activeVehicle.batteries : 0

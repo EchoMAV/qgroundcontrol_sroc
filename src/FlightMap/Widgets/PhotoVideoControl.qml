@@ -435,8 +435,8 @@ Rectangle {
             }
             QGCLabel {
                 Layout.alignment: Qt.AlignHCenter
-                text: qsTr("Video: ")+((_mavlinkCameraInVideoMode && _mavlinkCamera.videoStatus
-                       === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _mavlinkCamera.recordTimeStr : "00:00:00")
+                text: qsTr("Video: ") + ((_mavlinkCameraInVideoMode
+                                          && _mavlinkCamera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _mavlinkCamera.recordTimeStr : "00:00:00")
                 font.pointSize: ScreenTools.largeFontPointSize
                 //visible: _mavlinkCameraInVideoMode
                 //         && _mavlinkCamera.capturesVideo
@@ -446,6 +446,8 @@ Rectangle {
                 text: qsTr("Photo No.: ") + (_activeVehicle ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(
                                                                   -5) : "00000")
                 font.pointSize: ScreenTools.largeFontPointSize
+                color: _mavlinkCamera && _mavlinkCamera.photoStatus
+                       != QGCCameraControl.PHOTO_CAPTURE_IDLE ? qgcPal.colorGrey : qgcPal.text
                 //visible: _modeIndicatorPhotoMode
             }
             QGCButton {
