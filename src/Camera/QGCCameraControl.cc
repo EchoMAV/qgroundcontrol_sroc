@@ -774,7 +774,7 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                 break;
                 case MAV_CMD_IMAGE_START_CAPTURE:
                 case MAV_CMD_IMAGE_STOP_CAPTURE:
-                    if(++_captureInfoRetries < 3) {
+                    if(++_captureInfoRetries < 5) {
                         _captureStatusTimer.start(1000);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up start/stop image capture";
@@ -782,7 +782,7 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                     }
                     break;
                 case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
-                    if(++_captureInfoRetries < 3) {
+                    if(++_captureInfoRetries < 5) {
                          qCDebug(CameraControlLog) << "Retrying MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS";
                         _captureStatusTimer.start(500);
                     } else {
