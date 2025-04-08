@@ -767,7 +767,8 @@ void MonarkManager::_setEchoLinkRadioModel()
                     if(data.find("ERROR: Command Not Recognized")!= std::string::npos)
                     {
                         finished=true;
-                        return "";
+                        //default to the 1624
+                        return "pMDDL1624AES256";
                     }
                     else
                     {
