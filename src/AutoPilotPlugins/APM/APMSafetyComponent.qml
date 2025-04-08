@@ -12,6 +12,7 @@ import QtQuick 2.3
 import QtQuick.Controls 1.2
 import QtGraphicalEffects 1.0
 import QtQuick.Layouts 1.2
+import QtQuick.Dialogs 1.2
 
 import QGroundControl 1.0
 import QGroundControl.FactSystem 1.0
@@ -720,8 +721,61 @@ SetupPage {
                             onClicked: _rtlAltFact.value = 1500
                         }
 
+                        QGCTextField {
+                            id: rtlAltField
+                            anchors.leftMargin: _margins
+                            anchors.left: returnAltRadio.right
+                            anchors.baseline: returnAltRadio.baseline
+                            showUnits: true
+                            enabled: returnAltRadio.checked
+                            unitsLabel: "ft"
+                            showHelp: true
+                            numericValuesOnly: true
+                            property string convertedText: parseInt(
+                                                               text * 30.48, 10)
+                            signal updated
+                            onEditingFinished: {
+                                var errorString = _rtlAltFact.validate(
+                                            convertedText,
+                                            false /* convertOnly */
+                                            )
+                                if (errorString === "") {
+                                    _rtlAltFact.value = convertedText
+                                    rtlAltField.updated()
+                                } else {
+                                    validationErrorDialogComponentrtlAltField.createObject(
+                                                mainWindow).open()
+                                }
+                            }
+
+                            onHelpClicked: helpDialogComponentrtlAltField.createObject(
+                                               mainWindow).open()
+
+                            Component {
+                                id: validationErrorDialogComponentrtlAltField
+
+                                ParameterEditorDialog {
+                                    title: qsTr("Invalid Value")
+                                    validate: true
+                                    validateValue: convertedText
+                                    fact: _rtlAltFact
+                                }
+                            }
+
+                            Component {
+                                id: helpDialogComponentrtlAltField
+
+                                ParameterEditorDialog {
+                                    title: qsTr("Value Details")
+                                    fact: _rtlAltFact
+                                }
+                            }
+                        }
+
+
+                        /*
                         FactTextField {
-                            id: rltAltField
+                            id: rtlAltField
                             anchors.leftMargin: _margins
                             anchors.left: returnAltRadio.right
                             anchors.baseline: returnAltRadio.baseline
@@ -729,7 +783,7 @@ SetupPage {
                             showUnits: true
                             enabled: returnAltRadio.checked
                         }
-
+                        */
                         QGCCheckBox {
                             id: homeLoiterCheckbox
                             anchors.left: returnAtCurrentRadio.left
@@ -743,8 +797,8 @@ SetupPage {
                         FactTextField {
                             id: landDelayField
                             anchors.topMargin: _innerMargin
-                            anchors.left: rltAltField.left
-                            anchors.top: rltAltField.bottom
+                            anchors.left: rtlAltField.left
+                            anchors.top: rtlAltField.bottom
                             fact: _rtlLoitTimeFact
                             showUnits: true
                             enabled: homeLoiterCheckbox.checked === true
@@ -752,25 +806,129 @@ SetupPage {
 
                         QGCLabel {
                             anchors.left: returnAtCurrentRadio.left
-                            anchors.baseline: rltAltFinalField.baseline
+                            anchors.baseline: rtlAltFinalField.baseline
                             text: qsTr("Final land stage altitude:")
                         }
 
+                        QGCTextField {
+                            id: rtlAltFinalField
+                            anchors.topMargin: _innerMargin
+                            anchors.left: rtlAltField.left
+                            anchors.top: landDelayField.bottom
+                            showUnits: true
+                            unitsLabel: "ft"
+                            showHelp: true
+                            numericValuesOnly: true
+                            property string convertedText: parseInt(
+                                                               text * 30.48, 10)
+                            signal updated
+                            onEditingFinished: {
+                                var errorString = _rtlAltFinalFact.validate(
+                                            convertedText,
+                                            false /* convertOnly */
+                                            )
+                                if (errorString === "") {
+                                    _rtlAltFinalFact.value = convertedText
+                                    rtlAltFinalField.updated()
+                                } else {
+                                    validationErrorDialogComponentrtlAltFinalField.createObject(
+                                                mainWindow).open()
+                                }
+                            }
+
+                            onHelpClicked: helpDialogComponentrtlAltFinalField.createObject(
+                                               mainWindow).open()
+
+                            Component {
+                                id: validationErrorDialogComponentrtlAltFinalField
+
+                                ParameterEditorDialog {
+                                    title: qsTr("Invalid Value")
+                                    validate: true
+                                    validateValue: convertedText
+                                    fact: _rtlAltFinalFact
+                                }
+                            }
+
+                            Component {
+                                id: helpDialogComponentrtlAltFinalField
+
+                                ParameterEditorDialog {
+                                    title: qsTr("Value Details")
+                                    fact: _rtlAltFinalFact
+                                }
+                            }
+                        }
+
+
+                        /*
                         FactTextField {
-                            id: rltAltFinalField
+                            id: rtlAltFinalField
                             anchors.topMargin: _innerMargin
                             anchors.left: rltAltField.left
                             anchors.top: landDelayField.bottom
                             fact: _rtlAltFinalFact
                             showUnits: true
                         }
-
+                        */
                         QGCLabel {
                             anchors.left: returnAtCurrentRadio.left
                             anchors.baseline: landSpeedField.baseline
                             text: qsTr("Final land stage descent speed:")
                         }
 
+                        QGCTextField {
+                            id: landSpeedField
+                            anchors.topMargin: _innerMargin
+                            anchors.left: rtlAltFinalField.left
+                            anchors.top: rtlAltFinalField.bottom
+                            showUnits: true
+                            unitsLabel: "ft/s"
+                            showHelp: true
+                            numericValuesOnly: true
+                            property string convertedText: parseInt(
+                                                               text * 30.48, 10)
+                            signal updated
+                            onEditingFinished: {
+                                var errorString = _landSpeedFact.validate(
+                                            convertedText,
+                                            false /* convertOnly */
+                                            )
+                                if (errorString === "") {
+                                    _landSpeedFact.value = convertedText
+                                    landSpeedField.updated()
+                                } else {
+                                    validationErrorDialogComponentlandSpeedField.createObject(
+                                                mainWindow).open()
+                                }
+                            }
+
+                            onHelpClicked: helpDialogComponentlandSpeedField.createObject(
+                                               mainWindow).open()
+
+                            Component {
+                                id: validationErrorDialogComponentlandSpeedField
+
+                                ParameterEditorDialog {
+                                    title: qsTr("Invalid Value")
+                                    validate: true
+                                    validateValue: convertedText
+                                    fact: _landSpeedFact
+                                }
+                            }
+
+                            Component {
+                                id: helpDialogComponentlandSpeedField
+
+                                ParameterEditorDialog {
+                                    title: qsTr("Value Details")
+                                    fact: _landSpeedFact
+                                }
+                            }
+                        }
+
+
+                        /*
                         FactTextField {
                             id: landSpeedField
                             anchors.topMargin: _innerMargin
@@ -779,6 +937,7 @@ SetupPage {
                             fact: _landSpeedFact
                             showUnits: true
                         }
+                        */
                     } // Rectangle - RTL Settings
                 } // Column - RTL Settings
             }
@@ -802,8 +961,8 @@ SetupPage {
                     }
 
                     Rectangle {
-                        width: rltAltField.x + rltAltField.width + _margins
-                        height: rltAltField.y + rltAltField.height + _margins
+                        width: rtlAltField.x + rtlAltField.width + _margins
+                        height: rtlAltField.y + rtlAltField.height + _margins
                         color: qgcPal.windowShade
 
                         QGCRadioButton {
@@ -829,7 +988,7 @@ SetupPage {
                         }
 
                         FactTextField {
-                            id: rltAltField
+                            id: rtlAltField
                             anchors.leftMargin: _margins
                             anchors.left: returnAltRadio.right
                             anchors.baseline: returnAltRadio.baseline
