@@ -1266,6 +1266,10 @@ std::string MonarkManager::_getEncryptionKeyFromGcsRadio()
             result=str;
         }
     }
+    if(result.empty())
+    {
+        result="pMDDL1624AES256";
+    }
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_getEncryptionKeyFromGcsRadio()";
     return result;
 }
