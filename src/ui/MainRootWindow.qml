@@ -48,28 +48,48 @@ ApplicationWindow {
     MessageDialog {
         id: monarkUpdateAvailableDialog
         property var monarkId: 0
-        property bool restartAfter: false
         title: qsTr("MONARK UPDATE AVAILABLE")
-        text: "An update is available for MONARK-" + monarkId
-              + ". Would you like to push it to the MONARK?"
-        detailedText: "Version:" + QGroundControl.monarkManager.newDroneVersion
-                      + "\nRelease Date: " + QGroundControl.monarkManager.newDroneReleaseDate
-                      + "\nDescription: " + QGroundControl.monarkManager.newDroneDescription
+        text: qsTr("An update is available for MONARK-") + monarkId + qsTr(
+                  ". Would you like to push it to the MONARK?")
+        detailedText: qsTr("Version: ") + QGroundControl.monarkManager.newDroneVersion + qsTr(
+                          "\nRelease Date: ")
+                      + QGroundControl.monarkManager.newDroneReleaseDate + qsTr(
+                          "\nDescription: ") + QGroundControl.monarkManager.newDroneDescription
         standardButtons: StandardButton.Yes | StandardButton.No
         onYes: {
             QGroundControl.monarkManager.pushMonarkDownload(monarkId)
-            if (restartAfter) {
-                restartApplicationConfirmation.monarkId = monarkId
-                restartApplicationConfirmation.open()
-            }
+            monarkUpdateProgressDialogComponent.createObject(mainWindow).open()
         }
-        onNo: {
-            if (restartAfter) {
-                restartApplicationConfirmation.monarkId = monarkId
-                restartApplicationConfirmation.open()
+    }
+
+    Component {
+        id: monarkUpdateProgressDialogComponent
+
+        QGCPopupDialog {
+            id: monarkUpdateProgressDialog
+            buttons: StandardButton.Close
+            title: qsTr("MONARK UPDATE IN PROGRESS")
+            ProgressBar {
+                id: monarkUpdateProgressBar
+                anchors.left: parent.left
+                anchors.right: parent.right
+                //Layout.preferredWidth: parent.width
+                //Layout.fillWidth: true
+                value: QGroundControl.monarkManager.monarkUpdatePushPercent / 100.0
+            }
+
+            QGCLabel {
+                text: QGroundControl.monarkManager.monarkUpdatePushError
+                      === "" ? (qsTr("Progress: ")
+                                + QGroundControl.monarkManager.monarkUpdatePushPercent
+                                + "%") : (qsTr("Update Push Failed. Error message: ")
+                                          + QGroundControl.monarkManager.monarkUpdatePushError)
+                color: QGroundControl.monarkManager.monarkUpdatePushError
+                       === "" ? qgcPal.text : qgcPal.alertText
             }
         }
     }
+
 
     MessageDialog {
         id: downloadGCSUpdateDialog
@@ -94,9 +114,8 @@ ApplicationWindow {
 
     Connections {
         target: QGroundControl.monarkManager
-        function onDisplayMonarkUpdateMessage(monarkId, restartAfter) {
+        function onDisplayMonarkUpdateMessage(monarkId) {
             monarkUpdateAvailableDialog.monarkId = monarkId
-            monarkUpdateAvailableDialog.restartAfter = restartAfter
             monarkUpdateAvailableDialog.open()
         }
     }

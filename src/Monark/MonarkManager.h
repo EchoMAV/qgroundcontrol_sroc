@@ -91,6 +91,9 @@ public:
     Q_PROPERTY(QString newDroneURL         READ newDroneURL         NOTIFY newDroneURLChanged);
     Q_PROPERTY(QString newDroneReleaseDate READ newDroneReleaseDate NOTIFY newDroneReleaseDateChanged);
     Q_PROPERTY(float   echoLinkBatteryVoltage READ echoLinkBatteryVoltage NOTIFY echoLinkBatteryVoltageChanged);
+    Q_PROPERTY(int monarkUpdatePushPercent READ monarkUpdatePushPercent NOTIFY monarkUpdatePushPercentChanged);
+    Q_PROPERTY(QString monarkUpdatePushError READ monarkUpdatePushError NOTIFY monarkUpdatePushErrorChanged);
+
 
     int monarkState() const { return m_monarkState;}
     int groundRadioUpdateState() const { return m_groundRadioUpdateState;}
@@ -116,6 +119,8 @@ public:
     QString newDroneURL()         const{return m_newDroneURL;}
     QString newDroneReleaseDate() const{return m_newDroneReleaseDate;}
     float echoLinkBatteryVoltage() const {return m_echoLinkBatteryVoltage;}
+    int monarkUpdatePushPercent() const{return m_monarkUpdatePushPercent;}
+    QString monarkUpdatePushError() const{return m_monarkUpdatePushError;}
 
 
     virtual void setToolbox(QGCToolbox* p_toolbox) override;
@@ -167,7 +172,7 @@ signals:
     void updateFailedDronesChanged();
     void newDroneIdChanged();
     void newSysIdChanged();
-    void displayMonarkUpdateMessage(int monarkId, bool restartAfter);
+    void displayMonarkUpdateMessage(int monarkId);
     void displayRestartMessage();
     void displayGcsUpdateMessage();
     void validFrequenciesChanged();
@@ -181,7 +186,8 @@ signals:
     void newDroneReleaseDateChanged();
     void echoLinkBatteryVoltageChanged();
     void minMaxPowersChanged();
-
+    void monarkUpdatePushPercentChanged();
+    void monarkUpdatePushErrorChanged();
 
 private:
 
@@ -250,6 +256,8 @@ private:
     bool m_paired;
     std::unordered_map<int,QString> m_droneRadioModels;
     QString m_groundRadioModel;
+    int m_monarkUpdatePushPercent;
+    QString m_monarkUpdatePushError;
 
     //std::set<std::string> m_serialPorts;
 

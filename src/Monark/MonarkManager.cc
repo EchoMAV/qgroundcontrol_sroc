@@ -120,8 +120,9 @@ QString _convertSetToString(std::set<int> const& set, bool const includeGroundRa
     return QString::fromStdString(ss.str());
 }
 
-std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char const*const p_username, char const*const p_password, QFile& file, QString const& remoteLocation, bool toDrone, bool quiet=true)
+std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char const*const p_username, char const*const p_password, QFile& file, QString const& remoteLocation, bool toDrone, bool quiet=true, std::function<void(int, QString const&)> const& progressFunc=[](int, QString const&){})
 {
+    //TODO find a way to make the method timeout if you power off the drone
     qCDebug(MonarkManagerLog)<<"ENTER: _sendFile(p_host="<<p_host<<", p_username="<<p_username<<", file="<<file<<", remoteLocation="<<remoteLocation<<", toDrone="<<toDrone<<")";
     int returnCode=0;
     ssh_session p_session = nullptr;
@@ -129,8 +130,13 @@ std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char
     sftp_session p_sftp=nullptr;
     sftp_file p_sftpFile=nullptr;
     char p_buffer[4096];
-    bool commandsSent=false;
+    bool success=false;
     std::vector<std::string> commandResponses;
+    int percent = 0;
+    size_t fileSize = file.size();
+    size_t nextMilestone = size_t(double(fileSize)/100.0);
+    size_t totalNumWritten=0;
+    progressFunc(percent,"");
     do
     {
         p_session = ssh_new();
@@ -140,6 +146,7 @@ std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char
             {
                 qCCritical(MonarkManagerLog)<<"_sendFile("<<p_host<<") : ssh_new failed";
             }
+            progressFunc(-1, QString("ssh_new failed: ")+ssh_get_error(p_session));
             commandResponses.push_back("ssh_new failed");
             break;
         }
@@ -150,6 +157,19 @@ std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char
             {
                 qCCritical(MonarkManagerLog)<<"_sendFile("<<p_host<<") : ssh_options_set failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
             }
+            progressFunc(-1, QString("ssh_options_set failed: ")+ssh_get_error(p_session));
+            commandResponses.push_back("ssh_options_set failed");
+            break;
+        }
+        long timeoutsec=1;
+        returnCode=ssh_options_set(p_session, SSH_OPTIONS_TIMEOUT, &timeoutsec);
+        if(returnCode)
+        {
+            if(!quiet)
+            {
+                qCCritical(MonarkManagerLog)<<"_sendFile("<<p_host<<") : ssh_options_set failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+            }
+            progressFunc(-1, QString("ssh_options_set failed: ")+ssh_get_error(p_session));
             commandResponses.push_back("ssh_options_set failed");
             break;
         }
@@ -160,6 +180,7 @@ std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char
             {
                 qCCritical(MonarkManagerLog)<<"_sendFile("<<p_host<<") : ssh_connect failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
             }
+            progressFunc(-1, QString("ssh_connect failed: ")+ssh_get_error(p_session));
             commandResponses.push_back("ssh_connect failed");
             break;
         }
@@ -173,6 +194,7 @@ std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char
                 {
                     qCCritical(MonarkManagerLog)<<"_sendFile("<<p_host<<") : ssh_userauth_password failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
                 }
+                progressFunc(-1, QString("ssh_userauth_password failed: ")+ssh_get_error(p_session));
                 commandResponses.push_back("ssh_userauth_password failed");
                 break;
             }
@@ -183,6 +205,7 @@ std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char
                 {
                     qCCritical(MonarkManagerLog)<<"_sendFile("<<p_host<<") : sftp_new failed: "<<ssh_get_error(p_session);
                 }
+                progressFunc(-1, QString("sftp_new failed: ")+ssh_get_error(p_session));
                 commandResponses.push_back("sftp_new failed");
                 break;
             }
@@ -193,6 +216,7 @@ std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char
                 {
                     qCCritical(MonarkManagerLog)<<"_sendFile("<<p_host<<") : sftp_init failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
                 }
+                progressFunc(-1, QString("sftp_init failed: ")+ssh_get_error(p_session));
                 commandResponses.push_back("sftp_init failed");
                 break;
             }
@@ -204,6 +228,7 @@ std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char
                 {
                     qCCritical(MonarkManagerLog)<<"_sendFile("<<p_host<<") : sftp_open failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
                 }
+                progressFunc(-1, QString("sftp_open failed: ")+ssh_get_error(p_session));
                 commandResponses.push_back("sftp_open failed");
                 break;
             }
@@ -214,12 +239,32 @@ std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char
                     qCCritical(MonarkManagerLog)<<"_sendFile("<<p_host<<") : file.open failed";
                 }
                 commandResponses.push_back("file.open failed");
+                progressFunc(-1, "file.open failed");
                 break;
             }
+
+            /*
+            if(!ssh_handle_packets_termination(p_session,1000,_send_file_termination_callback, &progressFunc))
+            {
+
+                if(!quiet)
+                {
+                    qCCritical(MonarkManagerLog)<<"_sendFile("<<p_host<<") : ssh_handle_packets_termination failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                }
+                progressFunc(-1, QString("ssh_handle_packets_termination failed: ")+ssh_get_error(p_session));
+                progressFunc(-1, "ssh_handle_packets_termination failed");
+            }
+*/
+
+            sftp_file_set_nonblocking(p_sftpFile);
+
+
             for(;;)
             {
                 if(file.atEnd())
                 {
+                    success=true;
+                    progressFunc(100,"");
                     file.close();
                     break;
                 }
@@ -233,10 +278,18 @@ std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char
                         {
                             qCCritical(MonarkManagerLog)<<"_sendFile("<<p_host<<") : sftp_write failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
                         }
-                        commandResponses.push_back("sftp_write failed");
+                        progressFunc(-1, QString("sftp_write failed: ")+ssh_get_error(p_session));
+                        progressFunc(-1, "sftp_write failed");
                         file.close();
                         break;
                     }
+                    totalNumWritten+=numWritten;
+                    if(totalNumWritten>=nextMilestone)
+                    {
+                        progressFunc(++percent,"");
+                        nextMilestone = size_t(double(fileSize)/100.0 * double(percent+1));
+                    }
+
                 }
             }
         }
@@ -268,7 +321,7 @@ std::pair<bool,std::vector<std::string>> _sendFile(char const*const p_host, char
     }
     ssh_finalize();
     qCDebug(MonarkManagerLog)<<"EXIT : _sendFile(p_host="<<p_host<<", p_username="<<p_username<<", file="<<file<<", remoteLocation="<<remoteLocation<<", toDrone="<<toDrone<<")";
-    return std::make_pair(commandsSent,commandResponses);
+    return std::make_pair(success,commandResponses);
 }
 
 
@@ -711,6 +764,8 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , m_paired{false}
     , m_droneRadioModels{}
     , m_groundRadioModel{}
+    , m_monarkUpdatePushPercent{0}
+    , m_monarkUpdatePushError{}
 {
     //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::MonarkManager()()";
     //connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &MonarkManager::validFrequenciesChanged);
@@ -1783,7 +1838,7 @@ void MonarkManager::tryDroneUpdate(int monarkId)
         if(needsUpdate)
         {
 
-            emit displayMonarkUpdateMessage(monarkId, false);
+            emit displayMonarkUpdateMessage(monarkId);
         }
     }
 }
@@ -1806,7 +1861,7 @@ bool MonarkManager::_checkIfDroneNeedsUpdate(int monarkId)
         commands.push_back("monark-updater --version\n");
         std::string ip = _getDroneIPAddress(monarkId);
 
-        auto const& response = _sendCommands(ip.c_str(),"monark", "monark", &commands, true).second;
+        auto const& response = _sendCommands(ip.c_str(),"monark", "monark", &commands, true,false).second;
         if(!response.empty())
         {
             auto const currentVersionString = response.back();
@@ -1819,26 +1874,51 @@ bool MonarkManager::_checkIfDroneNeedsUpdate(int monarkId)
 
 void MonarkManager::pushMonarkDownload(int monarkID)
 {
-    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::pushMonarkDownload(monarkID="<<monarkID<<")";
-    auto const index=m_newDroneURL.lastIndexOf("/");
-    if(index>=0)
+    if(mp_slotHandler->needDispatch())
     {
-        QFile firmwareFile = QDir(qgcApp()->toolbox()->settingsManager()->appSettings()->firmwareSavePath()).absoluteFilePath(m_newDroneURL.mid(index+1));
-        if(firmwareFile.exists())
-        {
-            std::string ip = _getDroneIPAddress(monarkID);
-            _sendFile(ip.c_str(),"monark", "monark",firmwareFile,"/home/monark/monark-updates.zip",true,false);
-            std::vector<std::string> droneCommands;
-            droneCommands.push_back("microhard --action=reboot_rpi\n");
-            _sendCommands(ip.c_str(),"monark", "monark", &droneCommands, true,false);
-        }
+        mp_slotHandler->dispatch([this,monarkID](){pushMonarkDownload(monarkID);});
     }
-    //auto const p_vehicle = qgcApp()->toolbox()->multiVehicleManager()->getVehicleById(monarkID);
-    //if(p_vehicle)
-    //{
-    //    p_vehicle->rebootVehicle();
-    //}
-    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::pushMonarkDownload(monarkID="<<monarkID<<")";
+    else
+    {
+        qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::pushMonarkDownload(monarkID="<<monarkID<<")";
+        auto const index=m_newDroneURL.lastIndexOf("/");
+        qCDebug(MonarkManagerLog)<<"m_newDroneURL: "<<m_newDroneURL;
+
+        if(index>=0)
+        {
+            QFile firmwareFile = QDir(qgcApp()->toolbox()->settingsManager()->appSettings()->firmwareSavePath()).absoluteFilePath(m_newDroneURL.mid(index+1));
+            if(firmwareFile.exists())
+            {
+                m_monarkUpdatePushError.clear();
+                emit monarkUpdatePushErrorChanged();
+                std::string ip = _getDroneIPAddress(monarkID);
+                _sendFile(ip.c_str(),"monark", "monark",firmwareFile,"/home/monark/monark-updates.zip",true,false,[this](int percent,QString const& errorMessage){
+                    qCCritical(MonarkManagerLog)<<"Monark update progress: "<<percent<<"%";
+                    if(percent<0)
+                    {
+                        qCCritical(MonarkManagerLog)<<"Update Push Failed. Error message: "<<errorMessage;
+                        m_monarkUpdatePushError=errorMessage;
+                        emit monarkUpdatePushErrorChanged();
+                    }
+                    else
+                    {
+                        m_monarkUpdatePushPercent=percent;
+                        emit monarkUpdatePushPercentChanged();
+                    }
+
+                });
+                std::vector<std::string> droneCommands;
+                droneCommands.push_back("microhard --action=reboot_rpi\n");
+                _sendCommands(ip.c_str(),"monark", "monark", &droneCommands, true,false);
+            }
+        }
+        //auto const p_vehicle = qgcApp()->toolbox()->multiVehicleManager()->getVehicleById(monarkID);
+        //if(p_vehicle)
+        //{
+        //    p_vehicle->rebootVehicle();
+        //}
+        qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::pushMonarkDownload(monarkID="<<monarkID<<")";
+    }
 }
 
 void MonarkManager::showRestartMessage()
@@ -1847,7 +1927,7 @@ void MonarkManager::showRestartMessage()
     //auto const needsUpdate=_checkIfDroneNeedsUpdate(m_newSysId);
     ///if(needsUpdate)
     //{
-    //    emit displayMonarkUpdateMessage(m_newSysId, true);
+    //    emit displayMonarkUpdateMessage(m_newSysId);
     //}
     //else
     {
