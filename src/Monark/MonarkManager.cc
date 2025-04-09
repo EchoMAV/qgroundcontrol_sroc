@@ -827,7 +827,7 @@ void MonarkManager::_setEchoLinkRadioModel()
                     }
                     else
                     {
-                        auto beginIndex=data.find("Product");
+                        auto beginIndex=data.find("Image");
                         if(beginIndex!=std::string::npos)
                         {
                             beginIndex=data.find(": ", beginIndex);
