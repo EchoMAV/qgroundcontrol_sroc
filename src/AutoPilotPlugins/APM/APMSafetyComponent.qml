@@ -707,7 +707,10 @@ SetupPage {
                             text: qsTr("Return at current altitude")
                             checked: _rtlAltFact.value == 0
 
-                            onClicked: _rtlAltFact.value = 0
+                            onClicked: {
+                                _rtlAltFact.value = 0
+                                rtlAltField.text = 0
+                            }
                         }
 
                         QGCRadioButton {
@@ -718,7 +721,10 @@ SetupPage {
                             text: qsTr("Return at specified altitude:")
                             checked: _rtlAltFact.value != 0
 
-                            onClicked: _rtlAltFact.value = 1500
+                            onClicked: {
+                                _rtlAltFact.value = 1500
+                                rtlAltField.text = 1500 / 30.48
+                            }
                         }
 
                         QGCTextField {
@@ -731,6 +737,7 @@ SetupPage {
                             unitsLabel: "ft"
                             showHelp: true
                             numericValuesOnly: true
+                            text: parseInt(_rtlAltFact.value / 30.48, 10)
                             property string convertedText: parseInt(
                                                                text * 30.48, 10)
                             signal updated
@@ -791,9 +798,14 @@ SetupPage {
                             checked: _rtlLoitTimeFact.value > 0
                             text: qsTr("Loiter above Home for:")
 
-                            onClicked: _rtlLoitTimeFact.value = (checked ? 60 : 0)
+                            onClicked: {
+                                _rtlLoitTimeFact.value = (checked ? 1000 : 0)
+                                landDelayField.text = (checked ? 1 : 0)
+                            }
                         }
 
+
+                        /*
                         FactTextField {
                             id: landDelayField
                             anchors.topMargin: _innerMargin
@@ -802,6 +814,57 @@ SetupPage {
                             fact: _rtlLoitTimeFact
                             showUnits: true
                             enabled: homeLoiterCheckbox.checked === true
+                        }
+                        */
+                        QGCTextField {
+                            id: landDelayField
+                            anchors.topMargin: _innerMargin
+                            anchors.left: rtlAltField.left
+                            anchors.top: rtlAltField.bottom
+                            showUnits: true
+                            unitsLabel: "s"
+                            showHelp: true
+                            numericValuesOnly: true
+                            text: parseInt(_rtlLoitTimeFact.value / 1000.0, 10)
+                            property string convertedText: parseInt(
+                                                               text * 1000, 10)
+                            signal updated
+                            onEditingFinished: {
+                                var errorString = _rtlLoitTimeFact.validate(
+                                            convertedText,
+                                            false /* convertOnly */
+                                            )
+                                if (errorString === "") {
+                                    _rtlLoitTimeFact.value = convertedText
+                                    landDelayField.updated()
+                                } else {
+                                    validationErrorDialogComponentlandDelayField.createObject(
+                                                mainWindow).open()
+                                }
+                            }
+
+                            onHelpClicked: helpDialogComponentlandDelayField.createObject(
+                                               mainWindow).open()
+
+                            Component {
+                                id: validationErrorDialogComponentlandDelayField
+
+                                ParameterEditorDialog {
+                                    title: qsTr("Invalid Value")
+                                    validate: true
+                                    validateValue: convertedText
+                                    fact: _rtlLoitTimeFact
+                                }
+                            }
+
+                            Component {
+                                id: helpDialogComponentlandDelayField
+
+                                ParameterEditorDialog {
+                                    title: qsTr("Value Details")
+                                    fact: _rtlLoitTimeFact
+                                }
+                            }
                         }
 
                         QGCLabel {
@@ -819,6 +882,7 @@ SetupPage {
                             unitsLabel: "ft"
                             showHelp: true
                             numericValuesOnly: true
+                            text: parseInt(_rtlAltFinalFact.value / 30.48, 10)
                             property string convertedText: parseInt(
                                                                text * 30.48, 10)
                             signal updated
@@ -886,6 +950,7 @@ SetupPage {
                             unitsLabel: "ft/s"
                             showHelp: true
                             numericValuesOnly: true
+                            text: parseInt(_landSpeedFact.value / 30.48, 10)
                             property string convertedText: parseInt(
                                                                text * 30.48, 10)
                             signal updated
