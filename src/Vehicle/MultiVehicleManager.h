@@ -110,6 +110,8 @@ private:
 
     QmlObjectListModel  _vehicles;
 
+    QRecursiveMutex _vehiclesMut;
+
     FirmwarePluginManager*      _firmwarePluginManager;
     JoystickManager*            _joystickManager;
     MAVLinkProtocol*            _mavlinkProtocol;

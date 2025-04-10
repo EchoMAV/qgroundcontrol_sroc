@@ -100,6 +100,8 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     }
 #endif
 
+    QMutexLocker _vehiclesLock{&_vehiclesMut};
+
     if (_vehicles.count() > 0 && !qgcApp()->toolbox()->corePlugin()->options()->multiVehicleEnabled()) {
         return;
     }
@@ -165,6 +167,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
 void MultiVehicleManager::_requestProtocolVersion(unsigned version)
 {
     unsigned maxversion = 0;
+    QMutexLocker _vehiclesLock{&_vehiclesMut};
 
     if (_vehicles.count() == 0) {
         _mavlinkProtocol->setVersion(version);
@@ -189,6 +192,8 @@ void MultiVehicleManager::_requestProtocolVersion(unsigned version)
 void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
 {
     qCDebug(MultiVehicleManagerLog) << "_deleteVehiclePhase1" << vehicle;
+    QMutexLocker _vehiclesLock{&_vehiclesMut};
+
     _vehiclesBeingDeleted << vehicle;
 
     // Remove from map
@@ -233,6 +238,11 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
 
 void MultiVehicleManager::_deleteVehiclePhase2(void)
 {
+    QMutexLocker _vehiclesLock{&_vehiclesMut};
+    if(_vehiclesBeingDeleted.isEmpty())
+    {
+        return;
+    }
     qCDebug(MultiVehicleManagerLog) << "_deleteVehiclePhase2" << _vehiclesBeingDeleted[0];
 
     /// Qml has been notified of vehicle about to go away and should be disconnected from it by now.
@@ -343,6 +353,7 @@ QString MultiVehicleManager::loadSetting(const QString &name, const QString& def
 
 Vehicle* MultiVehicleManager::getVehicleById(int vehicleId)
 {
+     QMutexLocker _vehiclesLock{&_vehiclesMut};
     for (int i=0; i< _vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(_vehicles[i]);
         if (vehicle->id() == vehicleId) {
