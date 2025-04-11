@@ -33,6 +33,7 @@ ApplicationWindow {
                                               Screen.height)
     visible: true
 
+    /*
     MessageDialog {
         property var monarkId: 0
         id: restartApplicationConfirmation
@@ -44,6 +45,7 @@ ApplicationWindow {
             QGroundControl.monarkManager.restartApplication()
         }
     }
+    */
 
     MessageDialog {
         id: monarkUpdateAvailableDialog
@@ -104,6 +106,7 @@ ApplicationWindow {
         }
     }
 
+    /*
     Connections {
         target: QGroundControl.monarkManager
         onDisplayRestartMessage: {
@@ -111,6 +114,7 @@ ApplicationWindow {
             restartApplicationConfirmation.open()
         }
     }
+    */
 
     Connections {
         target: QGroundControl.monarkManager

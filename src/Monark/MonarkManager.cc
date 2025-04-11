@@ -747,8 +747,8 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , m_monarkState{(int)MonarkState::BeforeScan}
     , m_monarkStateMut{}
     , m_monarkStateCondition{}
-    , m_newDroneId{0}
-    , m_newSysId{0}
+    //, m_newDroneId{0}
+    //, m_newSysId{0}
     , m_openPorts{}
     //, mp_echoLinkPort{nullptr}
     , m_newGcsVersion{}
@@ -1597,16 +1597,18 @@ void MonarkManager::removeDrone(int monarkID)
         emit updateSuccessfulDronesChanged();
         m_updateFailedDrones.erase(monarkID);
         emit updateFailedDronesChanged();
-        if(monarkID==m_newDroneId)
-        {
-            m_newDroneId=0;
-            emit newDroneIdChanged();
-        }
+        //if(monarkID==m_newDroneId)
+        //{
+        //    m_newDroneId=0;
+        //    emit newDroneIdChanged();
+        //}
+        /*
         if(monarkID==m_newSysId)
         {
             m_newSysId=0;
             emit newSysIdChanged();
         }
+        */
         qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::removeDrone(monarkID="<<monarkID<<")";
     }
 }
@@ -1924,7 +1926,7 @@ void MonarkManager::pushMonarkDownload(int monarkID)
         qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::pushMonarkDownload(monarkID="<<monarkID<<")";
     }
 }
-
+/*
 void MonarkManager::showRestartMessage()
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::showRestartMessage()";
@@ -1939,6 +1941,7 @@ void MonarkManager::showRestartMessage()
     }
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::showRestartMessage()";
 }
+
 
 void MonarkManager::restartApplication()
 {
@@ -1965,6 +1968,7 @@ void MonarkManager::restartApplication()
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::restartApplication()";
 
 }
+*/
 
 void MonarkManager::openGcsDownload()
 {
@@ -2059,16 +2063,18 @@ void MonarkManager::resetActiveVehicle()
                 emit updateSuccessfulDronesChanged();
                 m_updateFailedDrones.erase(activeVehicleId);
                 emit updateFailedDronesChanged();
-                if(m_newDroneId==activeVehicleId)
-                {
-                    m_newDroneId=0;
-                    emit newDroneIdChanged();
-                }
+                //if(m_newDroneId==activeVehicleId)
+                //{
+                //    m_newDroneId=0;
+                //    emit newDroneIdChanged();
+                //}
+                /*
                 if(m_newSysId==activeVehicleId)
                 {
                     m_newSysId=0;
                     emit newSysIdChanged();
                 }
+                */
             }
 
         }
@@ -2104,8 +2110,10 @@ void MonarkManager::detect()
     {
         qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::detect()";
         auto monarkID = mp_monarkSettings->monarkID()->cookedValue().toUInt();
+        /*
         m_newSysId=monarkID;
         emit newSysIdChanged();
+        */
         _setMonarkState(MonarkState::ShowQRCode);
         auto detectionResult=MonarkState::DetectionFailed;
         auto encryptionKey=mp_monarkSettings->encryptionKey()->cookedValueString().toStdString();
@@ -2138,8 +2146,9 @@ void MonarkManager::detect()
                 m_beforeUpdateDrones.insert(monarkID);
                 emit beforeUpdateDronesChanged();
                 detectionResult=MonarkState::ScanSuccessAndPaired;
-                m_newDroneId=monarkID;
-                emit newDroneIdChanged();
+                //m_newDroneId=monarkID;
+                //emit newDroneIdChanged();
+                qgcApp()->showAppMessage(QString("MONARK-")+monarkID+" has been added.");
                 break;
             }
             std::unique_lock<std::mutex> lock(m_monarkStateMut);

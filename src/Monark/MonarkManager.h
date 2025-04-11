@@ -77,8 +77,8 @@ public:
     Q_PROPERTY(QString updateInProgressDrones READ updateInProgressDrones NOTIFY updateInProgressDronesChanged);
     Q_PROPERTY(QString updateSuccessfulDrones READ updateSuccessfulDrones NOTIFY updateSuccessfulDronesChanged);
     Q_PROPERTY(QString updateFailedDrones READ updateFailedDrones NOTIFY updateFailedDronesChanged);
-    Q_PROPERTY(int newDroneId READ newDroneId NOTIFY newDroneIdChanged);
-    Q_PROPERTY(int newSysId READ newSysId NOTIFY newSysIdChanged);
+    //Q_PROPERTY(int newDroneId READ newDroneId NOTIFY newDroneIdChanged);
+    //Q_PROPERTY(int newSysId READ newSysId NOTIFY newSysIdChanged);
     Q_PROPERTY(QStringList          validFrequencies READ    validFrequencies NOTIFY validFrequenciesChanged);
     Q_PROPERTY(int minimumPower READ minimumPower NOTIFY minMaxPowersChanged);
     Q_PROPERTY(int maximumPower READ maximumPower NOTIFY minMaxPowersChanged);
@@ -108,8 +108,8 @@ public:
     int maximumPower() const;
 
 
-    int newDroneId() const{return m_newDroneId;}
-    int newSysId() const{return m_newSysId;}
+    //int newDroneId() const{return m_newDroneId;}
+    //int newSysId() const{return m_newSysId;}
     QString newGcsVersion()     const{return m_newGcsVersion;}
     QString newGcsDescription() const{return m_newGcsDescription;}
     QString newGcsURL()         const{return m_newGcsURL;}
@@ -136,12 +136,12 @@ public:
 
     Q_INVOKABLE void detect();
 
-    Q_INVOKABLE void restartApplication();
+    //Q_INVOKABLE void restartApplication();
 
     Q_INVOKABLE void openGcsDownload();
     Q_INVOKABLE void pushMonarkDownload(int monarkID);
 
-    Q_INVOKABLE void showRestartMessage();
+    //Q_INVOKABLE void showRestartMessage();
 
 
     Q_INVOKABLE void gotoBeforePairNewDrone();
@@ -170,8 +170,8 @@ signals:
     void updateInProgressDronesChanged();
     void updateSuccessfulDronesChanged();
     void updateFailedDronesChanged();
-    void newDroneIdChanged();
-    void newSysIdChanged();
+    //void newDroneIdChanged();
+    //void newSysIdChanged();
     void displayMonarkUpdateMessage(int monarkId);
     void displayRestartMessage();
     void displayGcsUpdateMessage();
@@ -239,8 +239,8 @@ private:
     QAtomicInteger<int> m_monarkState;
     std::mutex m_monarkStateMut;
     std::condition_variable m_monarkStateCondition;
-    int m_newDroneId;
-    int m_newSysId;
+    //int m_newDroneId;
+    //int m_newSysId;
     std::vector<QSerialPort*> m_openPorts;
     //QSerialPort* mp_echoLinkPort;
     QString m_newGcsVersion;

@@ -1128,7 +1128,7 @@ private:
     void _handleMavlinkLoggingDataAcked (mavlink_message_t& message);
     void _ackMavlinkLogData             (uint16_t sequence);
     void _commonInit                    ();
-    void _setSysId();
+    //void _setSysId();
     void _initRC                        ();
     void _setupAutoDisarmSignalling     ();
     void _setCapabilities               (uint64_t capabilityBits);
@@ -1149,8 +1149,8 @@ private:
 
 
     int     _id;                    ///< Mavlink system id
-    bool    _needToSetSysId = true;
-    std::mutex _sysIdMut;
+    //bool    _needToSetSysId = true;
+    //std::mutex _sysIdMut;
     int     _defaultComponentId;
     bool    _offlineEditingVehicle = false; ///< true: This Vehicle is a "disconnected" vehicle for ui use while offline editing
 

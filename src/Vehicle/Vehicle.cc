@@ -431,6 +431,7 @@ void Vehicle::stopTrackingFirmwareVehicleTypeChanges(void)
     disconnect(_settingsManager->appSettings()->offlineEditingVehicleClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
 }
 
+/*
 void Vehicle::_setSysId()
 {
     if(_sysIdMut.try_lock())
@@ -494,6 +495,7 @@ void Vehicle::_setSysId()
     }
 
 }
+*/
 
 void Vehicle::_commonInit()
 {
@@ -787,7 +789,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         }
     }
     //once we know the message is for us, send a message back to the drone to tell us our address has changed
-    _setSysId();
+    //_setSysId();
 
 
 
@@ -1277,7 +1279,7 @@ void Vehicle::_handleAttitude(mavlink_message_t& message)
     }
 
     //once we know the message is for us, send a message back to the drone to tell us our address has changed
-    _setSysId();
+    //_setSysId();
 
 
     if (_receivingAttitudeQuaternion) {
@@ -1299,7 +1301,7 @@ void Vehicle::_handleAttitudeQuaternion(mavlink_message_t& message)
     }
 
     //once we know the message is for us, send a message back to the drone to tell us our address has changed
-    _setSysId();
+    //_setSysId();
 
     _receivingAttitudeQuaternion = true;
 
@@ -2697,10 +2699,10 @@ void Vehicle::_parametersReady(bool parametersReady)
         _setupAutoDisarmSignalling();
         _initialConnectStateMachine->advance();
         qgcApp()->toolbox()->monarkManager()->refreshDroneList();
-        _sysIdMut.lock();
-        bool doCheckUpdate=!_needToSetSysId;
-        _sysIdMut.unlock();
-        if(doCheckUpdate)
+        //_sysIdMut.lock();
+        //bool doCheckUpdate=!_needToSetSysId;
+        //_sysIdMut.unlock();
+        //if(doCheckUpdate)
         {
             qgcApp()->toolbox()->monarkManager()->tryDroneUpdate(_id);
         }
@@ -4810,7 +4812,7 @@ void Vehicle::closeVehicle(void)
 {
     qgcApp()->toolbox()->monarkManager()->removeDrone(_id);
     _vehicleLinkManager->closeVehicle();
-    _needToSetSysId=true;
+    //_needToSetSysId=true;
 }
 
 

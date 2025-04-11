@@ -454,7 +454,7 @@ SetupPage {
                         Layout.fillWidth: true
                     }
                     QGCLabel {
-                        text: qsTr("4. Once the beeping stops, wait patiently for a message to pop up. Read it carefully for the next set of instructions.")
+                        text: qsTr("4. Once the beeping stops, wait patiently for a message to pop up.")
                         font.pointSize: ScreenTools.defaultFontPointSize
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
