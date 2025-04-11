@@ -78,6 +78,12 @@ public:
     /// Converts from user specified vertical distance unit to meters
     static QVariant appSettingsVerticalDistanceUnitsToMeters(const QVariant& distance);
 
+    /// Converts from centimeters to the user specified vertical distance unit
+    static QVariant centimetersToAppSettingsVerticalDistanceUnits(const QVariant& centimeters);
+
+    /// Converts from user specified vertical distance unit to centimeters
+    static QVariant appSettingsVerticalDistanceUnitsToCentimeters(const QVariant& distance);
+
     /// Returns the string for vertical distance units which has configued by user
     static QString appSettingsVerticalDistanceUnitsString(void);
 
@@ -258,7 +264,11 @@ private:
     static QVariant _userGimbalDegreesToMavlinkGimbalDegrees(const QVariant& userGimbalDegrees);
     static QVariant _mavlinkGimbalDegreesToUserGimbalDegrees(const QVariant& mavlinkGimbalDegrees);
     static QVariant _metersToFeet(const QVariant& meters);
+    static QVariant _centimetersToFeet(const QVariant& centimeters);
+    static QVariant _centimetersToMeters(const QVariant& centimeters);
+    static QVariant _metersToCentimeters(const QVariant& meters);
     static QVariant _feetToMeters(const QVariant& feet);
+    static QVariant _feetToCentimeters(const QVariant& feet);
     static QVariant _squareMetersToSquareKilometers(const QVariant& squareMeters);
     static QVariant _squareKilometersToSquareMeters(const QVariant& squareKilometers);
     static QVariant _squareMetersToHectares(const QVariant& squareMeters);
@@ -345,6 +355,8 @@ private:
         static const qreal knotsToKPH;
         static const qreal milesToMeters;
         static const qreal feetToMeters;
+        static const qreal feetToCentimeters;
+        static const qreal centimetersToMeters;
         static const qreal inchesToCentimeters;
         static const qreal ouncesToGrams;
         static const qreal poundsToGrams;

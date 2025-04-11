@@ -41,6 +41,12 @@ public:
     /// Converts from user specified distance unit to meters
     Q_INVOKABLE QVariant appSettingsVerticalDistanceUnitsToMeters(const QVariant& distance) const { return FactMetaData::appSettingsVerticalDistanceUnitsToMeters(distance); }
 
+    /// Converts from centimeters to the user specified distance unit
+    Q_INVOKABLE QVariant centimetersToAppSettingsVerticalDistanceUnits(const QVariant& centimeters) const { return FactMetaData::centimetersToAppSettingsVerticalDistanceUnits(centimeters); }
+
+    /// Converts from user specified distance unit to centimeters
+    Q_INVOKABLE QVariant appSettingsVerticalDistanceUnitsToCentimeters(const QVariant& distance) const { return FactMetaData::appSettingsVerticalDistanceUnitsToCentimeters(distance); }
+
     QString appSettingsVerticalDistanceUnitsString(void) const { return FactMetaData::appSettingsVerticalDistanceUnitsString(); }
 
     /// Converts from grams to the user specified weight unit

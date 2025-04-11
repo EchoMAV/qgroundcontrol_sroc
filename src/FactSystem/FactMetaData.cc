@@ -30,6 +30,8 @@ const qreal FactMetaData::UnitConsts_s::knotsToKPH = 1.852; // exact, hence weir
 // Length
 const qreal FactMetaData::UnitConsts_s::milesToMeters       = 1609.344;
 const qreal FactMetaData::UnitConsts_s::feetToMeters        = 0.3048;
+const qreal FactMetaData::UnitConsts_s::feetToCentimeters   = 30.48;
+const qreal FactMetaData::UnitConsts_s::centimetersToMeters = 0.01;
 const qreal FactMetaData::UnitConsts_s::inchesToCentimeters = 2.54;
 
 //Weight
@@ -69,6 +71,7 @@ const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTransla
     { "meters", "meters",   FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsMeters, FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     //NOTE: we've coined an artificial "raw unit" of "vertical metre" to separate it from the horizontal metre - a bit awkward but this is all the design permits
     { "vertical m",  "m",   FactMetaData::UnitVerticalDistance,      UnitsSettings::VerticalDistanceUnitsMeters,   FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "vertical cm", "m",   FactMetaData::UnitVerticalDistance,      UnitsSettings::VerticalDistanceUnitsMeters,   FactMetaData::_centimetersToMeters,                 FactMetaData::_metersToCentimeters },
     { "cm/px",  "cm/px",    FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsMeters, FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "m/s",    "m/s",      FactMetaData::UnitSpeed,                 UnitsSettings::SpeedUnitsMetersPerSecond,     FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "C",      "C",        FactMetaData::UnitTemperature,           UnitsSettings::TemperatureUnitsCelsius,       FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
@@ -77,6 +80,7 @@ const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTransla
     { "meter",  "ft",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "meters", "ft",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "vertical m",  "ft",  FactMetaData::UnitVerticalDistance,      UnitsSettings::VerticalDistanceUnitsFeet,     FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
+    { "vertical cm", "ft",  FactMetaData::UnitVerticalDistance,      UnitsSettings::VerticalDistanceUnitsFeet,     FactMetaData::_centimetersToFeet,                   FactMetaData::_feetToCentimeters },
     { "cm/px",  "in/px",    FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_centimetersToInches,                 FactMetaData::_inchesToCentimeters },
     { "m^2",    "km^2",     FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareKilometers,     FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKilometersToSquareMeters },
     { "m^2",    "ha",       FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsHectares,             FactMetaData::_squareMetersToHectares,              FactMetaData::_hectaresToSquareMeters },
@@ -783,9 +787,30 @@ QVariant FactMetaData::_metersToFeet(const QVariant& meters)
     return QVariant(meters.toDouble() * 1.0/constants.feetToMeters);
 }
 
+QVariant FactMetaData::_metersToCentimeters(const QVariant& meters)
+{
+    return QVariant(meters.toDouble() * 1.0/constants.centimetersToMeters);
+}
+
+QVariant FactMetaData::_centimetersToFeet(const QVariant& centimeters)
+{
+    return QVariant(centimeters.toDouble() * 1.0/constants.feetToCentimeters);
+}
+
 QVariant FactMetaData::_feetToMeters(const QVariant& feet)
 {
     return QVariant(feet.toDouble() * constants.feetToMeters);
+}
+
+QVariant FactMetaData::_centimetersToMeters(const QVariant& centimeters)
+{
+    return QVariant(centimeters.toDouble() * constants.centimetersToMeters);
+}
+
+
+QVariant FactMetaData::_feetToCentimeters(const QVariant& feet)
+{
+    return QVariant(feet.toDouble() * constants.feetToCentimeters);
 }
 
 QVariant FactMetaData::_squareMetersToSquareKilometers(const QVariant& squareMeters)
@@ -1094,6 +1119,17 @@ QVariant FactMetaData::metersToAppSettingsVerticalDistanceUnits(const QVariant& 
     }
 }
 
+QVariant FactMetaData::centimetersToAppSettingsVerticalDistanceUnits(const QVariant& centimeters)
+{
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsUnitsTranslation("vertical cm", UnitVerticalDistance);
+    if (pAppSettingsTranslation) {
+        return pAppSettingsTranslation->rawTranslator(centimeters);
+    } else {
+        return centimeters;
+    }
+}
+
+
 QVariant FactMetaData::appSettingsHorizontalDistanceUnitsToMeters(const QVariant& distance)
 {
     const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsUnitsTranslation("m", UnitHorizontalDistance);
@@ -1107,6 +1143,16 @@ QVariant FactMetaData::appSettingsHorizontalDistanceUnitsToMeters(const QVariant
 QVariant FactMetaData::appSettingsVerticalDistanceUnitsToMeters(const QVariant& distance)
 {
     const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsUnitsTranslation("vertical m", UnitVerticalDistance);
+    if (pAppSettingsTranslation) {
+        return pAppSettingsTranslation->cookedTranslator(distance);
+    } else {
+        return distance;
+    }
+}
+
+QVariant FactMetaData::appSettingsVerticalDistanceUnitsToCentimeters(const QVariant& distance)
+{
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsUnitsTranslation("vertical cm", UnitVerticalDistance);
     if (pAppSettingsTranslation) {
         return pAppSettingsTranslation->cookedTranslator(distance);
     } else {
