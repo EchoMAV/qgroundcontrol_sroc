@@ -43,7 +43,7 @@ std::unordered_map<QString, std::set<QString>> n_validMicrohardFrequencies =
 std::unordered_map<QString, std::pair<int,int>> n_validMicrohardPowers =
     {
         {"pMDDL2450AES256",{7,30}},
-        {"pMDDL1624AES256",{7,33}},
+        {"pMDDL1624AES256",{7,32}},
         {"pMDDL2280AES256",{10,38}}
 };
 
