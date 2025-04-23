@@ -783,7 +783,7 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
 
 void MonarkManager::_setEchoLinkRadioModel()
 {
-    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_getEchoLinkRadioModel()";
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_setEchoLinkRadioModel()";
     m_groundRadioModel.clear();
     _openSerialConnectionToGcsRadio();
     std::string command="AT+GETRADIOINFO\r\n";
@@ -813,7 +813,7 @@ void MonarkManager::_setEchoLinkRadioModel()
                 {
                     ss<<QString(p_openPort->readAll()).toStdString();
                     auto data = ss.str();
-                    qCDebug(MonarkManagerLog)<<"data='"<<data.c_str()<<"'";
+                    qCDebug(MonarkManagerLog)<<"_setEchoLinkRadioModel data='"<<data.c_str()<<"'";
                     //for(auto c:data)
                     //{
                     //    qCDebug(MonarkManagerLog)<<int(c)<<"="<<c;
@@ -872,7 +872,12 @@ void MonarkManager::_setEchoLinkRadioModel()
             result=QString::fromStdString(str);
         }
     }
-    if(!result.isEmpty())
+    if(result.isEmpty())
+    {
+        m_groundRadioModel="pMDDL1624AES256";
+
+    }
+    else
     {
         m_groundRadioModel=result;
     }
@@ -880,7 +885,7 @@ void MonarkManager::_setEchoLinkRadioModel()
     emit minMaxPowersChanged();
     emit validFrequenciesChanged();
 
-    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_getEchoLinkRadioModel()";
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_setEchoLinkRadioModel() m_groundRadioModel="<<m_groundRadioModel;
 }
 
 void MonarkManager::_echoLinkBatteryVoltageTimerHandler()
@@ -1203,6 +1208,66 @@ void MonarkManager::_openSerialConnectionToGcsRadio()
     }
 }
 
+bool MonarkManager::_checkGoodSerialConnection()
+{
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_checkGoodSerialConnection()";
+    bool result=false;
+    _openSerialConnectionToGcsRadio();
+    std::string command="AT\r\n";
+    std::atomic_bool finished=false;
+
+    std::vector<std::future<bool>> jobs;
+    for(auto p_openPort : m_openPorts)
+    {
+        jobs.push_back(std::async(std::launch::async,[&command, p_openPort,&finished]()-> bool{
+            qCDebug(MonarkManagerLog)<<"checking serial connection from "<<p_openPort->portName();
+            p_openPort->write(command.c_str(),command.size());
+            p_openPort->waitForBytesWritten(10000);
+            std::stringstream ss;
+            auto const start = std::chrono::system_clock::now();
+            for(;;)
+            {
+                if(finished)
+                {
+                    break;
+                }
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                if(finished)
+                {
+                    break;
+                }
+                if(p_openPort->waitForReadyRead(2000))
+                {
+                    ss<<QString(p_openPort->readAll()).toStdString();
+                    auto data = ss.str();
+                    qCDebug(MonarkManagerLog)<<"_checkGoodSerialConnection data="<<data.c_str();
+                    auto beginIndex=data.find("OK");
+                    if(beginIndex!=std::string::npos)
+                    {
+                        return true;
+                    }
+                }
+                if(std::chrono::system_clock::now() - start > std::chrono::seconds(5))
+                {
+                    break;
+                }
+            }
+            return false;
+        }));
+    }
+
+    for(auto&& job: jobs)
+    {
+        auto jobResult = job.get();
+        if(jobResult)
+        {
+            result=jobResult;
+        }
+    }
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_checkGoodSerialConnection() result="<<result;
+    return result;
+}
+
 std::string MonarkManager::_getEncryptionKeyFromGcsRadio()
 {
     std::string result;
@@ -1236,6 +1301,7 @@ std::string MonarkManager::_getEncryptionKeyFromGcsRadio()
                 {
                     ss<<QString(p_openPort->readAll()).toStdString();
                     auto data = ss.str();
+                    qCDebug(MonarkManagerLog)<<"_getEncryptionKeyFromGcsRadio data="<<data.c_str();
                     auto beginIndex=data.find("Password: ");
                     if(beginIndex!=std::string::npos)
                     {
@@ -1266,19 +1332,174 @@ std::string MonarkManager::_getEncryptionKeyFromGcsRadio()
             result=str;
         }
     }
-    if(result.empty())
-    {
-        result="pMDDL1624AES256";
-    }
+
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_getEncryptionKeyFromGcsRadio()";
     return result;
 }
 
+bool MonarkManager::_changeGroundRadioEncryptionKey(std::string const& desiredKey)
+{
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_changeGroundRadioEncryptionKey()";
+
+#if 1
+    auto const oldState=m_groundRadioUpdateState;
+    m_groundRadioUpdateState=(int) UpdateState::UpdateInProgress;
+    switch(oldState)
+    {
+    case (int)UpdateState::BeforeUpdate:
+        emit beforeUpdateDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    case (int)UpdateState::UpdateFailed:
+        emit updateFailedDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    case (int)UpdateState::UpdateSuccessful:
+        emit updateSuccessfulDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    default:
+        break;
+    }
+
+
+    _openSerialConnectionToGcsRadio();
+    std::atomic_bool finished=false;
+    bool result;
+    std::vector<std::future<bool>> jobs;
+    for(auto p_openPort : m_openPorts)
+    {
+        jobs.push_back(std::async(std::launch::async,[&desiredKey,p_openPort,&finished]()-> bool{
+            std::vector<std::string> groundRadioCommands;
+            groundRadioCommands.emplace_back("AT+SETENCRYPTION="+desiredKey+"\r\n");
+            groundRadioCommands.emplace_back("AT+SETNEWPASSWORD="+desiredKey+"\r\n");
+            qCDebug(MonarkManagerLog)<<"Sending password to "<<p_openPort->portName();
+
+            int commandSuccess=0;
+            for(auto const& command: groundRadioCommands)
+            {
+                p_openPort->write(command.c_str(),command.size());
+                p_openPort->waitForBytesWritten(10000);
+                std::stringstream ss;
+                auto const start = std::chrono::system_clock::now();
+                for(;;)
+                {
+                    if(finished)
+                    {
+                        break;
+                    }
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    if(finished)
+                    {
+                        break;
+                    }
+                    if(p_openPort->waitForReadyRead(2000))
+                    {
+                        ss<<QString(p_openPort->readAll()).toStdString();
+                        auto data = ss.str();
+                        qCDebug(MonarkManagerLog)<<"port='"<<p_openPort->portName()<<"' command='"<<command.c_str()<<"' data='"<<data.c_str()<<"'";
+
+                        if(data.find("OK")!=std::string::npos)
+                        {
+                            ++commandSuccess;
+                            break;
+                        }
+                    }
+                    if(std::chrono::system_clock::now() - start > std::chrono::seconds(5))
+                    {
+                        break;
+                    }
+                }
+            }
+            if(commandSuccess>0)
+            {
+                finished=true;
+            }
+            return commandSuccess>=2;
+
+        }));
+    }
+    for(auto&& job: jobs)
+    {
+        auto jobResult = job.get();
+        if(jobResult)
+        {
+            result=true;
+        }
+    }
+    qCDebug(MonarkManagerLog)<<"EXIT: MonarkManager::_changeGroundRadioEncryptionKey() result="<<result;
+
+    return result;
+
+#else
+    //TODO send these commands over a serial connection
+    //TODO AT+SETENCRYPTION=password
+    //TODO AT+SETNEWPASSWORD=password
+    //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_changeGroundRadioEncryptionKey(reversion="<<reversion<<")";
+    auto const oldState=m_groundRadioUpdateState;
+    m_groundRadioUpdateState=(int) UpdateState::UpdateInProgress;
+    switch(oldState)
+    {
+    case (int)UpdateState::BeforeUpdate:
+        emit beforeUpdateDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    case (int)UpdateState::UpdateFailed:
+        emit updateFailedDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    case (int)UpdateState::UpdateSuccessful:
+        emit updateSuccessfulDronesChanged();
+        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+        emit updateInProgressDronesChanged();
+        break;
+    default:
+        break;
+    }
+    auto const oldKey=reversion?desiredKey:currentEncryptionKey;
+    auto const newKey=reversion?currentEncryptionKey:desiredKey;
+
+    std::vector<std::string> groundRadioCommands;
+    groundRadioCommands.emplace_back("AT+MWVENCRYPT=2,"+newKey+"\n");
+    groundRadioCommands.emplace_back("AT+MSPWD="+newKey+","+newKey+"\n");
+    groundRadioCommands.emplace_back("AT&W\n");
+    auto const& response = _sendCommands(np_srmPairedIp,"admin", oldKey.c_str(), &groundRadioCommands, false);
+    if(response.second.empty() || response.second.back().find(np_groundRadioSuccessStr)== std::string::npos)
+    {
+        m_groundRadioUpdateState=reversion?(int) UpdateState::UpdateSuccessful:(int) UpdateState::UpdateFailed;
+    }
+    else
+    {
+        m_groundRadioUpdateState=reversion?(int)UpdateState::UpdateFailed:(int) UpdateState::UpdateSuccessful;
+    }
+    emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+    if(m_groundRadioUpdateState==(int)UpdateState::UpdateFailed)
+    {
+        emit updateFailedDronesChanged();
+    }
+    else
+    {
+        emit updateSuccessfulDronesChanged();
+    }
+    emit updateInProgressDronesChanged();
+    //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_changeGroundRadioEncryptionKey(reversion="<<reversion<<")";
+    return response.first;
+#endif
+}
+
+/*
 void MonarkManager::_sendEncryptionKeyToGcsRadio(char const*const p_password)
 {
+    //TODO get rid of this
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_sendEncryptionKeyToGcsRadio()";
     _openSerialConnectionToGcsRadio();
     std::string command="AT+SETADMIN="+std::string{p_password}+"\r";
+
     for(auto p_openPort: m_openPorts)
     {
         auto const numBytesWritten=p_openPort->write(command.c_str(),command.size());
@@ -1291,6 +1512,7 @@ void MonarkManager::_sendEncryptionKeyToGcsRadio(char const*const p_password)
     }
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_sendEncryptionKeyToGcsRadio()";
 }
+*/
 
 void MonarkManager::_setMonarkState(MonarkState monarkState)
 {
@@ -1434,7 +1656,7 @@ void MonarkManager::startScanning()
                 scanningResult=MonarkState::ScanSuccessAndPaired;
                 if(sendPassword)
                 {
-                    _sendEncryptionKeyToGcsRadio( password.c_str());
+                    _changeGroundRadioEncryptionKey(password);
                 }
                 m_paired=true;
                 _initializeNetworkId();
@@ -1998,6 +2220,9 @@ void MonarkManager::saveFlutterManagementSettings(QString const& frequency)
             settingsChanged=true;
 
         }
+        qCDebug(MonarkManagerLog)<<"password="<<encryptionKey.c_str();
+
+
         using namespace std::string_literals;
         auto txPower=mp_monarkSettings->groundTxPower()->cookedValueString().toStdString();
         mp_monarkSettings->groundFrequency()->setCookedValue(frequency);
@@ -2007,8 +2232,8 @@ void MonarkManager::saveFlutterManagementSettings(QString const& frequency)
         commands.emplace_back("AT+MWTXPOWER="+txPower+"\n");
         commands.emplace_back("AT+MWFREQ="+frequency.toStdString()+"\n");
         commands.emplace_back("AT+MWNETWORKID="+networkId+"\n");
-        commands.emplace_back("AT+MWVENCRYPT=2,"+encryptionKey+"\n");
-        commands.emplace_back("AT+MSPWD="+encryptionKey+","+encryptionKey+"\n");
+        //commands.emplace_back("AT+MWVENCRYPT=2,"+encryptionKey+"\n");
+        //commands.emplace_back("AT+MSPWD="+encryptionKey+","+encryptionKey+"\n");
         commands.emplace_back("AT+MWVMODE=0\n");
         commands.emplace_back("AT+MNLAN=LAN,EDIT,0,"s+np_srmPairedIp+",255.255.0.0,0\n");
         commands.emplace_back("AT+MNLANDHCP=LAN,1,"s+np_srocIp+",1,0\n");
@@ -2025,7 +2250,7 @@ void MonarkManager::saveFlutterManagementSettings(QString const& frequency)
                 mp_monarkSettings->encryptionKey()->setCookedValue(QString::fromStdString(encryptionKey));
                 mp_monarkSettings->onSaveSettings();
             }
-            _sendEncryptionKeyToGcsRadio(encryptionKey.c_str());
+            _changeGroundRadioEncryptionKey(encryptionKey);
         }
         _setMonarkState(saveResult);
         //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::saveFlutterManagementSettings(frequency="<<frequency<<")";
@@ -2219,60 +2444,6 @@ bool MonarkManager::_changeGroundRadioFrequency(std::string const& desiredFreque
     return response.first;
 }
 
-bool MonarkManager::_changeGroundRadioEncryptionKey(std::string const& currentEncryptionKey, std::string const& desiredKey, bool reversion)
-{
-    //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_changeGroundRadioEncryptionKey(reversion="<<reversion<<")";
-    auto const oldState=m_groundRadioUpdateState;
-    m_groundRadioUpdateState=(int) UpdateState::UpdateInProgress;
-    switch(oldState)
-    {
-    case (int)UpdateState::BeforeUpdate:
-        emit beforeUpdateDronesChanged();
-        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
-        emit updateInProgressDronesChanged();
-        break;
-    case (int)UpdateState::UpdateFailed:
-        emit updateFailedDronesChanged();
-        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
-        emit updateInProgressDronesChanged();
-        break;
-    case (int)UpdateState::UpdateSuccessful:
-        emit updateSuccessfulDronesChanged();
-        emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
-        emit updateInProgressDronesChanged();
-        break;
-    default:
-        break;
-    }
-    auto const oldKey=reversion?desiredKey:currentEncryptionKey;
-    auto const newKey=reversion?currentEncryptionKey:desiredKey;
-
-    std::vector<std::string> groundRadioCommands;
-    groundRadioCommands.emplace_back("AT+MWVENCRYPT=2,"+newKey+"\n");
-    groundRadioCommands.emplace_back("AT+MSPWD="+newKey+","+newKey+"\n");
-    groundRadioCommands.emplace_back("AT&W\n");
-    auto const& response = _sendCommands(np_srmPairedIp,"admin", oldKey.c_str(), &groundRadioCommands, false);
-    if(response.second.empty() || response.second.back().find(np_groundRadioSuccessStr)== std::string::npos)
-    {
-        m_groundRadioUpdateState=reversion?(int) UpdateState::UpdateSuccessful:(int) UpdateState::UpdateFailed;
-    }
-    else
-    {
-        m_groundRadioUpdateState=reversion?(int)UpdateState::UpdateFailed:(int) UpdateState::UpdateSuccessful;
-    }
-    emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
-    if(m_groundRadioUpdateState==(int)UpdateState::UpdateFailed)
-    {
-        emit updateFailedDronesChanged();
-    }
-    else
-    {
-        emit updateSuccessfulDronesChanged();
-    }
-    emit updateInProgressDronesChanged();
-    //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_changeGroundRadioEncryptionKey(reversion="<<reversion<<")";
-    return response.first;
-}
 
 bool MonarkManager::_changeGroundRadioTxPower(std::string const& desiredPower)
 {
@@ -2570,6 +2741,7 @@ void MonarkManager::changeFrequencies(QString const& desiredFrequency)
             emit updateSuccessfulDronesChanged();
             emit updateFailedDronesChanged();
         }
+
         if(m_groundRadioUpdateState == (int)UpdateState::UpdateSuccessful)
         {
             qCDebug(MonarkManagerLog)<<"Setting frequency to "<<desiredFrequency.toUInt();
@@ -2590,151 +2762,170 @@ void MonarkManager::changeEncryptionKey()
     {
         //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::changeEncryptionKey()";
         _resetToBeforeUpdate();
-        auto const currentEncryptionKey=            mp_monarkSettings->encryptionKey()->rawValueString().toStdString();
-        auto const desiredStdString=_generateRandomKey();
-        std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> droneResponses=_sendDroneEncryptionKeyChangeCommands(desiredStdString,m_beforeUpdateDrones,m_updateInProgressDrones);
-        emit beforeUpdateDronesChanged();
-        emit updateInProgressDronesChanged();
-        std::set<int> failedDrones;
-        std::set<int> succeededDrones;
-        _waitForDroneResponses(droneResponses,succeededDrones,failedDrones);
-        if(failedDrones.empty())
+        if(_checkGoodSerialConnection())
         {
-            if(_changeGroundRadioEncryptionKey(currentEncryptionKey, desiredStdString, false))
-            {
-                std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> pingDroneResponses = _sendDronePingCommands(succeededDrones,60);
-                _waitForPingResponses(pingDroneResponses,
-                                      [this](int id){
-                                          m_updateSuccessfulDrones.insert(id);
-                                          emit updateSuccessfulDronesChanged();
-                                      },
-                                      [this](int id){
-                                          m_updateFailedDrones.insert(id);
-                                          emit updateFailedDronesChanged();
-                                      }
-                                      );
-                if(m_updateSuccessfulDrones.empty())
-                {
-                    if(m_updateFailedDrones.empty())
-                    {
-                        qCDebug(MonarkManagerLog)<<"EchoLink succeeded";
-                    }
-                    else
-                    {
-                        qCDebug(MonarkManagerLog)<<"All drones failed. Reverting EchoLink";
-                        if(_changeGroundRadioEncryptionKey(currentEncryptionKey, desiredStdString, true))
-                        {
-                            qCDebug(MonarkManagerLog)<<"EchoLink reversion successful";
-                        }
-                        else
-                        {
-                            qCDebug(MonarkManagerLog)<<"EchoLink reversion failed";
-                        }
-                    }
-                }
-                else
-                {
-                    if(m_updateFailedDrones.empty())
-                    {
-                        qCDebug(MonarkManagerLog)<<"All drones and EchoLink succeeded";
-                    }
-                    else
-                    {
-                        qCDebug(MonarkManagerLog)<<"Some drones failed. Re-pairing will be required";
-                    }
-                }
-            }
-            else
-            {
-                qCDebug(MonarkManagerLog)<<"Commands successfully sent to drones, but EchoLink failed to change key";
-                //we can't change the EchoLink's frequency
-                //therefore, we can't ping the drones to determine success
-                //Assume success in those drones, but set the EchoLink to failure
-                m_updateSuccessfulDrones=succeededDrones;
-                emit updateSuccessfulDronesChanged();
-            }
-        }
-        else if(!succeededDrones.empty())
-        {
-            qCDebug(MonarkManagerLog)<<"Some drones succeeded, some failed. Setting EchoLink encryption key";
-            m_updateFailedDrones.insert(std::begin(failedDrones), std::end(failedDrones));
-            emit updateFailedDronesChanged();
-            if(_changeGroundRadioEncryptionKey(currentEncryptionKey, desiredStdString, false))
-            {
-                qCDebug(MonarkManagerLog)<<"EchoLink changed. Pinging drones";
+            auto const currentEncryptionKey=            mp_monarkSettings->encryptionKey()->rawValueString().toStdString();
+            auto const desiredStdString=_generateRandomKey();
+            qCDebug(MonarkManagerLog)<<"current password="<<currentEncryptionKey.c_str();
+            qCDebug(MonarkManagerLog)<<"new password="<<desiredStdString.c_str();
 
-                std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> pingDroneResponses = _sendDronePingCommands(succeededDrones, 60);
-                _waitForPingResponses(pingDroneResponses,
-                                      [this](int id){
-                                          m_updateSuccessfulDrones.insert(id);
-                                          emit updateSuccessfulDronesChanged();
-                                      },
-                                      [this](int id){
-                                          m_updateFailedDrones.insert(id);
-                                          emit updateFailedDronesChanged();
-                                      }
-                                      );
-                if(m_updateSuccessfulDrones.empty())
+            std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> droneResponses=_sendDroneEncryptionKeyChangeCommands(desiredStdString,m_beforeUpdateDrones,m_updateInProgressDrones);
+            emit beforeUpdateDronesChanged();
+            emit updateInProgressDronesChanged();
+            std::set<int> failedDrones;
+            std::set<int> succeededDrones;
+            _waitForDroneResponses(droneResponses,succeededDrones,failedDrones);
+            if(failedDrones.empty())
+            {
+                if(_changeGroundRadioEncryptionKey(desiredStdString))
                 {
-                    if(m_updateFailedDrones.empty())
+                    std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> pingDroneResponses = _sendDronePingCommands(succeededDrones,60);
+                    _waitForPingResponses(pingDroneResponses,
+                                          [this](int id){
+                                              m_updateSuccessfulDrones.insert(id);
+                                              emit updateSuccessfulDronesChanged();
+                                          },
+                                          [this](int id){
+                                              m_updateFailedDrones.insert(id);
+                                              emit updateFailedDronesChanged();
+                                          }
+                                          );
+                    if(m_updateSuccessfulDrones.empty())
                     {
-                        qCDebug(MonarkManagerLog)<<"EchoLink succeeded";
-                    }
-                    else
-                    {
-                        qCDebug(MonarkManagerLog)<<"All drones failed. Reverting EchoLink";
-                        if(_changeGroundRadioEncryptionKey(currentEncryptionKey, desiredStdString, true))
+                        if(m_updateFailedDrones.empty())
                         {
-                            qCDebug(MonarkManagerLog)<<"EchoLink reversion successful";
+                            qCDebug(MonarkManagerLog)<<"EchoLink succeeded";
                         }
                         else
                         {
-                            qCDebug(MonarkManagerLog)<<"EchoLink reversion failed";
+                            qCDebug(MonarkManagerLog)<<"All drones failed. Reverting EchoLink";
+                            if(_changeGroundRadioEncryptionKey(currentEncryptionKey))
+                            {
+                                qCDebug(MonarkManagerLog)<<"EchoLink reversion successful";
+                            }
+                            else
+                            {
+                                qCDebug(MonarkManagerLog)<<"EchoLink reversion failed";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if(m_updateFailedDrones.empty())
+                        {
+                            qCDebug(MonarkManagerLog)<<"All drones and EchoLink succeeded";
+                        }
+                        else
+                        {
+                            qCDebug(MonarkManagerLog)<<"Some drones failed. Re-pairing will be required";
                         }
                     }
                 }
                 else
                 {
-                    if(m_updateFailedDrones.empty())
+                    qCDebug(MonarkManagerLog)<<"Commands successfully sent to drones, but EchoLink failed to change key";
+                    //we can't change the EchoLink's frequency
+                    //therefore, we can't ping the drones to determine success
+                    //Assume success in those drones, but set the EchoLink to failure
+                    m_updateSuccessfulDrones=succeededDrones;
+                    emit updateSuccessfulDronesChanged();
+                }
+            }
+            else if(!succeededDrones.empty())
+            {
+                qCDebug(MonarkManagerLog)<<"Some drones succeeded, some failed. Setting EchoLink encryption key";
+                m_updateFailedDrones.insert(std::begin(failedDrones), std::end(failedDrones));
+                emit updateFailedDronesChanged();
+                if(_changeGroundRadioEncryptionKey(desiredStdString))
+                {
+                    qCDebug(MonarkManagerLog)<<"EchoLink changed. Pinging drones";
+
+                    std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>> pingDroneResponses = _sendDronePingCommands(succeededDrones, 60);
+                    _waitForPingResponses(pingDroneResponses,
+                                          [this](int id){
+                                              m_updateSuccessfulDrones.insert(id);
+                                              emit updateSuccessfulDronesChanged();
+                                          },
+                                          [this](int id){
+                                              m_updateFailedDrones.insert(id);
+                                              emit updateFailedDronesChanged();
+                                          }
+                                          );
+                    if(m_updateSuccessfulDrones.empty())
                     {
-                        qCDebug(MonarkManagerLog)<<"All drones and EchoLink succeeded";
+                        if(m_updateFailedDrones.empty())
+                        {
+                            qCDebug(MonarkManagerLog)<<"EchoLink succeeded";
+                        }
+                        else
+                        {
+                            qCDebug(MonarkManagerLog)<<"All drones failed. Reverting EchoLink";
+                            if(_changeGroundRadioEncryptionKey(currentEncryptionKey))
+                            {
+                                qCDebug(MonarkManagerLog)<<"EchoLink reversion successful";
+                            }
+                            else
+                            {
+                                qCDebug(MonarkManagerLog)<<"EchoLink reversion failed";
+                            }
+                        }
                     }
                     else
                     {
-                        qCDebug(MonarkManagerLog)<<"Some drones failed. Re-pairing will be required";
+                        if(m_updateFailedDrones.empty())
+                        {
+                            qCDebug(MonarkManagerLog)<<"All drones and EchoLink succeeded";
+                        }
+                        else
+                        {
+                            qCDebug(MonarkManagerLog)<<"Some drones failed. Re-pairing will be required";
+                        }
                     }
                 }
+                else
+                {
+                    qCDebug(MonarkManagerLog)<<"Could not change EchoLink encryption key";
+                    //we can't change the EchoLink's frequency
+                    //therefore, we can't ping the drones to determine success
+                    //Assume success in those drones, but set all other drones and the EchoLink to failure
+                    m_updateSuccessfulDrones=succeededDrones;
+                    emit updateSuccessfulDronesChanged();
+                }
+                m_updateInProgressDrones.clear();
+                emit updateInProgressDronesChanged();
             }
             else
             {
-                qCDebug(MonarkManagerLog)<<"Could not change EchoLink encryption key";
-                //we can't change the EchoLink's frequency
-                //therefore, we can't ping the drones to determine success
-                //Assume success in those drones, but set all other drones and the EchoLink to failure
-                m_updateSuccessfulDrones=succeededDrones;
+                qCDebug(MonarkManagerLog)<<"All drones failed";
+                //all drones failed to receive the command, so don't bother changing the EchoLink
+                m_groundRadioUpdateState=(int) UpdateState::UpdateFailed;
+                emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
+                m_updateFailedDrones=m_updateInProgressDrones;
+                m_updateInProgressDrones.clear();
+                emit beforeUpdateDronesChanged();
+                emit updateInProgressDronesChanged();
                 emit updateSuccessfulDronesChanged();
+                emit updateFailedDronesChanged();
             }
-            m_updateInProgressDrones.clear();
-            emit updateInProgressDronesChanged();
+            if(m_groundRadioUpdateState == (int)UpdateState::UpdateSuccessful)
+            {
+                mp_monarkSettings->encryptionKey()->setRawValue(QString::fromStdString(desiredStdString));
+                mp_monarkSettings->onSaveSettings();
+               // _sendEncryptionKeyToGcsRadio(desiredStdString.c_str());
+            }
         }
         else
         {
-            qCDebug(MonarkManagerLog)<<"All drones failed";
-            //all drones failed to receive the command, so don't bother changing the EchoLink
+            qCDebug(MonarkManagerLog)<<"Bad serial connection";
+            //TODO show user
             m_groundRadioUpdateState=(int) UpdateState::UpdateFailed;
             emit groundRadioUpdateStateChanged(m_groundRadioUpdateState);
-            m_updateFailedDrones=m_updateInProgressDrones;
-            m_updateInProgressDrones.clear();
+            m_updateFailedDrones=m_beforeUpdateDrones;
+            m_beforeUpdateDrones.clear();
             emit beforeUpdateDronesChanged();
             emit updateInProgressDronesChanged();
             emit updateSuccessfulDronesChanged();
             emit updateFailedDronesChanged();
-        }
-        if(m_groundRadioUpdateState == (int)UpdateState::UpdateSuccessful)
-        {
-            mp_monarkSettings->encryptionKey()->setRawValue(QString::fromStdString(desiredStdString));
-            mp_monarkSettings->onSaveSettings();
-            _sendEncryptionKeyToGcsRadio(desiredStdString.c_str());
         }
         //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::changeEncryptionKey()";
     }

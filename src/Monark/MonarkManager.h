@@ -191,6 +191,8 @@ signals:
 
 private:
 
+    bool _checkGoodSerialConnection();
+
     void _setEchoLinkRadioModel();
     void _echoLinkBatteryVoltageTimerHandler();
     void _checkForUpdates();
@@ -204,7 +206,7 @@ private:
 
     void _openSerialConnectionToGcsRadio();
 
-    void _sendEncryptionKeyToGcsRadio(char const*const p_password);
+    //void _sendEncryptionKeyToGcsRadio(char const*const p_password);
 
     std::string _getEncryptionKeyFromGcsRadio();
 
@@ -215,7 +217,7 @@ private:
 
     bool _changeGroundRadioFrequency(std::string const& desiredFrequency, bool reversion);
 
-    bool _changeGroundRadioEncryptionKey(std::string const& currentEncryptionKey, std::string const& desiredKey, bool reversion);
+    bool _changeGroundRadioEncryptionKey(std::string const& desiredKey);
 
     bool _changeGroundRadioTxPower(std::string const& desiredPower);
 
