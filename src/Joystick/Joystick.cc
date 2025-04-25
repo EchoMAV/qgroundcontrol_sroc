@@ -295,6 +295,32 @@ void Joystick::_setDefaultCalibration(void) {
         _rgFunctionAxis[gimbalYawFunction]  = 6;
         _deadband           = false;
     }
+    else if(_name == "EchoMAV EchoControl")
+    {
+        _rgCalibration[pitchFunction].reversed = true;
+        _rgCalibration[throttleFunction].reversed = true;
+
+        //TODO remap and find deadbands
+        _rgFunctionAxis[rollFunction]       = 0;
+        _rgFunctionAxis[pitchFunction]      = 1;
+        _rgFunctionAxis[yawFunction]        = 3;
+        _rgFunctionAxis[throttleFunction]   = 4;
+        _rgFunctionAxis[zoomFunction]       = 2;
+        _rgFunctionAxis[gimbalPitchFunction]= 5;
+        //_rgFunctionAxis[gimbalYawFunction]  = 6;
+        _deadband           = false;
+
+        setButtonAction(5, "Land");
+        setButtonAction(2, "Flow Hold");
+        setButtonAction(10, "RTL");
+        setButtonAction(11, _buttonActionEmergencyStop);
+        setButtonAction(6, _buttonActionEmergencyStop);
+        setButtonAction(3, "GPS Loiter");
+        setButtonAction(9, _buttonActionToggleEOIR);
+        setButtonAction(0, _buttonActionToggleVideoRecord);
+        setButtonAction(4, "Altitude Hold");
+        setButtonAction(1, _buttonActionTriggerCamera);
+    }
     else
     {
         _rgCalibration[pitchFunction].reversed = true;

@@ -96,7 +96,7 @@ JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonC
     QtAndroidPrivate::registerKeyEventListener(this);
 
     if(name == "Kutta KTAC GC v2" || name == "Kutta KTAC GC v1" || name == "UXV Technologies SROC" || name == "Scuf Gaming SCUF Envision Controller" || name ==
-        "Scuf Gaming SCUF Envision Pro Controller")
+        "Scuf Gaming SCUF Envision Pro Controller" || name == "EchoMAV EchoControl")
     {
          _setDefaultCalibration();
     }

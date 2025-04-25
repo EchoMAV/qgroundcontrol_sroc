@@ -174,7 +174,7 @@ bool JoystickConfigController::hasRightRockerZoom()
     if(_activeJoystick && _activeJoystick->axisCount() > 4 && _joystickManager)
     {
         QString const& activeJoystickName = _joystickManager->activeJoystickName();
-        return activeJoystickName == "Kutta KTAC GC v1" || "Kutta KTAC GC v2" || activeJoystickName == "UXV Technologies SROC";
+        return activeJoystickName == "Kutta KTAC GC v1" || "Kutta KTAC GC v2" || activeJoystickName == "UXV Technologies SROC" || activeJoystickName == "EchoMAV EchoControl";
     }
     return false;
 }
