@@ -227,7 +227,11 @@ void QSerialPortPrivate::close()
     deviceId = BAD_PORT;
 
     if (!resultL)
+    {
+        qCCritical(AndroidSerialPortLog) << "Closing" << systemLocation.toLatin1().data()<<" failed";
+
         q_ptr->setErrorString(QStringLiteral("Closing device failed"));
+    }
 }
 
 bool QSerialPortPrivate::setParameters(int baudRateA, int dataBitsA, int stopBitsA, int parityA)

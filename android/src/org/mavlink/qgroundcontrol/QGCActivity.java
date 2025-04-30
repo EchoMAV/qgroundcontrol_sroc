@@ -200,25 +200,6 @@ public class QGCActivity extends QtActivity
         m_ioManager =               new HashMap<Integer, UsbIoManager>();
     }
 
-    public static void restartApp()
-    {
-        qgcLogDebug("ENTER QGCActivity::restartApp()");
-        //TODO broken
-        Intent intent = new Intent(_instance,QGCActivity.class);
-        qgcLogDebug("QGCActivity::restartApp() Intent intent = new Intent(_instance,QGCActivity.class);");
-        int mPendingIntentId = 2;
-        qgcLogDebug("QGCActivity::restartApp() int mPendingIntentId = 2;");
-        PendingIntent mPendingIntent = PendingIntent.getActivity(_instance, mPendingIntentId, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-        qgcLogDebug("QGCActivity::restartApp() PendingIntent mPendingIntent = PendingIntent.getActivity(_instance, mPendingIntentId, intent, PendingIntent.FLAG_CANCEL_CURRENT);");
-        AlarmManager alarmManager = (AlarmManager)_instance.getSystemService(Context.ALARM_SERVICE);
-        qgcLogDebug("QGCActivity::restartApp() AlarmManager alarmManager = (AlarmManager)_instance.getSystemService(Context.ALARM_SERVICE);");
-        alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
-        qgcLogDebug("QGCActivity::restartApp() alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);");
-        System.exit(0);
-        qgcLogDebug("QGCActivity::restartApp() System.exit(0);");
-    }
-
-
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
@@ -319,6 +300,8 @@ public class QGCActivity extends QtActivity
     /// Incrementally updates the list of drivers connected to the device
     private static void updateCurrentDrivers()
     {
+        qgcLogDebug("ENTER QGCActivity.updateCurrentDrivers()");
+
         final List<UsbSerialDriver> currentDrivers = new ArrayList<UsbSerialDriver>();
         // For each UsbDevice, call probe() for each prober.
         for (final UsbDevice usbDevice : _usbManager.getDeviceList().values()) {
@@ -376,57 +359,66 @@ public class QGCActivity extends QtActivity
             }
         }
 
+        qgcLogDebug("EXIT  QGCActivity.updateCurrentDrivers()");
+
+
     }
 
     /// Returns array of device info for each unopened device.
     /// @return Device info format DeviceName:Company:ProductId:VendorId
     public static String[] availableDevicesInfo()
     {
+        qgcLogDebug("ENTER QGCActivity::availableDevicesInfo()");
+
         updateCurrentDrivers();
 
-        if (_drivers.size() <= 0) {
-            return null;
-        }
+        String[] result=null;
 
-        List<String> deviceInfoList = new ArrayList<String>();
+        if (_drivers.size() > 0) {
 
-        for (int i=0; i<_drivers.size(); i++) {
-            String          deviceInfo;
-            UsbSerialDriver driver = _drivers.get(i);
-            if (driver.permissionStatus() != UsbSerialDriver.permissionStatusSuccess) {
-                continue;
+
+            List<String> deviceInfoList = new ArrayList<String>();
+
+            for (int i=0; i<_drivers.size(); i++) {
+                String          deviceInfo;
+                UsbSerialDriver driver = _drivers.get(i);
+                if (driver.permissionStatus() != UsbSerialDriver.permissionStatusSuccess) {
+                    continue;
+                }
+
+                UsbDevice device = driver.getDevice();
+
+                deviceInfo = device.getDeviceName() + ":";
+
+                if (driver instanceof FtdiSerialDriver) {
+                    deviceInfo = deviceInfo + "FTDI:";
+                } else if (driver instanceof CdcAcmSerialDriver) {
+                    deviceInfo = deviceInfo + "Cdc Acm:";
+                } else if (driver instanceof Cp2102SerialDriver) {
+                    deviceInfo = deviceInfo + "Cp2102:";
+                } else if (driver instanceof ProlificSerialDriver) {
+                    deviceInfo = deviceInfo + "Prolific:";
+                } else {
+                    deviceInfo = deviceInfo + "Unknown:";
+                }
+
+
+                deviceInfo = deviceInfo + Integer.toString(device.getProductId()) + ":";
+                deviceInfo = deviceInfo + Integer.toString(device.getVendorId()) + ":";
+                qgcLogDebug("QGCActivity::availableDevicesInfo() deviceInfo="+deviceInfo);
+
+                deviceInfoList.add(deviceInfo);
             }
 
-            UsbDevice device = driver.getDevice();
-
-            deviceInfo = device.getDeviceName() + ":";
-
-            if (driver instanceof FtdiSerialDriver) {
-                deviceInfo = deviceInfo + "FTDI:";
-            } else if (driver instanceof CdcAcmSerialDriver) {
-                deviceInfo = deviceInfo + "Cdc Acm:";
-            } else if (driver instanceof Cp2102SerialDriver) {
-                deviceInfo = deviceInfo + "Cp2102:";
-            } else if (driver instanceof ProlificSerialDriver) {
-                deviceInfo = deviceInfo + "Prolific:";
-            } else {
-                deviceInfo = deviceInfo + "Unknown:";
+            result = new String[deviceInfoList.size()];
+            for (int i=0; i<deviceInfoList.size(); i++) {
+                result[i] = deviceInfoList.get(i);
             }
 
-
-            deviceInfo = deviceInfo + Integer.toString(device.getProductId()) + ":";
-            deviceInfo = deviceInfo + Integer.toString(device.getVendorId()) + ":";
-            //qgcLogDebug("deviceInfo="+deviceInfo);
-
-            deviceInfoList.add(deviceInfo);
         }
 
-        String[] rgDeviceInfo = new String[deviceInfoList.size()];
-        for (int i=0; i<deviceInfoList.size(); i++) {
-            rgDeviceInfo[i] = deviceInfoList.get(i);
-        }
-
-        return rgDeviceInfo;
+        qgcLogDebug("EXIT  QGCActivity::availableDevicesInfo()");
+        return result;
     }
 
     /// Open the specified device
@@ -498,16 +490,16 @@ public class QGCActivity extends QtActivity
 
     public static void stopIoManager(int idA)
     {
-        //qgcLogDebug("ENTER QGCActivity::stopIoManager(idA="+idA+")");
+        qgcLogDebug("ENTER QGCActivity::stopIoManager(idA="+idA+")");
         if(m_ioManager.get(idA) == null)
         {
-            //qgcLogDebug("QGCActivity::stopIoManager(idA="+idA+") m_ioManager.get(idA) == null");
+            qgcLogDebug("QGCActivity::stopIoManager(idA="+idA+") m_ioManager.get(idA) == null");
             return;
         }
 
         m_ioManager.get(idA).stop();
         m_ioManager.remove(idA);
-        //qgcLogDebug("QGCActivity::stopIoManager(idA="+idA+") m_ioManager.remove(idA)");
+        qgcLogDebug("QGCActivity::stopIoManager(idA="+idA+") m_ioManager.remove(idA)");
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -562,7 +554,7 @@ public class QGCActivity extends QtActivity
 
         if (driverL == null)
         {
-            //qgcLogDebug("QGCActivity::close(idA="+idA+") driverL==null");
+            qgcLogDebug("QGCActivity::close(idA="+idA+") driverL==null");
             return false;
         }
 
@@ -570,11 +562,11 @@ public class QGCActivity extends QtActivity
         {
             stopIoManager(idA);
             _userDataHashByDeviceId.remove(idA);
-            //qgcLogDebug("QGCActivity::close(idA="+idA+") _userDataHashByDeviceId.remove(idA)");
+            qgcLogDebug("QGCActivity::close(idA="+idA+") _userDataHashByDeviceId.remove(idA)");
             driverL.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired);
-            //qgcLogDebug("QGCActivity::close(idA="+idA+") driverL.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired)");
+            qgcLogDebug("QGCActivity::close(idA="+idA+") driverL.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired)");
             driverL.close();
-            //qgcLogDebug("QGCActivity::close(idA="+idA+") returning true");
+            qgcLogDebug("QGCActivity::close(idA="+idA+") returning true");
             return true;
         }
         catch(IOException eA)

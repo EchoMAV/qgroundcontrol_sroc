@@ -306,9 +306,7 @@ SetupPage {
                         MessageDialog {
                             id: confirmVehicleReset
                             title: qsTr("Confirm Reset")
-                            text: qsTr("Are you sure you want to unpair active drone ID ")
-                                  + QGroundControl.multiVehicleManager.activeVehicle.id + qsTr(
-                                      "? Warning, do not unpair drone during flight! Unpairing the drone will allow it to be paired to another radio. Once the unpair command is issued, wait for drone to stop beeping before pulling power.")
+                            text: QGroundControl.multiVehicleManager.activeVehicle ? (qsTr("Are you sure you want to unpair active drone ID ") + QGroundControl.multiVehicleManager.activeVehicle.id + qsTr("? Warning, do not unpair drone during flight! Unpairing the drone will allow it to be paired to another radio. Once the unpair command is issued, wait for drone to stop beeping before pulling power.")) : ""
                             standardButtons: StandardButton.Yes | StandardButton.No
                             onYes: {
                                 QGroundControl.monarkManager.resetActiveVehicle(
@@ -328,9 +326,7 @@ SetupPage {
                         MessageDialog {
                             id: confirmVehicleReboot
                             title: qsTr("Confirm Reboot")
-                            text: qsTr("Are you sure you want to reboot active drone ID ")
-                                  + QGroundControl.multiVehicleManager.activeVehicle.id + qsTr(
-                                      "?")
+                            text: QGroundControl.multiVehicleManager.activeVehicle ? (qsTr("Are you sure you want to reboot active drone ID ") + QGroundControl.multiVehicleManager.activeVehicle.id + qsTr("?")) : ""
                             standardButtons: StandardButton.Yes | StandardButton.No
                             onYes: {
                                 QGroundControl.monarkManager.rebootActiveVehicle()

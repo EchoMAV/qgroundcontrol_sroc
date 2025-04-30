@@ -54,6 +54,8 @@ static int gErrorCount = 0;
 
 QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok)
 {
+    //__android_log_print(ANDROID_LOG_DEBUG, V_TAG, "ENTER availablePortsByFiltersOfDevices");
+
     QList<QSerialPortInfo> serialPortInfoList;
 
     //__android_log_print(ANDROID_LOG_INFO, V_TAG, "Collecting device list");
@@ -63,41 +65,45 @@ QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok)
         "()[Ljava/lang/String;");
     
     if (!resultL.isValid()) {
+        //__android_log_print(ANDROID_LOG_DEBUG, V_TAG, "availablePortsByFiltersOfDevices resultL is not valid");
+
         //-- If 5 consecutive errors, ignore it.
         if(gErrorCount < 5) {
             gErrorCount++;
             __android_log_print(ANDROID_LOG_ERROR, V_TAG, "Error from availableDevicesInfo");
         }
         ok = false;
-        return serialPortInfoList;
     } else {
         gErrorCount = 0;
+        QAndroidJniEnvironment envL;
+        jobjectArray objArrayL = resultL.object<jobjectArray>();
+        int countL = envL->GetArrayLength(objArrayL);
+        //__android_log_print(ANDROID_LOG_DEBUG, V_TAG, "availablePortsByFiltersOfDevices resultL is valid. count=%d",countL);
+
+        for (int iL = 0; iL < countL; iL++)
+        {
+            QSerialPortInfoPrivate priv;
+            jstring stringL = (jstring)(envL->GetObjectArrayElement(objArrayL, iL));
+            const char *rawStringL = envL->GetStringUTFChars(stringL, 0);
+            //__android_log_print(ANDROID_LOG_DEBUG, V_TAG, "Adding device: %s", rawStringL);
+            QStringList strListL = QString::fromUtf8(rawStringL).split(QStringLiteral(":"));
+            envL->ReleaseStringUTFChars(stringL, rawStringL);
+            envL->DeleteLocalRef(stringL);
+
+            priv.portName               = strListL[0];
+            priv.device                 = strListL[0];
+            priv.manufacturer           = strListL[1];
+            priv.productIdentifier      = strListL[2].toInt();
+            priv.hasProductIdentifier   = (priv.productIdentifier != 0) ? true: false;
+            priv.vendorIdentifier       = strListL[3].toInt();
+            priv.hasVendorIdentifier    = (priv.vendorIdentifier  != 0) ? true: false;
+
+            serialPortInfoList.append(priv);
+        }
+
     }
 
-    QAndroidJniEnvironment envL;
-    jobjectArray objArrayL = resultL.object<jobjectArray>();
-    int countL = envL->GetArrayLength(objArrayL);
-
-    for (int iL = 0; iL < countL; iL++)
-    {
-        QSerialPortInfoPrivate priv;
-        jstring stringL = (jstring)(envL->GetObjectArrayElement(objArrayL, iL));
-        const char *rawStringL = envL->GetStringUTFChars(stringL, 0);
-        //__android_log_print(ANDROID_LOG_INFO, V_TAG, "Adding device: %s", rawStringL);
-        QStringList strListL = QString::fromUtf8(rawStringL).split(QStringLiteral(":"));
-        envL->ReleaseStringUTFChars(stringL, rawStringL);
-        envL->DeleteLocalRef(stringL);
-
-        priv.portName               = strListL[0];
-        priv.device                 = strListL[0];
-        priv.manufacturer           = strListL[1];
-        priv.productIdentifier      = strListL[2].toInt();
-        priv.hasProductIdentifier   = (priv.productIdentifier != 0) ? true: false;
-        priv.vendorIdentifier       = strListL[3].toInt();
-        priv.hasVendorIdentifier    = (priv.vendorIdentifier  != 0) ? true: false;
-
-        serialPortInfoList.append(priv);
-    }
+    //__android_log_print(ANDROID_LOG_DEBUG, V_TAG, "EXIT  availablePortsByFiltersOfDevices");
 
     return serialPortInfoList;
 }

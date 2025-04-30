@@ -10,7 +10,9 @@
 #include <mutex>
 #include <set>
 #include <future>
+#include <QGCSerialPortInfo.h>
 #include <unordered_map>
+#include <functional>
 Q_DECLARE_LOGGING_CATEGORY(MonarkManagerLog)
 
 class QSerialPort;
@@ -69,196 +71,151 @@ public:
 
     MonarkManager(QGCApplication* p_app, QGCToolbox* p_toolbox);
     ~MonarkManager();
-
-    Q_PROPERTY(int monarkState READ monarkState NOTIFY monarkStateChanged)
-    Q_PROPERTY(int groundRadioUpdateState READ groundRadioUpdateState NOTIFY groundRadioUpdateStateChanged)
-    Q_PROPERTY(QString allDrones READ allDrones NOTIFY allDronesChanged);
-    Q_PROPERTY(QString beforeUpdateDrones READ beforeUpdateDrones NOTIFY beforeUpdateDronesChanged);
-    Q_PROPERTY(QString updateInProgressDrones READ updateInProgressDrones NOTIFY updateInProgressDronesChanged);
-    Q_PROPERTY(QString updateSuccessfulDrones READ updateSuccessfulDrones NOTIFY updateSuccessfulDronesChanged);
-    Q_PROPERTY(QString updateFailedDrones READ updateFailedDrones NOTIFY updateFailedDronesChanged);
-    //Q_PROPERTY(int newDroneId READ newDroneId NOTIFY newDroneIdChanged);
-    //Q_PROPERTY(int newSysId READ newSysId NOTIFY newSysIdChanged);
-    Q_PROPERTY(QStringList          validFrequencies READ    validFrequencies NOTIFY validFrequenciesChanged);
-    Q_PROPERTY(int minimumPower READ minimumPower NOTIFY minMaxPowersChanged);
-    Q_PROPERTY(int maximumPower READ maximumPower NOTIFY minMaxPowersChanged);
-    Q_PROPERTY(QString newGcsVersion     READ newGcsVersion     NOTIFY newGcsVersionChanged);
-    Q_PROPERTY(QString newGcsDescription READ newGcsDescription NOTIFY newGcsDescriptionChanged);
-    Q_PROPERTY(QString newGcsURL         READ newGcsURL         NOTIFY newGcsURLChanged);
-    Q_PROPERTY(QString newGcsReleaseDate READ newGcsReleaseDate NOTIFY newGcsReleaseDateChanged);
-    Q_PROPERTY(QString newDroneVersion     READ newDroneVersion     NOTIFY newDroneVersionChanged);
-    Q_PROPERTY(QString newDroneDescription READ newDroneDescription NOTIFY newDroneDescriptionChanged);
-    Q_PROPERTY(QString newDroneURL         READ newDroneURL         NOTIFY newDroneURLChanged);
-    Q_PROPERTY(QString newDroneReleaseDate READ newDroneReleaseDate NOTIFY newDroneReleaseDateChanged);
-    Q_PROPERTY(float   echoLinkBatteryVoltage READ echoLinkBatteryVoltage NOTIFY echoLinkBatteryVoltageChanged);
-    Q_PROPERTY(int monarkUpdatePushPercent READ monarkUpdatePushPercent NOTIFY monarkUpdatePushPercentChanged);
-    Q_PROPERTY(QString monarkUpdatePushError READ monarkUpdatePushError NOTIFY monarkUpdatePushErrorChanged);
-
-
-    int monarkState() const { return m_monarkState;}
-    int groundRadioUpdateState() const { return m_groundRadioUpdateState;}
-
-    QString allDrones() const;
-    QString beforeUpdateDrones() const;
-    QString updateInProgressDrones() const;
-    QString updateSuccessfulDrones() const;
-    QString updateFailedDrones() const;
-    QStringList                     validFrequencies       () const;
-    int minimumPower() const;
-    int maximumPower() const;
-
-
-    //int newDroneId() const{return m_newDroneId;}
-    //int newSysId() const{return m_newSysId;}
-    QString newGcsVersion()     const{return m_newGcsVersion;}
-    QString newGcsDescription() const{return m_newGcsDescription;}
-    QString newGcsURL()         const{return m_newGcsURL;}
-    QString newGcsReleaseDate() const{return m_newGcsReleaseDate;}
-    QString newDroneVersion()     const{return m_newDroneVersion;}
-    QString newDroneDescription() const{return m_newDroneDescription;}
-    QString newDroneURL()         const{return m_newDroneURL;}
-    QString newDroneReleaseDate() const{return m_newDroneReleaseDate;}
-    float echoLinkBatteryVoltage() const {return m_echoLinkBatteryVoltage;}
-    int monarkUpdatePushPercent() const{return m_monarkUpdatePushPercent;}
-    QString monarkUpdatePushError() const{return m_monarkUpdatePushError;}
-
-
     virtual void setToolbox(QGCToolbox* p_toolbox) override;
 
-    Q_INVOKABLE void startScanning();
-    Q_INVOKABLE void refreshDroneList();
-    Q_INVOKABLE void removeDrone(int monarkID);
+    Q_PROPERTY(int         monarkState             READ monarkState             NOTIFY monarkStateChanged)
+    Q_PROPERTY(int         groundRadioUpdateState  READ groundRadioUpdateState  NOTIFY groundRadioUpdateStateChanged)
+    Q_PROPERTY(QString     allDrones               READ allDrones               NOTIFY allDronesChanged);
+    Q_PROPERTY(QString     beforeUpdateDrones      READ beforeUpdateDrones      NOTIFY beforeUpdateDronesChanged);
+    Q_PROPERTY(QString     updateInProgressDrones  READ updateInProgressDrones  NOTIFY updateInProgressDronesChanged);
+    Q_PROPERTY(QString     updateSuccessfulDrones  READ updateSuccessfulDrones  NOTIFY updateSuccessfulDronesChanged);
+    Q_PROPERTY(QString     updateFailedDrones      READ updateFailedDrones      NOTIFY updateFailedDronesChanged);
+    Q_PROPERTY(QStringList validFrequencies        READ    validFrequencies     NOTIFY validFrequenciesChanged);
+    Q_PROPERTY(int         minimumPower            READ minimumPower            NOTIFY minMaxPowersChanged);
+    Q_PROPERTY(int         maximumPower            READ maximumPower            NOTIFY minMaxPowersChanged);
+    Q_PROPERTY(QString     newGcsVersion           READ newGcsVersion           NOTIFY newGcsVersionChanged);
+    Q_PROPERTY(QString     newGcsDescription       READ newGcsDescription       NOTIFY newGcsDescriptionChanged);
+    Q_PROPERTY(QString     newGcsURL               READ newGcsURL               NOTIFY newGcsURLChanged);
+    Q_PROPERTY(QString     newGcsReleaseDate       READ newGcsReleaseDate       NOTIFY newGcsReleaseDateChanged);
+    Q_PROPERTY(QString     newDroneVersion         READ newDroneVersion         NOTIFY newDroneVersionChanged);
+    Q_PROPERTY(QString     newDroneDescription     READ newDroneDescription     NOTIFY newDroneDescriptionChanged);
+    Q_PROPERTY(QString     newDroneURL             READ newDroneURL             NOTIFY newDroneURLChanged);
+    Q_PROPERTY(QString     newDroneReleaseDate     READ newDroneReleaseDate     NOTIFY newDroneReleaseDateChanged);
+    Q_PROPERTY(float       echoLinkBatteryVoltage  READ echoLinkBatteryVoltage  NOTIFY echoLinkBatteryVoltageChanged);
+    Q_PROPERTY(int         monarkUpdatePushPercent READ monarkUpdatePushPercent NOTIFY monarkUpdatePushPercentChanged);
+    Q_PROPERTY(QString     monarkUpdatePushError   READ monarkUpdatePushError   NOTIFY monarkUpdatePushErrorChanged);
+
+    int         monarkState            () const { return m_monarkState; }
+    int         groundRadioUpdateState () const { return m_groundRadioUpdateState; }
+    QString     newGcsVersion          () const { return m_newGcsVersion; }
+    QString     newGcsDescription      () const { return m_newGcsDescription; }
+    QString     newGcsURL              () const { return m_newGcsURL; }
+    QString     newGcsReleaseDate      () const { return m_newGcsReleaseDate; }
+    QString     newDroneVersion        () const { return m_newDroneVersion; }
+    QString     newDroneDescription    () const { return m_newDroneDescription; }
+    QString     newDroneURL            () const { return m_newDroneURL; }
+    QString     newDroneReleaseDate    () const { return m_newDroneReleaseDate; }
+    float       echoLinkBatteryVoltage () const { return m_echoLinkBatteryVoltage; }
+    int         monarkUpdatePushPercent() const { return m_monarkUpdatePushPercent; }
+    QString     monarkUpdatePushError  () const { return m_monarkUpdatePushError; }
+    QString     allDrones              () const;
+    QString     beforeUpdateDrones     () const;
+    QString     updateInProgressDrones () const;
+    QString     updateSuccessfulDrones () const;
+    QString     updateFailedDrones     () const;
+    QStringList validFrequencies       () const;
+    int         minimumPower           () const;
+    int         maximumPower           () const;
+
+    Q_INVOKABLE void startScanning                ();
+    Q_INVOKABLE void refreshDroneList             ();
+    Q_INVOKABLE void removeDrone                  (int monarkID);
     Q_INVOKABLE void saveFlutterManagementSettings(QString const& frequency);
-    //Q_INVOKABLE void saveFlutterManagementSettings();
-    Q_INVOKABLE void resetActiveVehicle();
-    Q_INVOKABLE void rebootActiveVehicle();
-
-
-    Q_INVOKABLE void detect();
-
-    //Q_INVOKABLE void restartApplication();
-
-    Q_INVOKABLE void openGcsDownload();
-    Q_INVOKABLE void pushMonarkDownload(int monarkID);
-
-    //Q_INVOKABLE void showRestartMessage();
-
-
-    Q_INVOKABLE void gotoBeforePairNewDrone();
-    Q_INVOKABLE void gotoChangeEncryptionKey();
-    Q_INVOKABLE void gotoChangeFrequencies();
-    Q_INVOKABLE void gotoChangeTxPower();
-    Q_INVOKABLE void gotoResetUnpairMonark();
-    Q_INVOKABLE void gotoScanSuccessAndPaired();
-    Q_INVOKABLE void gotoDetectionFailed();
-
-    Q_INVOKABLE void changeTxPower(QString const& desiredTxPower);
-    Q_INVOKABLE void changeFrequencies(QString const& desiredFrequency);
-    Q_INVOKABLE void changeEncryptionKey();
-
-    Q_INVOKABLE void tryDroneUpdate(int monarkId);
-
-
+    Q_INVOKABLE void resetActiveVehicle           ();
+    Q_INVOKABLE void rebootActiveVehicle          ();
+    Q_INVOKABLE void detect                       ();
+    Q_INVOKABLE void openGcsDownload              ();
+    Q_INVOKABLE void pushMonarkDownload           (int monarkID);
+    Q_INVOKABLE void gotoBeforePairNewDrone       ();
+    Q_INVOKABLE void gotoChangeEncryptionKey      ();
+    Q_INVOKABLE void gotoChangeFrequencies        ();
+    Q_INVOKABLE void gotoChangeTxPower            ();
+    Q_INVOKABLE void gotoResetUnpairMonark        ();
+    Q_INVOKABLE void gotoScanSuccessAndPaired     ();
+    Q_INVOKABLE void gotoDetectionFailed          ();
+    Q_INVOKABLE void changeTxPower                (QString const& desiredTxPower);
+    Q_INVOKABLE void changeFrequencies            (QString const& desiredFrequency);
+    Q_INVOKABLE void changeEncryptionKey          ();
+    Q_INVOKABLE void tryDroneUpdate               (int monarkId);
 
 signals:
 
-
-    void monarkStateChanged(int monarkState);
-    void groundRadioUpdateStateChanged(int updateState);
-    void allDronesChanged();
-    void beforeUpdateDronesChanged();
-    void updateInProgressDronesChanged();
-    void updateSuccessfulDronesChanged();
-    void updateFailedDronesChanged();
-    //void newDroneIdChanged();
-    //void newSysIdChanged();
-    void displayMonarkUpdateMessage(int monarkId);
-    void displayRestartMessage();
-    void displayGcsUpdateMessage();
-    void validFrequenciesChanged();
-    void newGcsVersionChanged();
-    void newGcsDescriptionChanged();
-    void newGcsURLChanged();
-    void newGcsReleaseDateChanged();
-    void newDroneVersionChanged();
-    void newDroneDescriptionChanged();
-    void newDroneURLChanged();
-    void newDroneReleaseDateChanged();
-    void echoLinkBatteryVoltageChanged();
-    void minMaxPowersChanged();
+    void monarkStateChanged            (int monarkState);
+    void groundRadioUpdateStateChanged (int updateState);
+    void allDronesChanged              ();
+    void beforeUpdateDronesChanged     ();
+    void updateInProgressDronesChanged ();
+    void updateSuccessfulDronesChanged ();
+    void updateFailedDronesChanged     ();
+    void displayMonarkUpdateMessage    (int monarkId);
+    void displayRestartMessage         ();
+    void displayGcsUpdateMessage       ();
+    void validFrequenciesChanged       ();
+    void newGcsVersionChanged          ();
+    void newGcsDescriptionChanged      ();
+    void newGcsURLChanged              ();
+    void newGcsReleaseDateChanged      ();
+    void newDroneVersionChanged        ();
+    void newDroneDescriptionChanged    ();
+    void newDroneURLChanged            ();
+    void newDroneReleaseDateChanged    ();
+    void echoLinkBatteryVoltageChanged ();
+    void minMaxPowersChanged           ();
     void monarkUpdatePushPercentChanged();
-    void monarkUpdatePushErrorChanged();
+    void monarkUpdatePushErrorChanged  ();
 
 private:
 
-    void _setEchoLinkRadioModel();
-    void _echoLinkBatteryVoltageTimerHandler();
-    void _checkForUpdates();
-    void _gcsVersionCheck(QString /*remoteFile*/, QString localFile, QString errorMsg);
-    void _renameFirmwareFile(QString /*remoteFile*/, QString localFile, QString errorMsg);
-    bool _checkIfDroneNeedsUpdate(int monarkId);
+    void                    _checkForUpdates                   ();
+    void                    _gcsVersionCheck                   (QString /*remoteFile*/, QString localFile, QString errorMsg);
+    void                    _renameFirmwareFile                (QString /*remoteFile*/, QString localFile, QString errorMsg);
+    bool                    _checkIfDroneNeedsUpdate           (int monarkId);
+    void                    _initializeNetworkId               ();
+    void                    _initializeFrequency               ();
+    void                    _initializeTxPower                 ();
+    void                    _pingAllDrones                     ();
+    void                    _setMonarkState                    (MonarkState monarkState);
+    bool                    _changeGroundRadioFrequency        (QString const& desiredFrequency, bool reversion);
+    bool                    _changeGroundRadioTxPower          (QString const& desiredPower);
+    void                    _resetToBeforeUpdate               ();
+    void                    _waitForPingResponses              (std::vector<std::pair<int,std::future<std::pair<bool,std::vector<QString>>>>>& pingDroneResponses,  std::function<void(int)> const& responseGoodFunc, std::function<void(int)> const& responseBadFunc);
+    bool                    _parseInfoJsonResponse             (QString json);
+    void                    _findEchoLinkDevice                ();
+    void                    _setEchoLinkRadioModel             ();
+    void                    _echoLinkBatteryVoltageTimerHandler();
+    void                    _sendEncryptionKeyToGcsRadio       (QString const& password);
+    bool                    _changeGroundRadioEncryptionKey    (QString const& currentEncryptionKey, QString const& desiredKey, bool reversion);
+    QString                 _getEncryptionKeyFromGcsRadio      ();
+    std::pair<bool,QString> _runEchoLinkSerialCommand          (QString const& command, std::function<std::pair<bool,QString>(QString const&)>&& func, int numSeconds=5);
 
-    void _initializeNetworkId();
-    void _initializeFrequency();
-    void _initializeTxPower();
-
-    void _openSerialConnectionToGcsRadio();
-
-    void _sendEncryptionKeyToGcsRadio(char const*const p_password);
-
-    std::string _getEncryptionKeyFromGcsRadio();
-
-
-    void _pingAllDrones();
-
-    void _setMonarkState(MonarkState monarkState);
-
-    bool _changeGroundRadioFrequency(std::string const& desiredFrequency, bool reversion);
-
-    bool _changeGroundRadioEncryptionKey(std::string const& currentEncryptionKey, std::string const& desiredKey, bool reversion);
-
-    bool _changeGroundRadioTxPower(std::string const& desiredPower);
-
-    void _resetToBeforeUpdate();
-
-    void _waitForPingResponses(std::vector<std::pair<int,std::future<std::pair<bool,std::vector<std::string>>>>>& pingDroneResponses,  std::function<void(int)> const& responseGoodFunc, std::function<void(int)> const& responseBadFunc);
-
-    bool _parseInfoJsonResponse(QString json);
-
-protected:
+private:
     std::unique_ptr<MonarkManagerWorkerWorker> mp_slotHandler;
-    MonarkSettings*          mp_monarkSettings;
-    MonarkQRCodeProvider*    mp_monarkQRCodeProvider;
-    std::set<int> m_allDrones;
-    std::set<int> m_beforeUpdateDrones;
-    std::set<int> m_updateInProgressDrones;
-    std::set<int> m_updateSuccessfulDrones;
-    std::set<int> m_updateFailedDrones;
-    QAtomicInteger<int> m_groundRadioUpdateState;
-private:
-    QAtomicInteger<int> m_monarkState;
-    std::mutex m_monarkStateMut;
-    std::condition_variable m_monarkStateCondition;
-    //int m_newDroneId;
-    //int m_newSysId;
-    std::vector<QSerialPort*> m_openPorts;
-    //QSerialPort* mp_echoLinkPort;
-    QString m_newGcsVersion;
-    QString m_newGcsDescription;
-    QString m_newGcsURL;
-    QString m_newGcsReleaseDate;
-    QString m_newDroneVersion;
-    QString m_newDroneDescription;
-    QString m_newDroneURL;
-    QString m_newDroneReleaseDate;
-    float m_echoLinkBatteryVoltage;
-    QTimer m_echoLinkBatteryVoltageTimer;
-    bool m_paired;
-    std::unordered_map<int,QString> m_droneRadioModels;
-    QString m_groundRadioModel;
-    int m_monarkUpdatePushPercent;
-    QString m_monarkUpdatePushError;
-
-    //std::set<std::string> m_serialPorts;
-
+    MonarkSettings*                            mp_monarkSettings;
+    MonarkQRCodeProvider*                      mp_monarkQRCodeProvider;
+    std::set<int>                              m_allDrones;
+    std::set<int>                              m_beforeUpdateDrones;
+    std::set<int>                              m_updateInProgressDrones;
+    std::set<int>                              m_updateSuccessfulDrones;
+    std::set<int>                              m_updateFailedDrones;
+    QAtomicInteger<int>                        m_groundRadioUpdateState;
+    QAtomicInteger<int>                        m_monarkState;
+    std::mutex                                 m_monarkStateMut;
+    std::condition_variable                    m_monarkStateCondition;
+    QString                                    m_newGcsVersion;
+    QString                                    m_newGcsDescription;
+    QString                                    m_newGcsURL;
+    QString                                    m_newGcsReleaseDate;
+    QString                                    m_newDroneVersion;
+    QString                                    m_newDroneDescription;
+    QString                                    m_newDroneURL;
+    QString                                    m_newDroneReleaseDate;
+    float                                      m_echoLinkBatteryVoltage;
+    QTimer                                     m_echoLinkBatteryVoltageTimer;
+    bool                                       m_paired;
+    std::unordered_map<int,QString>            m_droneRadioModels;
+    QString                                    m_groundRadioModel;
+    int                                        m_monarkUpdatePushPercent;
+    QString                                    m_monarkUpdatePushError;
+    std::mutex                                 m_serialMut;
+    QSerialPort*                               mp_serialPort;
 };
