@@ -216,6 +216,6 @@ private:
     QString                                    m_groundRadioModel;
     int                                        m_monarkUpdatePushPercent;
     QString                                    m_monarkUpdatePushError;
-    std::mutex                                 m_serialMut;
+    std::recursive_mutex                                 m_serialMut;
     QSerialPort*                               mp_serialPort;
 };

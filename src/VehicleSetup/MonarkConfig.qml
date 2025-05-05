@@ -579,13 +579,16 @@ SetupPage {
                         visible: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
                                  || QGroundControl.monarkManager.monarkState
                                  === 13 //ChangeFrequencies
+                                 || QGroundControl.monarkManager.monarkState
+                                 === 14 //ChangeEncryptionKey
                         wrapMode: Text.Wrap
                         //Layout.fillWidth: true
                         text: QGroundControl.monarkManager.monarkState === 12 //ChangeTxPower
                               ? qsTr("Current Tx Power") : QGroundControl.monarkManager.monarkState
                                 === 13 //ChangeFrequencies
-                                ? qsTr("Current Frequency (MHz)") : qsTr(
-                                      "INVALID Application state. Restart application or contact support.")
+                                ? qsTr("Current Frequency (MHz)") : QGroundControl.monarkManager.monarkState === 14 //ChangeEncryptionKey
+                                  ? qsTr("Current Encryption Key:") : qsTr(
+                                        "INVALID Application state. Restart application or contact support.")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     QGCLabel {
@@ -604,7 +607,15 @@ SetupPage {
                         font.pointSize: ScreenTools.mediumFontPointSize
                         Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
                     }
-
+                    QGCLabel {
+                        wrapMode: Text.Wrap
+                        //Layout.fillWidth: true
+                        visible: QGroundControl.monarkManager.monarkState
+                                 === 14 //ChangeEncryptionKey
+                        text: QGroundControl.settingsManager.monarkSettings.encryptionKey.rawValue
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        Layout.preferredWidth: 30 * ScreenTools.defaultFontPixelWidth
+                    }
                     QGCLabel {
                         wrapMode: Text.Wrap
                         //Layout.fillWidth: true

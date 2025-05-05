@@ -770,7 +770,7 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
 void MonarkManager::_findEchoLinkDevice()
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_findEchoLinkDevice()";
-    std::lock_guard<std::mutex> lock(m_serialMut);
+    std::lock_guard<decltype(m_serialMut)> lock(m_serialMut);
     bool foundDevice=false;
     for (auto const& portInfo : QSerialPortInfo::availablePorts())
     {
@@ -881,7 +881,9 @@ std::pair<bool,QString> MonarkManager::_runEchoLinkSerialCommand(QString const& 
     }
     if(mp_serialPort->isOpen())
     {
-        std::unique_lock<std::mutex> lock(m_serialMut);
+        std::unique_lock<decltype(m_serialMut)> lock(m_serialMut);
+        bool setAdminAttempted=false;
+    retryCall:
         qCDebug(MonarkManagerLog)<<"Running command '"<<command<<"' on device "<<mp_serialPort->portName();
         mp_serialPort->clear();
         mp_serialPort->write(command.toUtf8());
@@ -894,6 +896,12 @@ std::pair<bool,QString> MonarkManager::_runEchoLinkSerialCommand(QString const& 
             if(mp_serialPort->waitForReadyRead(2000))
             {
                 ss<<mp_serialPort->readAll();
+                if(data.indexOf("Not Logged in to Microhard")>=0 && !setAdminAttempted)
+                {
+                    _sendEncryptionKeyToGcsRadio(this->mp_monarkSettings->encryptionKey()->cookedValueString());
+                    setAdminAttempted=true;
+                    goto retryCall;
+                }
                 auto resultAttempt=func(data);
                 if(resultAttempt.first)
                 {
@@ -908,6 +916,7 @@ std::pair<bool,QString> MonarkManager::_runEchoLinkSerialCommand(QString const& 
                 break;
             }
         }
+
         mp_serialPort->clear();
         lock.unlock();
     }
@@ -924,14 +933,14 @@ void MonarkManager::_setEchoLinkRadioModel()
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_setEchoLinkRadioModel()";
      m_groundRadioModel.clear();
     //_sendEncryptionKeyToGcsRadio(mp_monarkSettings->encryptionKey()->cookedValueString());
-    auto const result=_runEchoLinkSerialCommand("AT+GETRADIOINFO\r\n",[this](QString const& data)->std::pair<bool,QString>{
+    auto result=_runEchoLinkSerialCommand("AT+GETRADIOINFO\r\n",[this](QString const& data)->std::pair<bool,QString>{
         auto errorIndex=data.indexOf("ERROR:");
         if(errorIndex>=0)
         {
+
             qCCritical(MonarkManagerLog)<<"AT+GETRADIOINFO failed. Defaulting to pMDDL1624AES256. errorIndex="<<errorIndex<<" port='"<<mp_serialPort->portName()<<" data='"<<data<<"'";
             return std::make_pair(true,"pMDDL1624AES256");
         }
-
         auto beginIndex=data.indexOf("Image");
         if(beginIndex>=0)
         {
