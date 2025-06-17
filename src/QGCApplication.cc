@@ -16,7 +16,7 @@
  *
  */
 
-#define ECHOMAV_VERSION "v1.0.14"
+#define ECHOMAV_VERSION "v1.1.00"
 
 #include <QFile>
 #include <QRegularExpression>
@@ -189,6 +189,13 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
 static QObject* shapeFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     return new ShapeFileHelper;
+}
+
+
+bool QGCApplication::isHerelink() const
+{
+    //TODO find a more precise way to determine this. Checking prettyProductName isn't necessarily safe
+    return QSysInfo::prettyProductName()=="Android Nougat (7.1)";
 }
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)

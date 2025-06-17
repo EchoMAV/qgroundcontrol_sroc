@@ -62,6 +62,11 @@ QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
 {
 }
 
+bool                    QGroundControlQmlGlobal::isHerelink          ()  const
+{
+    return qgcApp()->isHerelink();
+}
+
 void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);

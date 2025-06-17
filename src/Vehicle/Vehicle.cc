@@ -431,71 +431,6 @@ void Vehicle::stopTrackingFirmwareVehicleTypeChanges(void)
     disconnect(_settingsManager->appSettings()->offlineEditingVehicleClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
 }
 
-/*
-void Vehicle::_setSysId()
-{
-    if(_sysIdMut.try_lock())
-    {
-        //qCDebug(VehicleLog)<<"ENTER Vehicle::_setSysId()";
-        if(_needToSetSysId)
-        {
-            //qCDebug(VehicleLog)<<"_needToSetSysId=true";
-            auto *const p_monarkManager = qgcApp()->toolbox()->monarkManager();
-            if(p_monarkManager)
-            {
-                auto const newSysId=p_monarkManager->newSysId();
-                qCDebug(VehicleLog)<<"newSysId="<<newSysId<<" id="<<_id;
-                if(_id>0)
-                {
-                    if(newSysId>0 )
-                    {
-                        if(_parameterManager->parameterExists(_defaultComponentId,"SYSID_THISMAV"))
-                        {
-                            qCDebug(VehicleLog)<<"parameter exists";
-                            auto const p_sysIdFact=_parameterManager->getParameter(_defaultComponentId,"SYSID_THISMAV");
-                            if(p_sysIdFact)
-                            {
-                                qCDebug(VehicleLog)<<"p_sysIdFact";
-
-                                auto const errorString = p_sysIdFact->validate(QString::number(newSysId),false);
-                                if(errorString.isEmpty())
-                                {
-                                    qCDebug(VehicleLog)<<"errorString.isEmpty()";
-                                    _needToSetSysId=false;
-                                    p_sysIdFact->setCookedValue(newSysId);
-                                    p_monarkManager->showRestartMessage();
-                                    //qgcApp()->showAppMessage(QString("MONARK-%1 added. Rebooting in 10 seconds").arg(newSysId));
-                                    //p_monarkManager->restartApplication();
-
-                                }
-                                else
-                                {
-                                    qCCritical(VehicleLog)<<"Unable to set SYSID_THISMAV to "<<newSysId<<" because: "<<errorString;
-                                }
-                            }
-                            else
-                            {
-                                qCCritical(VehicleLog)<<"SYSID_THISMAV fact was not found";
-                            }
-                        }
-                        else
-                        {
-                             qCDebug(VehicleLog)<<"parameter does not exist";
-                        }
-                    }
-                    else
-                    {
-                         _needToSetSysId=false;
-                    }
-                }
-            }
-        }
-        _sysIdMut.unlock();
-        //qCDebug(VehicleLog)<<"EXIT Vehicle::_setSysId()";
-    }
-
-}
-*/
 
 void Vehicle::_commonInit()
 {
@@ -2335,7 +2270,7 @@ void Vehicle::_loadJoystickSettings()
     if (_toolbox->joystickManager()->activeJoystick()) {
         qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified of an active joystick. Loading setting joystickenabled: " << settings.value(_joystickEnabledSettingsKey, false).toBool();
         auto const joystickName=_toolbox->joystickManager()->activeJoystick()->name();
-        if(joystickName=="Scuf Gaming SCUF Envision Controller" || joystickName == "Scuf Gaming SCUF Envision Pro Controller" || joystickName == "Kutta KTAC GC v1" || joystickName == "Kutta KTAC GC v2")
+        if(joystickName=="Scuf Gaming SCUF Envision Controller" || joystickName == "Scuf Gaming SCUF Envision Pro Controller" || joystickName == "Kutta KTAC GC v1" || joystickName == "Kutta KTAC GC v2" || joystickName=="gpio-keys")
         {
 
              setJoystickEnabled(true);
@@ -2698,15 +2633,12 @@ void Vehicle::_parametersReady(bool parametersReady)
         disconnect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
         _setupAutoDisarmSignalling();
         _initialConnectStateMachine->advance();
-        qgcApp()->toolbox()->monarkManager()->refreshDroneList();
-        //_sysIdMut.lock();
-        //bool doCheckUpdate=!_needToSetSysId;
-        //_sysIdMut.unlock();
-        //if(doCheckUpdate)
+        auto p_monarkManager=qgcApp()->toolbox()->monarkManager();
+        if(p_monarkManager)
         {
-            qgcApp()->toolbox()->monarkManager()->tryDroneUpdate(_id);
+            p_monarkManager->refreshDroneList();
+            p_monarkManager->tryDroneUpdate(_id);
         }
-
     }
 
     _multirotor_speed_limits_available = _firmwarePlugin->mulirotorSpeedLimitsAvailable(this);
@@ -4810,9 +4742,12 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
 
 void Vehicle::closeVehicle(void)
 {
-    qgcApp()->toolbox()->monarkManager()->removeDrone(_id);
+    auto p_monarkManager=qgcApp()->toolbox()->monarkManager();
+    if(p_monarkManager)
+    {
+        p_monarkManager->removeDrone(_id);
+    }
     _vehicleLinkManager->closeVehicle();
-    //_needToSetSysId=true;
 }
 
 

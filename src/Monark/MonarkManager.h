@@ -187,6 +187,7 @@ private:
     bool                    _changeGroundRadioEncryptionKey    (QString const& currentEncryptionKey, QString const& desiredKey, bool reversion);
     QString                 _getEncryptionKeyFromGcsRadio      ();
     std::pair<bool,QString> _runEchoLinkSerialCommand          (QString const& command, std::function<std::pair<bool,QString>(QString const&)>&& func, int numSeconds=5);
+    std::pair<bool,QString> _runEchoLinkSSHCommand             (QString const& command, bool configured, std::function<std::pair<bool,QString>(QString const&)>&& func, int numSeconds=5);
 
 private:
     std::unique_ptr<MonarkManagerWorkerWorker> mp_slotHandler;

@@ -33,33 +33,18 @@ ApplicationWindow {
                                               Screen.height)
     visible: true
 
-    /*
-    MessageDialog {
-        property var monarkId: 0
-        id: restartApplicationConfirmation
-        title: qsTr("READ CAREFULLY")
-        text: "MONARK-" + monarkId + " has been added."
-        detailedText: "Press OK, wait 5 seconds, and the application will automatically close. Then power cycle the drone and relaunch MONARK GCS App."
-        standardButtons: StandardButton.Ok
-        onAccepted: {
-            QGroundControl.monarkManager.restartApplication()
-        }
-    }
-    */
-
     MessageDialog {
         id: monarkUpdateAvailableDialog
         property var monarkId: 0
         title: qsTr("MONARK UPDATE AVAILABLE")
         text: qsTr("An update is available for MONARK-") + monarkId + qsTr(
                   ". Would you like to push it to the MONARK?")
-        detailedText: qsTr("Version: ") + QGroundControl.monarkManager.newDroneVersion + qsTr(
-                          "\nRelease Date: ")
-                      + QGroundControl.monarkManager.newDroneReleaseDate + qsTr(
-                          "\nDescription: ") + QGroundControl.monarkManager.newDroneDescription
+        detailedText: QGroundControl.monarkManager ? qsTr("Version: ") + QGroundControl.monarkManager.newDroneVersion + qsTr("\nRelease Date: ") + QGroundControl.monarkManager.newDroneReleaseDate + qsTr("\nDescription: ") + QGroundControl.monarkManager.newDroneDescription : ""
         standardButtons: StandardButton.Yes | StandardButton.No
         onYes: {
-            QGroundControl.monarkManager.pushMonarkDownload(monarkId)
+            if (QGroundControl.monarkManager) {
+                QGroundControl.monarkManager.pushMonarkDownload(monarkId)
+            }
             monarkUpdateProgressDialogComponent.createObject(mainWindow).open()
         }
     }
@@ -77,44 +62,36 @@ ApplicationWindow {
                 anchors.right: parent.right
                 //Layout.preferredWidth: parent.width
                 //Layout.fillWidth: true
-                value: QGroundControl.monarkManager.monarkUpdatePushPercent / 100.0
+                value: QGroundControl.monarkManager?QGroundControl.monarkManager.monarkUpdatePushPercent / 100.0:0
             }
 
             QGCLabel {
-                text: QGroundControl.monarkManager.monarkUpdatePushError
+                text: QGroundControl.monarkManager?QGroundControl.monarkManager.monarkUpdatePushError
                       === "" ? (qsTr("Progress: ")
                                 + QGroundControl.monarkManager.monarkUpdatePushPercent
                                 + "%") : (qsTr("Update Push Failed. Error message: ")
-                                          + QGroundControl.monarkManager.monarkUpdatePushError)
-                color: QGroundControl.monarkManager.monarkUpdatePushError
+                                          + QGroundControl.monarkManager.monarkUpdatePushError):""
+                color: !QGroundControl.monarkManager || QGroundControl.monarkManager.monarkUpdatePushError
                        === "" ? qgcPal.text : qgcPal.alertText
             }
         }
     }
 
-
     MessageDialog {
         id: downloadGCSUpdateDialog
         title: qsTr("GCS UPDATE AVAILABLE")
         text: "An update is available for your GCS." + "\nDo you want to download it?"
-        detailedText: "Version:" + QGroundControl.monarkManager.newGcsVersion
+        detailedText: QGroundControl.monarkManager?"Version:" + QGroundControl.monarkManager.newGcsVersion
                       + "\nRelease Date: " + QGroundControl.monarkManager.newGcsReleaseDate
-                      + "\nDescription: " + QGroundControl.monarkManager.newGcsDescription
+                      + "\nDescription: " + QGroundControl.monarkManager.newGcsDescription:""
         standardButtons: StandardButton.Yes | StandardButton.No
         onYes: {
-            QGroundControl.monarkManager.openGcsDownload()
+            if(QGroundControl.monarkManager)
+            {
+                QGroundControl.monarkManager.openGcsDownload()
+            }
         }
     }
-
-    /*
-    Connections {
-        target: QGroundControl.monarkManager
-        onDisplayRestartMessage: {
-            restartApplicationConfirmation.monarkId = QGroundControl.monarkManager.newSysId
-            restartApplicationConfirmation.open()
-        }
-    }
-    */
 
     Connections {
         target: QGroundControl.monarkManager
@@ -533,9 +510,9 @@ ApplicationWindow {
                                     standardButtons: StandardButton.Yes | StandardButton.No
                                     onYes: {
                                         console.log(typeof QGroundControl.multiVehicleManager.activeVehicle.flightModes)
-                                        for (var i; i < QGroundControl.multiVehicleManager.activeVehicle.flightModes.length; i++)
-                                        {
-                                            QGroundControl.multiVehicleManager.activeVehicle.flightModes.append("Auto Tune")
+                                        for (var i; i < QGroundControl.multiVehicleManager.activeVehicle.flightModes.length; i++) {
+                                            QGroundControl.multiVehicleManager.activeVehicle.flightModes.append(
+                                                        "Auto Tune")
                                         }
 
                                         QGroundControl.corePlugin.showAdvancedUI = true

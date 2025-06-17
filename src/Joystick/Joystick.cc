@@ -176,8 +176,16 @@ void Joystick::_setDefaultCalibration(void) {
     }
 
 
-
-    if(_name == "Scuf Gaming SCUF Envision Controller" || _name == "Scuf Gaming SCUF Envision Pro Controller")
+    if(_name == "gpio-keys")
+    {
+        setButtonAction(0, "Altitude Hold");
+        setButtonAction(1, _buttonActionToggleVideoRecord);
+        setButtonAction(2, "GPS Loiter");
+        setButtonAction(3, "Flow Hold");
+        setButtonAction(4, "RTL");
+        setButtonAction(5, _buttonActionTriggerCamera);
+    }
+    else if(_name == "Scuf Gaming SCUF Envision Controller" || _name == "Scuf Gaming SCUF Envision Pro Controller")
     {
         _rgCalibration[pitchFunction].reversed = true;
         _rgCalibration[throttleFunction].reversed = true;

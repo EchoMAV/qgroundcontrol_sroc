@@ -301,7 +301,7 @@ Rectangle {
                 setupIndicator: false //TODO what does this mean?
                 setupComplete: false //TODO what does this mean?
                 exclusiveGroup: setupButtonGroup //TODO what does this mean?
-                visible: true //TODO determine under what circumstances this should be visible?
+                visible: !QGroundControl.isHerelink
                 text: qsTr("MONARK")
                 Layout.fillWidth: true
                 onClicked: showPanel(this, "MonarkConfig.qml")
@@ -364,19 +364,12 @@ Rectangle {
             panelLoader.source = ""
             panelLoader.vehicleComponent = vehicleComponent
             panelLoader.source = source
-            //if (QGroundControl.monarkManager.monarkState === 0) {
-            //    QGroundControl.monarkManager.startScanning()
-            //}
         }
 
         function setSourceComponent(sourceComponent, vehicleComponent) {
             panelLoader.sourceComponent = undefined
             panelLoader.vehicleComponent = vehicleComponent
             panelLoader.sourceComponent = sourceComponent
-
-            //if (QGroundControl.monarkManager.monarkState === 0) {
-            //    QGroundControl.monarkManager.startScanning()
-            //}
         }
 
         property var vehicleComponent

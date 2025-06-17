@@ -446,6 +446,8 @@ HEADERS += \
     src/QmlControls/QmlUnitsConversion.h \
     src/Settings/MonarkSettings.h \
     src/Vehicle/VehicleEscStatusFactGroup.h \
+    src/api/HerelinkCorePlugin.h \
+    src/api/HerelinkOptions.h \
     src/api/QGCCorePlugin.h \
     src/api/QGCOptions.h \
     src/api/QGCSettings.h \
@@ -465,6 +467,8 @@ SOURCES += \
     src/QmlControls/GPSUnitsController.cc \
     src/Settings/MonarkSettings.cc \
     src/Vehicle/VehicleEscStatusFactGroup.cc \
+    src/api/HerelinkCorePlugin.cc \
+    src/api/HerelinkOptions.cc \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
     src/api/QGCSettings.cc \
@@ -1449,7 +1453,8 @@ contains (CONFIG, QGC_DISABLE_INSTALLER_SETUP) {
 }
 
 DISTFILES += \
-    src/QmlControls/QGroundControl/Specific/qmldir
+    src/QmlControls/QGroundControl/Specific/qmldir \
+    src/api/HerelinkCorePlugin.json
 
 #
 # Steps for "install" target on Linux

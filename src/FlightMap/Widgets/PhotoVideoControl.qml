@@ -35,6 +35,8 @@ Rectangle {
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property bool _isArmed: _activeVehicle ? (_activeVehicle.armed) : false
 
+    property bool _isHerelink: QGroundControl.isHerelink
+
     // The following properties relate to a simple camera
     property var _flyViewSettings: QGroundControl.settingsManager.flyViewSettings
     property bool _simpleCameraAvailable: !_mavlinkCamera && _activeVehicle
@@ -54,7 +56,7 @@ Rectangle {
     property bool _videoStreamRecording: _videoStreamManager.recording
     property bool _videoStreamCanShoot: _videoStreamIsStreaming
     property bool _videoStreamIsShootingInCurrentMode: _videoStreamInPhotoMode ? !_simplePhotoCaptureIsIdle : _videoStreamRecording
-    property bool _videoStreamInPhotoMode: false
+    property bool _videoStreamInPhotoMode: true
 
     // The following properties relate to a mavlink protocol camera
     property var _mavlinkCameraManager: _activeVehicle ? _activeVehicle.cameraManager : null
@@ -104,12 +106,12 @@ Rectangle {
                                            && ((_mavlinkCameraStorageReady
                                                 && _mavlinkCamera.storageFree > 0)
                                                || !_mavlinkCameraStorageSupported))
-                                          || _videoStreamManager.streaming
+    //|| _videoStreamManager.streaming
     property bool _mavlinkCameraIsShooting: ((_mavlinkCameraInVideoMode
                                               && _mavlinkCameraVideoIsRecording)
                                              || (_mavlinkCameraInPhotoMode
                                                  && !_mavlinkCameraPhotoCaptureIsIdle))
-                                            || _videoStreamManager.recording
+    //|| _videoStreamManager.recording
 
     // The following settings and functions unify between a mavlink camera and a simple video stream for simple access
     property bool _anyVideoStreamAvailable: _videoStreamManager.hasVideo
@@ -119,9 +121,9 @@ Rectangle {
                                                             || _onlySimpleCameraAvailable
     property bool _allowsPhotoWhileRecording: _mavlinkCamera ? _mavlinkCameraAllowsPhotoWhileRecording : _videoStreamAllowsPhotoWhileRecording
     property bool _switchToPhotoModeAllowed: !_modeIndicatorPhotoMode
-                                             && (_mavlinkCamera ? !_mavlinkCameraIsShooting : true)
+                                             && (/*_mavlinkCamera ? !_mavlinkCameraIsShooting :*/ true)
     property bool _switchToVideoModeAllowed: _modeIndicatorPhotoMode
-                                             && (_mavlinkCamera ? !_mavlinkCameraIsShooting : true)
+                                             && (/*_mavlinkCamera ? !_mavlinkCameraIsShooting : */ true)
     property bool _videoIsRecording: _mavlinkCamera ? _mavlinkCameraIsShooting : _videoStreamRecording
     property bool _canShootInCurrentMode: _mavlinkCamera ? _mavlinkCameraCanShoot : _videoStreamCanShoot
                                                            || _simpleCameraAvailable
@@ -271,8 +273,6 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: ScreenTools.defaultFontPixelHeight / 2
 
-
-        /*
         // Photo/Video Mode Selector
         // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
         // using the unified properties/functions.
@@ -282,7 +282,7 @@ Rectangle {
             height: width / 2
             color: qgcPal.windowShadeLight
             radius: height * 0.5
-            visible: _showModeIndicator
+            visible: _showModeIndicator && _isHerelink
 
             //-- Video Mode
             Rectangle {
@@ -337,7 +337,6 @@ Rectangle {
             }
         }
 
-        */
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
             spacing: 0
@@ -356,8 +355,6 @@ Rectangle {
             }
         }
 
-
-        /*
         // Take Photo, Start/Stop Video button
         // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
         // using the unified properties/functions.
@@ -369,6 +366,7 @@ Rectangle {
             radius: width * 0.5
             border.color: qgcPal.buttonText
             border.width: 3
+            visible: _isHerelink
 
             Rectangle {
                 anchors.centerIn: parent
@@ -384,7 +382,6 @@ Rectangle {
                 onClicked: toggleShooting()
             }
         }
-        */
 
         // Tracking button
         Rectangle {
@@ -435,8 +432,9 @@ Rectangle {
             }
             QGCLabel {
                 Layout.alignment: Qt.AlignHCenter
-                text: qsTr("Video: ") + ((_mavlinkCameraInVideoMode
-                                          && _mavlinkCamera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _mavlinkCamera.recordTimeStr : "00:00:00")
+                text: qsTr("Video: ") + ((
+                                             /*_mavlinkCameraInVideoMode
+                                          && */ _mavlinkCamera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _mavlinkCamera.recordTimeStr : "00:00:00")
                 font.pointSize: ScreenTools.largeFontPointSize
                 //visible: _mavlinkCameraInVideoMode
                 //         && _mavlinkCamera.capturesVideo

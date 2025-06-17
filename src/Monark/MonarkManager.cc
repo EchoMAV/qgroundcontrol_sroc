@@ -871,6 +871,128 @@ void MonarkManager::_findEchoLinkDevice()
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_findEchoLinkDevice()";
 }
 
+std::pair<bool,QString> MonarkManager::_runEchoLinkSSHCommand(QString const& command, bool configured, std::function<std::pair<bool,QString>(QString const&)>&& func, int numSeconds)
+{
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_runEchoLinkSSHCommand(command="<<command<<", configured="<<configured<<" numSeconds="<<numSeconds<<")";
+    std::pair<bool,QString> result=std::make_pair(false,"");
+    int returnCode=0;
+    ssh_session p_session = nullptr;
+    bool isConnected=false;
+    ssh_channel p_channel = nullptr;
+    char p_buffer[4096];
+    QString username="admin";
+    QString host = configured?np_srmPairedIp:np_srmDefaultIp;
+    QString password=configured?"monarkmonark":"admin";
+    do
+    {
+        p_session = ssh_new();
+        if(!p_session)
+        {
+            result.second=("ssh_new failed");
+            qCCritical(MonarkManagerLog) << "MonarkManager::_runEchoLinkSSHCommand result="<<result.second;
+            break;
+        }
+        returnCode=ssh_options_set(p_session, SSH_OPTIONS_HOST, host.toUtf8().data());
+        if(returnCode)
+        {
+            result.second=("ssh_options_set failed");
+            qCCritical(MonarkManagerLog) << "MonarkManager::_runEchoLinkSSHCommand result="<<result.second;
+            break;
+        }
+        returnCode=ssh_connect(p_session);
+        if(returnCode)
+        {
+            result.second=("ssh_connect failed");
+            qCCritical(MonarkManagerLog) << "MonarkManager::_runEchoLinkSSHCommand result="<<result.second;
+            break;
+        }
+        isConnected=true;
+        returnCode = ssh_userauth_password(p_session, username.toUtf8().data(), password.toUtf8().data());
+        if(returnCode)
+        {
+            result.second=("ssh_userauth_password failed");
+            qCCritical(MonarkManagerLog) << "MonarkManager::_runEchoLinkSSHCommand result="<<result.second;
+            break;
+        }
+        p_channel=ssh_channel_new(p_session);
+        if(!p_channel)
+        {
+            result.second=("ssh_channel_new failed");
+            qCCritical(MonarkManagerLog) << "MonarkManager::_runEchoLinkSSHCommand result="<<result.second;
+            break;
+        }
+        returnCode = ssh_channel_open_session(p_channel);
+        if(returnCode)
+        {
+            result.second=("ssh_channel_open_session failed");
+            qCCritical(MonarkManagerLog) << "MonarkManager::_runEchoLinkSSHCommand result="<<result.second;
+            break;
+        }
+        returnCode = ssh_channel_request_shell(p_channel);
+        if(returnCode)
+        {
+            result.second=("ssh_channel_request_shell failed");
+            qCCritical(MonarkManagerLog) << "MonarkManager::_runEchoLinkSSHCommand result="<<result.second;
+            break;
+        }
+        //command is sent
+        ssh_channel_write(p_channel,command.toUtf8().data(), command.size());
+        char* p_bufferItr = &p_buffer[0];
+        auto const start = std::chrono::system_clock::now();
+        for(;;)
+        {
+            if(!ssh_channel_is_open(p_channel))
+            {
+                break;
+            }
+            if(ssh_channel_poll_timeout(p_channel,2000,0)>0)
+            {
+                int numBytesRead = ssh_channel_read(p_channel, p_bufferItr, sizeof(p_buffer) - (p_bufferItr - (&p_buffer[0])),0);
+                p_bufferItr+=numBytesRead;
+                if(numBytesRead>0)
+                {
+                    auto resultAttempt=func(QString::fromUtf8(p_buffer,p_bufferItr - (&p_buffer[0])));
+                    if(resultAttempt.first)
+                    {
+                        result.first=true;
+                        result.second=resultAttempt.second;
+                        qCDebug(MonarkManagerLog) << "MonarkManager::_runEchoLinkSSHCommand result="<<result.second;
+                        break;
+                    }
+                }
+            }
+            if(std::chrono::system_clock::now() - start > std::chrono::seconds(numSeconds))
+            {
+                break;
+            }
+            if(size_t(p_bufferItr - (&p_buffer[0])) >= sizeof(p_buffer))
+            {
+                break;
+            }
+        }
+    }
+    while(false);
+    if(p_channel)
+    {
+        ssh_channel_close(p_channel);
+        ssh_channel_free(p_channel);
+        p_channel=nullptr;
+    }
+    if(isConnected)
+    {
+        ssh_disconnect(p_session);
+        isConnected=false;
+    }
+    if(p_session)
+    {
+        ssh_free(p_session);
+        p_session=nullptr;
+    }
+    ssh_finalize();
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_runEchoLinkSSHCommand(command="<<command<<", configured="<<configured<<" numSeconds="<<numSeconds<<")";
+    return result;
+}
+
 std::pair<bool,QString> MonarkManager::_runEchoLinkSerialCommand(QString const& command, std::function<std::pair<bool,QString>(QString const&)>&& func, int numSeconds)
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_runEchoLinkSerialCommand(command="<<command<<")";

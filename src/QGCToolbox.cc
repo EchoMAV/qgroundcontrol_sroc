@@ -14,6 +14,7 @@
 #ifndef __mobile__
 #include "GPSManager.h"
 #endif
+#include "HerelinkCorePlugin.h"
 #include "JoystickManager.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
@@ -82,9 +83,17 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 #if defined(QGC_GST_MICROHARD_ENABLED)
     _microhardManager       = new MicrohardManager          (app, this);
 #endif
-    _monarkManager          = new MonarkManager             (app, this);
+    if(qgcApp()->isHerelink())
+    {
+        _monarkManager=nullptr;
+    }
+    else
+    {
+        _monarkManager          = new MonarkManager             (app, this);
+        connect(_corePlugin, &QGCCorePlugin::showAdvancedUIChanged, _monarkManager, &MonarkManager::validFrequenciesChanged);
 
-    connect(_corePlugin, &QGCCorePlugin::showAdvancedUIChanged, _monarkManager, &MonarkManager::validFrequenciesChanged);
+    }
+
 
 }
 
@@ -123,7 +132,10 @@ void QGCToolbox::setChildToolboxes(void)
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager->setToolbox(this);
 #endif
-    _monarkManager->setToolbox(this);
+    if(_monarkManager)
+    {
+        _monarkManager->setToolbox(this);
+    }
 }
 
 void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)
@@ -135,8 +147,16 @@ void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)
         return;
     }
 #endif
-    //-- No plugins found, use default instance
-    _corePlugin = new QGCCorePlugin(app, this);
+
+    if(app->isHerelink())
+    {
+        _corePlugin = (QGCCorePlugin*) new HerelinkCorePlugin(app, this);
+    }
+    else
+    {
+        //-- No plugins found, use default instance
+        _corePlugin = new QGCCorePlugin(app, this);
+    }
 }
 
 QGCTool::QGCTool(QGCApplication* app, QGCToolbox* toolbox)

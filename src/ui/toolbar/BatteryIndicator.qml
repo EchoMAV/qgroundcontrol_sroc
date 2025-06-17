@@ -30,15 +30,22 @@ Item {
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     function getEchoLinkBatteryVoltageColor() {
-        if (!isNaN(QGroundControl.monarkManager.echoLinkBatteryVoltage)) {
-            if (QGroundControl.monarkManager.echoLinkBatteryVoltage >= 11.1) {
-                return qgcPal.colorGreen
+        if(QGroundControl.monarkManager)
+        {
+            if (!isNaN(QGroundControl.monarkManager.echoLinkBatteryVoltage)) {
+                if (QGroundControl.monarkManager.echoLinkBatteryVoltage >= 11.1) {
+                    return qgcPal.colorGreen
+                }
+                if (QGroundControl.monarkManager.echoLinkBatteryVoltage >= 10.15) {
+                    return qgcPal.colorYellow
+                }
             }
-            if (QGroundControl.monarkManager.echoLinkBatteryVoltage >= 10.15) {
-                return qgcPal.colorYellow
-            }
+            return qgcPal.colorRed
         }
-        return qgcPal.colorRed
+        else
+        {
+            return qgcPal.colorGreen
+        }
     }
 
     Row {
@@ -47,7 +54,7 @@ Item {
         anchors.bottom: parent.bottom
         Row {
 
-            visible: QGroundControl.monarkManager.echoLinkBatteryVoltage >= 0
+            visible: QGroundControl.monarkManager &&  QGroundControl.monarkManager.echoLinkBatteryVoltage >= 0
 
             anchors.top: parent.top
             anchors.bottom: parent.bottom
@@ -62,8 +69,8 @@ Item {
             }
 
             QGCLabel {
-                text: (QGroundControl.monarkManager.echoLinkBatteryVoltage).toFixed(
-                          1) + "V"
+                text: QGroundControl.monarkManager?(QGroundControl.monarkManager.echoLinkBatteryVoltage).toFixed(
+                          1) + "V":""
                 font.pointSize: ScreenTools.mediumFontPointSize
                 color: getEchoLinkBatteryVoltageColor()
                 anchors.verticalCenter: parent.verticalCenter
@@ -271,8 +278,8 @@ Item {
 
                     ColumnLayout {
                         QGCLabel {
-                            text: (QGroundControl.monarkManager.echoLinkBatteryVoltage).toFixed(
-                                      1) + " V"
+                            text: QGroundControl.monarkManager?(QGroundControl.monarkManager.echoLinkBatteryVoltage).toFixed(
+                                      1) + " V":""
                         }
                         Repeater {
                             model: _activeVehicle ? _activeVehicle.batteries : 0
