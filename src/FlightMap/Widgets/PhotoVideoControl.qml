@@ -103,9 +103,10 @@ Rectangle {
                                                   !== QGCCameraControl.STORAGE_NOT_SUPPORTED
     property bool _mavlinkCameraAllowsPhotoWhileRecording: false
     property bool _mavlinkCameraCanShoot: (!_mavlinkCameraModeUndefined
-                                           && ((_mavlinkCameraStorageReady
-                                                && _mavlinkCamera.storageFree > 0)
-                                               || !_mavlinkCameraStorageSupported))
+                                           && (!_mavlinkCamera.inCooldown
+                                               && ((_mavlinkCameraStorageReady
+                                                    && _mavlinkCamera.storageFree > 0)
+                                                   || !_mavlinkCameraStorageSupported)))
     //|| _videoStreamManager.streaming
     property bool _mavlinkCameraIsShooting: ((_mavlinkCameraInVideoMode
                                               && _mavlinkCameraVideoIsRecording)
@@ -434,8 +435,11 @@ Rectangle {
                 Layout.alignment: Qt.AlignHCenter
                 text: qsTr("Video: ") + ((
                                              /*_mavlinkCameraInVideoMode
-                                          && */ _mavlinkCamera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _mavlinkCamera.recordTimeStr : "00:00:00")
+                                          && */ _mavlinkCamera
+                                             && _mavlinkCamera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _mavlinkCamera.recordTimeStr : "00:00:00")
                 font.pointSize: ScreenTools.largeFontPointSize
+                color: _mavlinkCamera
+                       && (_mavlinkCamera.inCooldown) ? qgcPal.colorRed : qgcPal.text
                 //visible: _mavlinkCameraInVideoMode
                 //         && _mavlinkCamera.capturesVideo
             }
@@ -444,8 +448,9 @@ Rectangle {
                 text: qsTr("Photo No.: ") + (_activeVehicle ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(
                                                                   -5) : "00000")
                 font.pointSize: ScreenTools.largeFontPointSize
-                color: _mavlinkCamera && _mavlinkCamera.photoStatus
-                       != QGCCameraControl.PHOTO_CAPTURE_IDLE ? qgcPal.colorGrey : qgcPal.text
+                color: _mavlinkCamera
+                       && (_mavlinkCamera.photoStatus != QGCCameraControl.PHOTO_CAPTURE_IDLE
+                           || _mavlinkCamera.inCooldown) ? qgcPal.colorRed : qgcPal.text
                 //visible: _modeIndicatorPhotoMode
             }
             QGCButton {

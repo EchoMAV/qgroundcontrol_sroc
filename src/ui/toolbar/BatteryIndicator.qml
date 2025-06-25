@@ -29,53 +29,11 @@ Item {
     property bool showIndicator: true
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    function getEchoLinkBatteryVoltageColor() {
-        if(QGroundControl.monarkManager)
-        {
-            if (!isNaN(QGroundControl.monarkManager.echoLinkBatteryVoltage)) {
-                if (QGroundControl.monarkManager.echoLinkBatteryVoltage >= 11.1) {
-                    return qgcPal.colorGreen
-                }
-                if (QGroundControl.monarkManager.echoLinkBatteryVoltage >= 10.15) {
-                    return qgcPal.colorYellow
-                }
-            }
-            return qgcPal.colorRed
-        }
-        else
-        {
-            return qgcPal.colorGreen
-        }
-    }
 
     Row {
         id: batteryIndicatorRow
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        Row {
-
-            visible: QGroundControl.monarkManager &&  QGroundControl.monarkManager.echoLinkBatteryVoltage >= 0
-
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            QGCColoredImage {
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: height
-                sourceSize.width: width
-                source: "/qmlimages/battery_radio.svg"
-                fillMode: Image.PreserveAspectFit
-                color: getEchoLinkBatteryVoltageColor()
-            }
-
-            QGCLabel {
-                text: QGroundControl.monarkManager?(QGroundControl.monarkManager.echoLinkBatteryVoltage).toFixed(
-                          1) + "V":""
-                font.pointSize: ScreenTools.mediumFontPointSize
-                color: getEchoLinkBatteryVoltageColor()
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
         Repeater {
             model: _activeVehicle ? _activeVehicle.batteries : 0
 
@@ -224,9 +182,6 @@ Item {
                     spacing: ScreenTools.defaultFontPixelWidth
 
                     ColumnLayout {
-                        QGCLabel {
-                            text: qsTr("EchoLink Voltage")
-                        }
                         Repeater {
                             model: _activeVehicle ? _activeVehicle.batteries : 0
 

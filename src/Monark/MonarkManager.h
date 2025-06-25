@@ -91,7 +91,6 @@ public:
     Q_PROPERTY(QString     newDroneDescription     READ newDroneDescription     NOTIFY newDroneDescriptionChanged);
     Q_PROPERTY(QString     newDroneURL             READ newDroneURL             NOTIFY newDroneURLChanged);
     Q_PROPERTY(QString     newDroneReleaseDate     READ newDroneReleaseDate     NOTIFY newDroneReleaseDateChanged);
-    Q_PROPERTY(float       echoLinkBatteryVoltage  READ echoLinkBatteryVoltage  NOTIFY echoLinkBatteryVoltageChanged);
     Q_PROPERTY(int         monarkUpdatePushPercent READ monarkUpdatePushPercent NOTIFY monarkUpdatePushPercentChanged);
     Q_PROPERTY(QString     monarkUpdatePushError   READ monarkUpdatePushError   NOTIFY monarkUpdatePushErrorChanged);
 
@@ -105,7 +104,6 @@ public:
     QString     newDroneDescription    () const { return m_newDroneDescription; }
     QString     newDroneURL            () const { return m_newDroneURL; }
     QString     newDroneReleaseDate    () const { return m_newDroneReleaseDate; }
-    float       echoLinkBatteryVoltage () const { return m_echoLinkBatteryVoltage; }
     int         monarkUpdatePushPercent() const { return m_monarkUpdatePushPercent; }
     QString     monarkUpdatePushError  () const { return m_monarkUpdatePushError; }
     QString     allDrones              () const;
@@ -159,7 +157,6 @@ signals:
     void newDroneDescriptionChanged    ();
     void newDroneURLChanged            ();
     void newDroneReleaseDateChanged    ();
-    void echoLinkBatteryVoltageChanged ();
     void minMaxPowersChanged           ();
     void monarkUpdatePushPercentChanged();
     void monarkUpdatePushErrorChanged  ();

@@ -745,8 +745,6 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     , m_newDroneDescription{}
     , m_newDroneURL{}
     , m_newDroneReleaseDate{}
-    , m_echoLinkBatteryVoltage{-1}
-    , m_echoLinkBatteryVoltageTimer{}
     , m_paired{false}
     , m_droneRadioModels{}
     , m_groundRadioModel{}
@@ -757,11 +755,6 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
 {
     //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::MonarkManager()()";
     //connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &MonarkManager::validFrequenciesChanged);
-    _echoLinkBatteryVoltageTimerHandler();
-    m_echoLinkBatteryVoltageTimer.setSingleShot(false);
-    m_echoLinkBatteryVoltageTimer.setInterval(1000*45);
-    connect(&m_echoLinkBatteryVoltageTimer, &QTimer::timeout, this, &MonarkManager::_echoLinkBatteryVoltageTimerHandler);
-    m_echoLinkBatteryVoltageTimer.start(45*1000);
     mp_slotHandler->start();
     _checkForUpdates();
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::MonarkManager()()";
@@ -1127,73 +1120,6 @@ void MonarkManager::_setEchoLinkRadioModel()
     emit minMaxPowersChanged();
     emit validFrequenciesChanged();
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_setEchoLinkRadioModel()";
-}
-
-void MonarkManager::_echoLinkBatteryVoltageTimerHandler()
-{
-#if 1
-    //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_echoLinkBatteryVoltageTimerHandler()";
-    auto const result=_runEchoLinkSerialCommand("AT+GETVOLTAGE\r\n",[this](QString const& data)->std::pair<bool,QString>{
-        auto errorIndex=data.indexOf("ERROR:");
-        if(errorIndex>=0)
-        {
-            qCCritical(MonarkManagerLog)<<"AT+GETVOLTAGE failed errorIndex="<<errorIndex<<" port='"<<mp_serialPort->portName()<<" data='"<<data<<"'";
-            return std::make_pair(true,"");
-        }
-        auto beginIndex=data.indexOf("\n");
-        if(beginIndex>=0)
-        {
-            ++beginIndex;
-            auto endIndex=data.indexOf("\r",beginIndex);
-            if(endIndex>=0)
-            {
-                qCDebug(MonarkManagerLog)<<"AT+GETVOLTAGE succeeded beginIndex="<<beginIndex<<", endIndex="<<endIndex<<" port='"<<mp_serialPort->portName()<<" data='"<<data<<"'";
-                return std::make_pair(true,data.mid(beginIndex,endIndex-beginIndex));
-            }
-        }
-        return std::make_pair(false,"");
-    });
-    if(result.first)
-    {
-        if(!result.second.isEmpty())
-        {
-            bool okay=false;
-            float newVoltage=result.second.toFloat(&okay);
-            if(okay && newVoltage == newVoltage)
-            {
-                if(newVoltage != m_echoLinkBatteryVoltage)
-                {
-                    m_echoLinkBatteryVoltage=newVoltage;
-                    emit echoLinkBatteryVoltageChanged();
-                    qCDebug(MonarkManagerLog)<<"new voltage is "<<m_echoLinkBatteryVoltage;
-                }
-            }
-            else if(m_echoLinkBatteryVoltage!=-1)
-            {
-                m_echoLinkBatteryVoltage=-1;
-                emit echoLinkBatteryVoltageChanged();
-                qCCritical(MonarkManagerLog)<<"failed to parse voltage from "<<result.second;
-            }
-        }
-        else if(m_echoLinkBatteryVoltage!=-1)
-        {
-            m_echoLinkBatteryVoltage=-1;
-            emit echoLinkBatteryVoltageChanged();
-            qCDebug(MonarkManagerLog)<<"new voltage is "<<m_echoLinkBatteryVoltage;
-            qCCritical(MonarkManagerLog)<<"No voltage could be recovered from the echolink";
-        }
-    }
-    else
-    {
-        if(0 != m_echoLinkBatteryVoltage)
-        {
-            m_echoLinkBatteryVoltage=0;
-            emit echoLinkBatteryVoltageChanged();
-            qCCritical(MonarkManagerLog)<<"No voltage could be recovered from the echolink";
-        }
-    }
-#endif
-    //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_echoLinkBatteryVoltageTimerHandler()";
 }
 
 void MonarkManager::_sendEncryptionKeyToGcsRadio(QString const& password)

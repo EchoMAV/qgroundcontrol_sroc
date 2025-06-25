@@ -227,6 +227,9 @@ QGCCameraControl::_initWhenReady()
     _captureStatusTimer.setSingleShot(true);
     QTimer::singleShot(2500, this, &QGCCameraControl::_requestStorageInfo);
     _captureStatusTimer.start(2750);
+
+    connect(&_cooldownTimer, &QTimer::timeout, this, [this](){_inCooldown=false; emit inCooldownChanged();});
+    _cooldownTimer.setSingleShot(true);
     emit infoChanged();
 
     delete _netManager;
@@ -396,7 +399,7 @@ QGCCameraControl::takePhoto()
         return false;
     }
     if(!_resetting) {
-        if(capturesPhotos()) {
+        if(capturesPhotos() && !_inCooldown) {
             _vehicle->sendMavCommand(
                 _compID,                                                                    // Target component
                 MAV_CMD_IMAGE_START_CAPTURE,                                                // Command id
@@ -410,6 +413,11 @@ QGCCameraControl::takePhoto()
             if(qgcApp()->toolbox()->videoManager()) {
                 qgcApp()->toolbox()->videoManager()->grabImage();
             }
+
+            _inCooldown=true;
+            emit inCooldownChanged();
+            _cooldownTimer.start(2000);
+
             return true;
         }
     }
@@ -425,7 +433,7 @@ QGCCameraControl::stopTakePhoto()
         if(photoStatus() == PHOTO_CAPTURE_IDLE || (photoStatus() != PHOTO_CAPTURE_INTERVAL_IDLE && photoStatus() != PHOTO_CAPTURE_INTERVAL_IN_PROGRESS)) {
             return false;
         }
-        if(capturesPhotos()) {
+        if(capturesPhotos() && !_inCooldown) {
             _vehicle->sendMavCommand(
                 _compID,                                                    // Target component
                 MAV_CMD_IMAGE_STOP_CAPTURE,                                 // Command id
@@ -433,6 +441,9 @@ QGCCameraControl::stopTakePhoto()
                 0);                                                         // Reserved (Set to 0)
             _setPhotoStatus(PHOTO_CAPTURE_IDLE);
             _captureInfoRetries = 0;
+            _inCooldown=true;
+            emit inCooldownChanged();
+            _cooldownTimer.start(2000);
             return true;
         }
     }
@@ -446,17 +457,22 @@ QGCCameraControl::startVideo()
     if(!_resetting) {
         qCDebug(CameraControlLog) << "startVideo()";
         //-- Check if camera can capture videos or if it can capture it while in Photo Mode
-        if(!capturesVideo() || (cameraMode() == CAM_MODE_PHOTO && !videoInPhotoMode())) {
+        if(!capturesVideo() /*|| (cameraMode() == CAM_MODE_PHOTO && !videoInPhotoMode())*/) {
             return false;
         }
-        if(videoStatus() != VIDEO_CAPTURE_STATUS_RUNNING) {
+        if(videoStatus() != VIDEO_CAPTURE_STATUS_RUNNING && !_inCooldown) {
             _vehicle->sendMavCommand(
                 _compID,                                    // Target component
                 MAV_CMD_VIDEO_START_CAPTURE,                // Command id
                 false,                                      // Don't Show Error (handle locally)
                 0,                                          // Reserved (Set to 0)
                 0);                                         // CAMERA_CAPTURE_STATUS Frequency
+
+            _inCooldown=true;
+            emit inCooldownChanged();
+            _cooldownTimer.start(2000);
             return true;
+
         }
     }
     return false;
@@ -468,12 +484,16 @@ QGCCameraControl::stopVideo()
 {
     if(!_resetting) {
         qCDebug(CameraControlLog) << "stopVideo()";
-        if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
+        if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING && !_inCooldown) {
             _vehicle->sendMavCommand(
                 _compID,                                    // Target component
                 MAV_CMD_VIDEO_STOP_CAPTURE,                 // Command id
                 false,                                      // Don't Show Error (handle locally)
                 0);                                         // Reserved (Set to 0)
+
+            _inCooldown=true;
+            emit inCooldownChanged();
+            _cooldownTimer.start(2000);
             return true;
         }
     }

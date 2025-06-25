@@ -171,6 +171,7 @@ public:
     Q_PROPERTY(bool         photosInVideoMode   READ photosInVideoMode  NOTIFY infoChanged)
     Q_PROPERTY(bool         videoInPhotoMode    READ videoInPhotoMode   NOTIFY infoChanged)
     Q_PROPERTY(bool         isBasic             READ isBasic            NOTIFY infoChanged)
+    Q_PROPERTY(bool         inCooldown          READ inCooldown         NOTIFY inCooldownChanged)
     Q_PROPERTY(quint32      storageFree         READ storageFree        NOTIFY storageFreeChanged)
     Q_PROPERTY(QString      storageFreeStr      READ storageFreeStr     NOTIFY storageFreeChanged)
     Q_PROPERTY(quint32      storageTotal        READ storageTotal       NOTIFY storageTotalChanged)
@@ -258,6 +259,7 @@ public:
     virtual CameraMode  cameraMode          () { return _cameraMode; }
     virtual StorageStatus storageStatus     () { return _storageStatus; }
     virtual QStringList activeSettings      ();
+    virtual bool        inCooldown          () { return _inCooldown;   }
     virtual quint32     storageFree         () { return _storageFree;  }
     virtual QString     storageFreeStr      ();
     virtual quint32     storageTotal        () { return _storageTotal; }
@@ -344,6 +346,7 @@ signals:
     void    cameraModeChanged               ();
     void    activeSettingsChanged           ();
     void    storageFreeChanged              ();
+    void    inCooldownChanged               ();
     void    storageTotalChanged             ();
     void    batteryRemainingChanged         ();
     void    dataReady                       (QByteArray data);
@@ -435,6 +438,7 @@ protected:
     QStringList                         _activeSettings;
     QStringList                         _settings;
     QTimer                              _captureStatusTimer;
+    QTimer                              _cooldownTimer;
     QList<QGCCameraOptionExclusion*>    _valueExclusions;
     QList<QGCCameraOptionRange*>        _optionRanges;
     QMap<QString, QStringList>          _originalOptNames;
@@ -467,4 +471,5 @@ protected:
     double                              _trackingRadius     = 0.0;
     mavlink_camera_tracking_image_status_t         _trackingImageStatus;
     QRectF                                         _trackingImageRect;
+    bool                                _inCooldown = false;
 };
