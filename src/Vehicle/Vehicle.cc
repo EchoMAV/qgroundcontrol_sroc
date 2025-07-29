@@ -1682,6 +1682,7 @@ void Vehicle::_updateArmed(bool armed)
             if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
                 if(_settingsManager->videoSettings()->disableWhenDisarmed()->rawValue().toBool()) {
                     _settingsManager->videoSettings()->streamEnabled()->setRawValue(false);
+                    qCDebug(VehicleLog) << "Stopping video receiver from _updateArmed";
                     qgcApp()->toolbox()->videoManager()->videoReceiver()->stop();
                 }
             }
