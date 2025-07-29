@@ -44,6 +44,7 @@ public:
     DEFINE_SETTINGFACT(indoorPalette)
     DEFINE_SETTINGFACT(showLargeCompass)
     DEFINE_SETTINGFACT(savePath)
+    DEFINE_SETTINGFACT(droneSidePhotoFolderName)
     DEFINE_SETTINGFACT(androidSaveToSDCard)
     DEFINE_SETTINGFACT(useChecklist)
     DEFINE_SETTINGFACT(enforceChecklist)
@@ -81,6 +82,8 @@ public:
     Q_PROPERTY(QString photoSavePath            READ photoSavePath              NOTIFY savePathsChanged)
     Q_PROPERTY(QString crashSavePath            READ crashSavePath              NOTIFY savePathsChanged)
     Q_PROPERTY(QString customActionsSavePath    READ customActionsSavePath      NOTIFY savePathsChanged)
+
+    //Q_PROPERTY(QString droneSidePhotoFolderName READ droneSidePhotoFolderName   NOTIFY droneSidePhotoFolderNameChanged)
 
     Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension        CONSTANT)
     Q_PROPERTY(QString missionFileExtension     MEMBER missionFileExtension     CONSTANT)
@@ -139,6 +142,8 @@ public:
 
 signals:
     void savePathsChanged();
+
+    void droneSidePhotoFolderNameChanged();
 
 private slots:
     void _indoorPaletteChanged();

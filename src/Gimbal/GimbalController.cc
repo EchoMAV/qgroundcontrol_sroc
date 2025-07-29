@@ -108,6 +108,8 @@ GimbalController::setActiveGimbal(Gimbal* gimbal)
         _activeGimbal = gimbal;
         emit activeGimbalChanged();
     }
+
+    sendPitchBodyYaw(0,0,false);
 }
 
 void

@@ -116,8 +116,6 @@ public:
     int         maximumPower           () const;
 
     Q_INVOKABLE void startScanning                ();
-    Q_INVOKABLE void refreshDroneList             ();
-    Q_INVOKABLE void removeDrone                  (int monarkID);
     Q_INVOKABLE void saveFlutterManagementSettings(QString const& frequency);
     Q_INVOKABLE void resetActiveVehicle           ();
     Q_INVOKABLE void rebootActiveVehicle          ();
@@ -135,6 +133,12 @@ public:
     Q_INVOKABLE void changeFrequencies            (QString const& desiredFrequency);
     Q_INVOKABLE void changeEncryptionKey          ();
     Q_INVOKABLE void tryDroneUpdate               (int monarkId);
+
+
+    void refreshDroneList             ();
+    void removeDrone                  (int monarkID);
+
+
 
 signals:
 
@@ -180,14 +184,16 @@ private:
     void                    _findEchoLinkDevice                ();
     void                    _setEchoLinkRadioModel             ();
     void                    _echoLinkBatteryVoltageTimerHandler();
-    void                    _sendEncryptionKeyToGcsRadio       (QString const& password);
+    void                    _sendPasswordOverSerial            (QString const& password);
     bool                    _changeGroundRadioEncryptionKey    (QString const& currentEncryptionKey, QString const& desiredKey, bool reversion);
-    QString                 _getEncryptionKeyFromGcsRadio      ();
+    QString                 _getEncryptionKeyOverSerial        ();
+    QString                 _getEncryptionKeyOverSSH           ();
     std::pair<bool,QString> _runEchoLinkSerialCommand          (QString const& command, std::function<std::pair<bool,QString>(QString const&)>&& func, int numSeconds=5);
     std::pair<bool,QString> _runEchoLinkSSHCommand             (QString const& command, bool configured, std::function<std::pair<bool,QString>(QString const&)>&& func, int numSeconds=5);
 
 private:
     std::unique_ptr<MonarkManagerWorkerWorker> mp_slotHandler;
+    std::unique_ptr<MonarkManagerWorkerWorker> mp_refreshDroneSlotHandler;
     MonarkSettings*                            mp_monarkSettings;
     MonarkQRCodeProvider*                      mp_monarkQRCodeProvider;
     std::set<int>                              m_allDrones;

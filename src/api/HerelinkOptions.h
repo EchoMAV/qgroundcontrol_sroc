@@ -13,5 +13,5 @@ public:
     bool wifiReliableForCalibration () const override { return true; }
     bool showFirmwareUpgrade        () const override { return false; }
     bool multiVehicleEnabled        () const override { return false; }
-    bool allowJoystickSelection     () const override { return false; }
+    bool allowJoystickSelection     () const override { return false; } //TODO disable this when default calibrations have been set
 };

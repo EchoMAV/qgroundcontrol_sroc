@@ -80,6 +80,13 @@
     "decimalPlaces":    2
 },
 {
+    "name":      "droneSidePhotoFolderName",
+    "shortDesc": "Drone-side Photo Folder Name",
+    "longDesc":  "The name of the folder to save photos to onboard the drone",
+    "type":      "string",
+    "default":   ""
+},
+{
     "name":             "telemetrySave",
     "shortDesc": "Save telemetry Log after each flight",
     "longDesc":  "If this option is enabled a telemetry will be saved after each flight completes.",

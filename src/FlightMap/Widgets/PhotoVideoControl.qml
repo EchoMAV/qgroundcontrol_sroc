@@ -33,6 +33,8 @@ Rectangle {
 
     property real _margins: ScreenTools.defaultFontPixelHeight / 2
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property var _gimbalController: _activeVehicle ? _activeVehicle.gimbalController : null
+    property var _activeGimbal: _gimbalController ? _gimbalController.activeGimbal : null
     property bool _isArmed: _activeVehicle ? (_activeVehicle.armed) : false
 
     property bool _isHerelink: QGroundControl.isHerelink
@@ -453,20 +455,61 @@ Rectangle {
                            || _mavlinkCamera.inCooldown) ? qgcPal.colorRed : qgcPal.text
                 //visible: _modeIndicatorPhotoMode
             }
-            QGCButton {
-                Layout.alignment: Qt.AlignHCenter
-                enabled: true
-                text: qsTr("EO/IR")
-                width: 100
-                onClicked: {
-                    if (_mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_BLEND
-                            || _mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_OFF
-                            || _mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_PIP)
-                        _mavlinkCamera.thermalMode = QGCCameraControl.THERMAL_FULL
-                    else
-                        _mavlinkCamera.thermalMode = QGCCameraControl.THERMAL_OFF
+            RowLayout {
+                QGCButton {
+                    property real _upDelta: 15
+                    visible: _isHerelink
+                    id: gimbalUpButton
+                    Layout.alignment: Qt.AlignHCenter
+                    enabled: true
+                    text: qsTr("Up")
+                    width: 100
+                    onClicked: {
+                        if (_activeGimbal) {
+                            var curVal = _activeGimbal.absolutePitch.rawValue
+                            var newVal = curVal + _upDelta
+                            if (newVal > 0) {
+                                newVal = 0
+                            }
+                            _gimbalController.sendPitchBodyYaw(newVal, 0, false)
+                        }
+                    }
+                }
+                QGCButton {
+                    Layout.alignment: Qt.AlignHCenter
+                    enabled: true
+                    text: qsTr("EO/IR")
+                    width: 100
+                    onClicked: {
+                        if (_mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_BLEND
+                                || _mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_OFF
+                                || _mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_PIP)
+                            _mavlinkCamera.thermalMode = QGCCameraControl.THERMAL_FULL
+                        else
+                            _mavlinkCamera.thermalMode = QGCCameraControl.THERMAL_OFF
+                    }
+                }
+                QGCButton {
+                    property real _downDelta: 15
+                    visible: _isHerelink
+                    id: gimbalDownButton
+                    Layout.alignment: Qt.AlignHCenter
+                    enabled: true
+                    text: qsTr("Down")
+                    width: 100
+                    onClicked: {
+                        if (_activeGimbal) {
+                            var curVal = _activeGimbal.absolutePitch.rawValue
+                            var newVal = curVal - _downDelta
+                            if (newVal < -90) {
+                                newVal = -90
+                            }
+                            _gimbalController.sendPitchBodyYaw(newVal, 0, false)
+                        }
+                    }
                 }
             }
+
             QGCLabel {
                 Layout.alignment: Qt.AlignHCenter
                 text: _mavlinkCamera ? qsTr("Free Space: ") + _mavlinkCamera.storageFreeStr : ""
@@ -575,7 +618,7 @@ Rectangle {
                     }
 
                     QGCLabel {
-                        text: qsTr("Video Grid Lines")
+                        text: qsTr("Show Crosshairs")
                         visible: _anyVideoStreamAvailable
                         onVisibleChanged: gridLayout.dynamicRows += visible ? 1 : -1
                     }

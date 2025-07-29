@@ -726,6 +726,7 @@ void MonarkManagerWorkerWorker::run()
 MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_toolbox)
     : QGCTool{p_app, p_toolbox}
     , mp_slotHandler{std::make_unique<MonarkManagerWorkerWorker>()}
+    , mp_refreshDroneSlotHandler{std::make_unique<MonarkManagerWorkerWorker>()}
     , mp_monarkSettings{nullptr}
     , mp_monarkQRCodeProvider{nullptr}
     , m_allDrones{}
@@ -756,7 +757,8 @@ MonarkManager::MonarkManager(QGCApplication*const p_app, QGCToolbox*const p_tool
     //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::MonarkManager()()";
     //connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &MonarkManager::validFrequenciesChanged);
     mp_slotHandler->start();
-    _checkForUpdates();
+    mp_refreshDroneSlotHandler->start();
+    //_checkForUpdates();
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::MonarkManager()()";
 }
 
@@ -1035,11 +1037,39 @@ std::pair<bool,QString> MonarkManager::_runEchoLinkSerialCommand(QString const& 
     return result;
 }
 
+QString MonarkManager::_getEncryptionKeyOverSSH()
+{
+    auto result=_runEchoLinkSSHCommand("AT+MWVENCRYPT\r\n",true,[](QString const& data)->std::pair<bool,QString>{
+        qCDebug(MonarkManagerLog)<<"MonarkManager::_getEncryptionKeyOverSSH: data="<<data;
+        auto beginIndex=data.indexOf("Password: ");
+        if(beginIndex>=0)
+        {
+            beginIndex+=10;
+            auto endIndex=data.indexOf("\r\n",beginIndex);
+            if(endIndex>=0)
+            {
+                qCDebug(MonarkManagerLog)<<"AT+MWVENCRYPT succeeded beginIndex="<<beginIndex<<" endIndex="<<endIndex<<" data='"<<data<<"'";
+                return std::make_pair(true,data.mid(beginIndex,endIndex-beginIndex));
+            }
+        }
+        else
+        {
+            auto errorIndex=data.indexOf("ERROR:");
+            if(errorIndex>=0)
+            {
+                qCCritical(MonarkManagerLog)<<"AT+MWVENCRYPT failed errorIndex="<<errorIndex<<" data='"<<data<<"'";
+                return std::make_pair(true,"");
+            }
+        }
+        return std::make_pair(false,"");
+    });
+    return result.second;
+}
+
 void MonarkManager::_setEchoLinkRadioModel()
 {
     qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_setEchoLinkRadioModel()";
      m_groundRadioModel.clear();
-    //_sendEncryptionKeyToGcsRadio(mp_monarkSettings->encryptionKey()->cookedValueString());
 
 #if 1
     auto result=_runEchoLinkSSHCommand("AT+MSSYSI\r\n",m_paired,[this](QString const& data)->std::pair<bool,QString>{
@@ -1122,10 +1152,10 @@ void MonarkManager::_setEchoLinkRadioModel()
     qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_setEchoLinkRadioModel()";
 }
 
-void MonarkManager::_sendEncryptionKeyToGcsRadio(QString const& password)
+void MonarkManager::_sendPasswordOverSerial(QString const& password)
 {
-    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_sendEncryptionKeyToGcsRadio()";
-#if 0
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_sendPasswordOverSerial()";
+#if 1
     (void)_runEchoLinkSerialCommand("AT+SETADMIN="+password+"\r\n",[this](QString const& data)->std::pair<bool,QString>{
         auto okIndex=data.indexOf("OK\r");
         if(okIndex>=0)
@@ -1140,13 +1170,13 @@ void MonarkManager::_sendEncryptionKeyToGcsRadio(QString const& password)
             return std::make_pair(true,"FAIL");
         }
         else
-        {    return "";
+        {
 
             return std::make_pair(false,"");
         }
     }, 20);
 #endif
-    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_sendEncryptionKeyToGcsRadio()";
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_sendPasswordOverSerial()";
 }
 bool MonarkManager::_changeGroundRadioEncryptionKey(QString const& currentEncryptionKey, QString const& desiredKey, bool reversion)
 {
@@ -1245,11 +1275,14 @@ bool MonarkManager::_changeGroundRadioEncryptionKey(QString const& currentEncryp
     return result;
 }
 
-QString MonarkManager::_getEncryptionKeyFromGcsRadio()
+QString MonarkManager::_getEncryptionKeyOverSerial()
 {
-    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_getEncryptionKeyFromGcsRadio()";
+    qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::_getEncryptionKeyOverSerial()";
 #if 1
+    //auto const result=_runEchoLinkSerialCommand("AT+MWVENCRYPT\r\n",[this](QString const& data)->std::pair<bool,QString>{
     auto const result=_runEchoLinkSerialCommand("AT+GETENCRYPTION\r\n",[this](QString const& data)->std::pair<bool,QString>{
+
+        qCDebug(MonarkManagerLog)<<"MonarkManager::_getEncryptionKeyOverSerial() data="<<data;
         auto beginIndex=data.indexOf("Password: ");
         if(beginIndex>=0)
         {
@@ -1273,7 +1306,7 @@ QString MonarkManager::_getEncryptionKeyFromGcsRadio()
         return std::make_pair(false,"");
     });
 #endif
-    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_getEncryptionKeyFromGcsRadio()";
+    qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::_getEncryptionKeyOverSerial()";
     return result.second;
 }
 
@@ -1463,6 +1496,7 @@ void MonarkManager::_setMonarkState(MonarkState monarkState)
 MonarkManager::~MonarkManager() {
     //qCDebug(MonarkManagerLog)<<"ENTER: MonarkManager::~MonarkManager()()";
     mp_slotHandler->shutdown();
+    mp_refreshDroneSlotHandler->shutdown();
     //qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::~MonarkManager()()";
 }
 
@@ -1532,6 +1566,8 @@ void MonarkManager::startScanning()
         {
             qCDebug(MonarkManagerLog)<<"ScanSuccessPairingRequired";
             scanningResult=MonarkState::ScanSuccessPairingRequired;
+            //send monarkmonark over serial
+            _sendPasswordOverSerial("monarkmonark");
             this->mp_monarkSettings->encryptionKey()->setCookedValue("");
             this->mp_monarkSettings->groundFrequency()->setCookedValue(n_defaultGroundFrequency);
             this->mp_monarkSettings->groundTxPower()->setCookedValue(n_defaultGroundTxPower);
@@ -1545,13 +1581,19 @@ void MonarkManager::startScanning()
             auto pingPairedResponse = pingPairedResponseFuture.get().second;
             if(!pingPairedResponse.empty())
             {
-                bool passwordOk=true;
-                if(pingPairedResponse.back() != np_groundRadioSuccessStr)
+                bool ok=false;
+                QString encryptionKey;
+                if(pingPairedResponse.back() == np_groundRadioSuccessStr)
                 {
-                    passwordOk=false;
-                    auto encryptionKey = _getEncryptionKeyFromGcsRadio();
-
-
+                    encryptionKey=_getEncryptionKeyOverSSH();
+                    if(!encryptionKey.isEmpty())
+                    {
+                        ok=true;
+                    }
+                }
+                if(!ok)
+                {
+                    encryptionKey = _getEncryptionKeyOverSerial();
                     if(!encryptionKey.isEmpty())
                     {
                         std::vector<QString> commands;
@@ -1560,16 +1602,15 @@ void MonarkManager::startScanning()
                         auto const& response = _sendCommands(np_srmPairedIp,"admin", encryptionKey, &commands, false).second;
                         if(!response.empty() && response.back().indexOf(np_groundRadioSuccessStr)>=0)
                         {
-                            passwordOk=true;
-
+                            ok=true;
                         }
-                        this->mp_monarkSettings->encryptionKey()->setCookedValue(encryptionKey);
-                        mp_monarkSettings->onSaveSettings();
                     }
                 }
-
-                if(passwordOk)
+                if(ok)
                 {
+                    _sendPasswordOverSerial("monarkmonark");
+                    this->mp_monarkSettings->encryptionKey()->setCookedValue(encryptionKey);
+                    mp_monarkSettings->onSaveSettings();
                     m_droneRadioModels.clear();
                     m_allDrones.clear();
                     m_beforeUpdateDrones.clear();
@@ -1630,7 +1671,7 @@ void MonarkManager::startScanning()
 
         }
 #else
-        auto password = _getEncryptionKeyFromGcsRadio();
+        auto password = _getEncryptionKeyOverSerial();
 
 
         bool sendPassword=false;
@@ -1692,7 +1733,7 @@ void MonarkManager::startScanning()
                 scanningResult=MonarkState::ScanSuccessAndPaired;
                 if(sendPassword)
                 {
-                    _sendEncryptionKeyToGcsRadio( password);
+                    _sendPasswordOverSerial( password);
 
                 }
                 m_paired=true;
@@ -1739,9 +1780,9 @@ void MonarkManager::startScanning()
 
 void MonarkManager::refreshDroneList()
 {
-    if(mp_slotHandler->needDispatch())
+    if(mp_refreshDroneSlotHandler->needDispatch())
     {
-        mp_slotHandler->dispatch([this](){refreshDroneList();});
+        mp_refreshDroneSlotHandler->dispatch([this](){refreshDroneList();});
     }
     else
     {
@@ -1756,7 +1797,7 @@ void MonarkManager::refreshDroneList()
                 std::vector<QString> dronePingCommands;
                 dronePingCommands.push_back("microhard --action=info --monark_id="+QString::number(i)+"\n");
                 auto const ip = _getDroneIPAddress(i);
-                return _sendCommands(ip, "monark", "monark", &dronePingCommands, true).second;
+                return _sendCommands(ip, "monark", "monark", &dronePingCommands, true,false).second;
             }));
         }
 
@@ -1868,6 +1909,7 @@ void MonarkManager::removeDrone(int monarkID)
             emit newSysIdChanged();
         }
         */
+        this->refreshDroneList();
         qCDebug(MonarkManagerLog)<<"EXIT : MonarkManager::removeDrone(monarkID="<<monarkID<<")";
     }
 }
@@ -2276,7 +2318,7 @@ void MonarkManager::saveFlutterManagementSettings(QString const& frequency)
                 mp_monarkSettings->encryptionKey()->setCookedValue(encryptionKey);
                 mp_monarkSettings->onSaveSettings();
             }
-            //_sendEncryptionKeyToGcsRadio(encryptionKey);
+            //_sendPasswordOverSerial(encryptionKey);
 
         }
 #else
@@ -2315,7 +2357,7 @@ void MonarkManager::saveFlutterManagementSettings(QString const& frequency)
                 mp_monarkSettings->encryptionKey()->setCookedValue(encryptionKey);
                 mp_monarkSettings->onSaveSettings();
             }
-            _sendEncryptionKeyToGcsRadio(encryptionKey);
+            _sendPasswordOverSerial(encryptionKey);
 
         }
 #endif

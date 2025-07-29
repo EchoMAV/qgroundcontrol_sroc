@@ -287,7 +287,30 @@ void Joystick::_setDefaultCalibration(void) {
         setButtonAction(11, "Altitude Hold");
         setButtonAction(13, _buttonActionTriggerCamera);
     }
+    else if (_name == "EchoMAV EchoControl")
+    {
+        _rgCalibration[pitchFunction].reversed = true;
+        _rgCalibration[throttleFunction].reversed = true;
 
+        _rgFunctionAxis[rollFunction]       = 5;
+        _rgFunctionAxis[pitchFunction]      = 4;
+        _rgFunctionAxis[yawFunction]        = 2;
+        _rgFunctionAxis[throttleFunction]   = 1;
+        _rgFunctionAxis[zoomFunction]       = 0;
+        _deadband           = false;
+
+
+        setButtonAction(5, "Land");
+        setButtonAction(2, "Flow Hold");
+        setButtonAction(10, "RTL");
+        setButtonAction(6, _buttonActionEmergencyStop);
+        setButtonAction(11, _buttonActionEmergencyStop);
+        setButtonAction(3, "GPS Loiter");
+        setButtonAction(9, _buttonActionToggleEOIR);
+        setButtonAction(1, _buttonActionToggleVideoRecord);
+        setButtonAction(4, "Altitude Hold");
+        setButtonAction(0, _buttonActionTriggerCamera);
+    }
     else if(_name == "UXV Technologies SROC")
     {
         _rgCalibration[pitchFunction].reversed = true;
@@ -452,7 +475,7 @@ void Joystick::_loadSettings()
         }
         qCDebug(JoystickLog) << "_loadSettings function:axis:badsettings" << function << functionAxis << badSettings;
     }
-    badSettings |= workingAxis < 4;
+    badSettings |= (workingAxis < 4 && !qgcApp()->isHerelink());
 
     // FunctionAxis mappings are always stored in TX mode 2
     // Remap to stored TX mode in settings

@@ -1048,6 +1048,7 @@ signals:
     void sensorsParametersResetAck      (bool success);
 
 private slots:
+    void _sendPhotoFolderName               ();
     void _generateCotPacket();  // Function to generate and log CoT packet
     void _mavlinkMessageReceived            (LinkInterface* link, mavlink_message_t message);
     void _sendMessageMultipleNext           ();
@@ -1533,6 +1534,7 @@ private:
     // We use this to limit above terrain altitude queries based on distance and altitude change
     QGeoCoordinate              _altitudeAboveTerrLastCoord;
     float                       _altitudeAboveTerrLastRelAlt = qQNaN();
+    uint64_t                    _lastGPSReportTime=0;
 };
 
 Q_DECLARE_METATYPE(Vehicle::MavCmdResultFailureCode_t)

@@ -676,6 +676,17 @@ Rectangle {
                                 indexModel: false
                                 visible: _followTarget.visible
                             }
+
+                            QGCLabel {
+                                text: qsTr("Drone-side photo folder name")
+                                visible: QGroundControl.settingsManager.appSettings.droneSidePhotoFolderName.visible
+                            }
+                            FactTextField {
+                                Layout.preferredWidth: _comboFieldWidth
+                                fact: QGroundControl.settingsManager.appSettings.droneSidePhotoFolderName
+                                visible: QGroundControl.settingsManager.appSettings.droneSidePhotoFolderName.visible
+                            }
+
                             QGCLabel {
                                 text: qsTr("UI Scaling")
                                 visible: _appFontPointSize.visible

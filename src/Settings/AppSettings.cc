@@ -127,7 +127,8 @@ DECLARE_SETTINGGROUP(App, "")
         savePathFact->setRawValue(rootDir.filePath(appName));
 #endif
     }
-
+    SettingsFact* savePathFactdroneSidePhotoFolderNameFact = qobject_cast<SettingsFact*>(droneSidePhotoFolderName());
+    connect(savePathFactdroneSidePhotoFolderNameFact, &Fact::rawValueChanged, this, &AppSettings::droneSidePhotoFolderNameChanged);
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::savePathsChanged);
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::_checkSavePathDirectories);
 
@@ -151,6 +152,7 @@ DECLARE_SETTINGSFACT(AppSettings, virtualJoystickAutoCenterThrottle)
 DECLARE_SETTINGSFACT(AppSettings, appFontPointSize)
 DECLARE_SETTINGSFACT(AppSettings, showLargeCompass)
 DECLARE_SETTINGSFACT(AppSettings, savePath)
+DECLARE_SETTINGSFACT(AppSettings, droneSidePhotoFolderName)
 DECLARE_SETTINGSFACT(AppSettings, androidSaveToSDCard)
 DECLARE_SETTINGSFACT(AppSettings, useChecklist)
 DECLARE_SETTINGSFACT(AppSettings, enforceChecklist)

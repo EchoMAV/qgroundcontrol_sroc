@@ -238,6 +238,8 @@ Vehicle::Vehicle(LinkInterface*             link,
         _settingsManager->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
         _settingsManager->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
+    connect(_settingsManager->appSettings(), &AppSettings::droneSidePhotoFolderNameChanged, this, &Vehicle::_sendPhotoFolderName);
+
 
     _autopilotPlugin = _firmwarePlugin->autopilotPlugin(this);
     _autopilotPlugin->setParent(this);
@@ -1264,6 +1266,20 @@ void Vehicle::_handleAttitudeQuaternion(mavlink_message_t& message)
     yawRate()->setRawValue(qRadiansToDegrees(rates[2]));
 }
 
+void Vehicle::_sendPhotoFolderName()
+{
+#if 0
+    QTcpSocket socket{};
+    QString const hostAddress=qgcApp()->isHerelink()?"192.168.144.10":"172.20.3."+QString::number(_id);
+    socket.connectToHost(hostAddress,54321);
+    if(socket.waitForConnected(1000))
+    {
+        QString const data="media_mission_name "+qgcApp()->toolbox()->settingsManager()->appSettings()->droneSidePhotoFolderName()->rawValueString();
+        socket.write(data.toUtf8());
+    }
+#endif
+}
+
 void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
 {
     mavlink_gps_raw_int_t gpsRawInt;
@@ -1283,6 +1299,32 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
             }
         }
     }
+#if 0
+    if(int64_t(gpsRawInt.time_usec) - int64_t(_lastGPSReportTime) >= 1000000)
+    {
+        _lastGPSReportTime=gpsRawInt.time_usec;
+        QTcpSocket socket{};
+        QString const hostAddress=qgcApp()->isHerelink()?"192.168.144.10":"172.20.3."+QString::number(_id);
+        socket.connectToHost(hostAddress,54321);
+        if(socket.waitForConnected(1000))
+        {
+            QString const gpsData=QStringLiteral("gps_data '{\"lat\": %1, \"lon\": %2, \"alt\": %3, \"eph\": %4, \"epv\": %5, \"vel\": %6, \"cog\": %7, \"fix_type\": %8, \"satellites_visible\": %9, \"time_usec\": %10, \"pitch\": %11, \"roll\": %12, \"camera_model\": \"IMX477\", \"focal_length\": [50, 1]}'")
+            .arg(gpsRawInt.lat)
+                .arg(gpsRawInt.lon)
+                .arg(gpsRawInt.alt)
+                .arg(gpsRawInt.eph)
+                .arg(gpsRawInt.epv)
+                .arg(gpsRawInt.vel)
+                .arg(gpsRawInt.cog)
+                .arg(gpsRawInt.fix_type)
+                .arg(gpsRawInt.satellites_visible)
+                .arg(gpsRawInt.time_usec)
+                .arg(_pitchFact.rawValue().toDouble())
+                .arg(_rollFact.rawValue().toDouble());
+            socket.write(gpsData.toUtf8());
+        }
+    }
+#endif
 }
 
 void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
@@ -2271,7 +2313,7 @@ void Vehicle::_loadJoystickSettings()
     if (_toolbox->joystickManager()->activeJoystick()) {
         qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified of an active joystick. Loading setting joystickenabled: " << settings.value(_joystickEnabledSettingsKey, false).toBool();
         auto const joystickName=_toolbox->joystickManager()->activeJoystick()->name();
-        if(joystickName=="Scuf Gaming SCUF Envision Controller" || joystickName == "Scuf Gaming SCUF Envision Pro Controller" || joystickName == "Kutta KTAC GC v1" || joystickName == "Kutta KTAC GC v2" || joystickName=="gpio-keys")
+        if(joystickName=="Scuf Gaming SCUF Envision Controller" || joystickName == "Scuf Gaming SCUF Envision Pro Controller" || joystickName == "Kutta KTAC GC v1" || joystickName == "Kutta KTAC GC v2" || joystickName=="gpio-keys" || joystickName == "EchoMAV EchoControl")
         {
 
              setJoystickEnabled(true);
@@ -2640,6 +2682,7 @@ void Vehicle::_parametersReady(bool parametersReady)
             p_monarkManager->refreshDroneList();
             p_monarkManager->tryDroneUpdate(_id);
         }
+        _sendPhotoFolderName();
     }
 
     _multirotor_speed_limits_available = _firmwarePlugin->mulirotorSpeedLimitsAvailable(this);
@@ -2666,6 +2709,9 @@ void Vehicle::_parametersReady(bool parametersReady)
             false,                                  // ShowError
             0);
     }
+
+    //TODO send the droneSidePhotoFolderName to the drone
+
 }
 
 void Vehicle::_sendQGCTimeToVehicle()
@@ -3402,6 +3448,12 @@ bool Vehicle::_sendMavCommandShouldRetry(MAV_CMD command)
     case MAV_CMD_REQUEST_MESSAGE:
     case MAV_CMD_PREFLIGHT_STORAGE:
     case MAV_CMD_RUN_PREARM_CHECKS:
+        //TODO experiment with retrying gimbal pitch commands
+        //TODO so do_set_mode
+        //TODO gripper
+    case MAV_CMD_DO_SET_MODE:
+    case MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW:
+    case MAV_CMD_DO_GRIPPER:
         return true;
 
     default:
