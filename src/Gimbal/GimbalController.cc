@@ -546,7 +546,6 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
     GimbalPairId pairId;
 
     // If gimbal_device_id is 0, we must take the compid of the message
-    qCDebug(GimbalLog) << "attitude_status.gimbal_device_id = " << attitude_status.gimbal_device_id << " message.compid = " << message.compid;
     if (attitude_status.gimbal_device_id == 0) {
         pairId.deviceId = message.compid;
 
@@ -584,7 +583,6 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
 
     float roll, pitch, yaw;
     mavlink_quaternion_to_euler(attitude_status.q, &roll, &pitch, &yaw);
-    qCDebug(GimbalLog) << "pitch qRadiansToDegrees=" << qRadiansToDegrees(pitch);
 
     gimbal.setAbsoluteRoll(qRadiansToDegrees(roll));
     gimbal.setAbsolutePitch(qRadiansToDegrees(pitch));
