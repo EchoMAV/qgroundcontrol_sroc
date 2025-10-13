@@ -92,6 +92,31 @@ Item {
                         y: (parent.height * controller.stickPositions[3]) - (height * 0.5)
                     }
                     //---------------------------------------------------------
+                    //-- Left rocker Gimbal Pitch (Kutta v2, EchoControl)
+                    Rectangle {
+                        width: parent.width * 0.25
+                        height: parent.width * 0.035
+                        radius: height * 0.5
+                        color: qgcPal.window
+                        border.color: qgcPal.text
+                        border.width: ScreenTools.defaultFontPixelWidth * 0.125
+                        visible: controller.hasLeftRockerGimbalPitch
+                        x: (parent.width * 0.25) - (width * 0.5)
+                        y: -height
+                    }
+                    Rectangle {
+                        color: qgcPal.colorGreen
+                        width: parent.width * 0.035
+                        height: width
+                        radius: width * 0.5
+                        visible: controller.hasLeftRockerGimbalPitch
+                                 && parent.hasStickPositions
+                        x: (parent.width * controller.stickPositions[5]) - (width * 0.5)
+                        y: -height
+                    }
+
+
+                    //---------------------------------------------------------
                     //-- Right rocker zoom (Kutta and SRoC)
                     Rectangle {
                         width: parent.width * 0.25

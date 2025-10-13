@@ -528,7 +528,6 @@ public:
     /// Provides access to the Firmware Plugin for this Vehicle
     FirmwarePlugin* firmwarePlugin() { return _firmwarePlugin; }
 
-
     QGeoCoordinate homePosition();
 
     bool armed              () const{ return _armed; }

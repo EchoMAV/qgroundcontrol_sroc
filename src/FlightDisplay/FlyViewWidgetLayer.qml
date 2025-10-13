@@ -172,6 +172,41 @@ Item {
         property bool _verticalCenter: !QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel.rawValue
     }
 
+    // === Gimbal Pitch Slider ===
+    Slider {
+        id: gimbalPitchSlider
+        anchors.right: parent.right
+        anchors.rightMargin: ScreenTools.defaultFontPixelWidth * 2
+        anchors.verticalCenter: parent.verticalCenter
+        height: parent.height * 0.55
+        width: ScreenTools.defaultFontPixelWidth * 5
+        orientation: Qt.Vertical
+        visible: _activeVehicle && _activeVehicle.cameraAvailable  // optional visibility logic
+
+        from: -90
+        to: 90
+        stepSize: 1
+        value: 0
+
+        onValueChanged: {
+            if (_activeVehicle)
+                _activeVehicle.sendGimbalPitch(value)
+        }
+
+        background: Rectangle {
+            anchors.fill: parent
+            radius: 4
+            color: Qt.rgba(0.2,0.2,0.2,0.5)
+        }
+
+        handle: Rectangle {
+            implicitWidth: 24
+            implicitHeight: 10
+            radius: 5
+            color: "#00C853"
+        }
+    }
+
     TelemetryValuesBar {
         id: telemetryPanel
         x: recalcXPosition()

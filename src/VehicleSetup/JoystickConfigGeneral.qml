@@ -108,6 +108,7 @@ Item {
                     }
                 }
             }
+
             /*
             //---------------------------------------------------------------------
             //-- RC Mode
@@ -239,14 +240,30 @@ Item {
                         reversed: controller.zoomAxisReversed
                     }
 
+                    QGCLabel {
+                        id: gimbalPitchLabel
+                        visible: controller.hasLeftRockerGimbalPitch
+                        width: _attitudeLabelWidth
+                        text: qsTr("Gimbal Pitch")
+                    }
+                    AxisMonitor {
+                        id: gimbalPitchAxis
+                        visible: controller.hasLeftRockerGimbalPitch
+                        height: ScreenTools.defaultFontPixelHeight
+                        width: axisMonitorWidth
+                        mapped: controller.gimbalPitchAxisMapped
+                        reversed: controller.gimbalPitchAxisReversed
+                    }
+
                     Connections {
                         target: _activeJoystick
-                        onAxisValues: (roll, pitch, yaw, throttle, zoom) => {
+                        onAxisValues: (roll, pitch, yaw, throttle, zoom, gimbalPitch) => {
                                           rollAxis.axisValue = roll * 32768.0
                                           pitchAxis.axisValue = pitch * 32768.0
                                           yawAxis.axisValue = yaw * 32768.0
                                           throttleAxis.axisValue = _activeJoystick.negativeThrust ? throttle * -32768.0 : (-2 * throttle + 1) * 32768.0
                                           zoomAxis.axisValue = zoom * 32768.0
+                                          gimbalPitchAxis.axisValue = gimbalPitch * -32768.0
                                       }
                     }
                 }

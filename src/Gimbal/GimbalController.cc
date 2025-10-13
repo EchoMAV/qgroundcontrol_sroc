@@ -5,10 +5,19 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "ParameterManager.h"
+#include <libssh/libssh.h>
 
 #include <Eigen/Eigen>
 
 QGC_LOGGING_CATEGORY(GimbalLog, "GimbalLog")
+
+namespace
+{
+static constexpr char const*const np_pi_herelink_host = "192.168.144.100";
+static constexpr char const*const np_monark_name_and_pass = "monark";
+static constexpr char const*const np_scrollWheelGimbalFile = "/home/monark/.herelinkScrollGimbal";
+
+}
 
 const char* GimbalController::_gimbalFactGroupNamePrefix =  "gimbal";
 const char* Gimbal::_absoluteRollFactName =                 "gimbalRoll";
@@ -17,6 +26,55 @@ const char* Gimbal::_bodyYawFactName =                      "gimbalYaw";
 const char* Gimbal::_absoluteYawFactName =                  "gimbalAzimuth";
 const char* Gimbal::_deviceIdFactName =                     "deviceId";
 const char* Gimbal::_managerCompidFactName =                "managerCompid";
+
+
+ThreadWorker::ThreadWorker()
+    : m_taskQueueCondition{}
+    , m_taskQueueMut{}
+    , m_taskQueue{}
+    , m_shutdown{false}
+{
+}
+
+bool ThreadWorker::needDispatch()
+{
+    return QThread::currentThread() != this;
+}
+
+void ThreadWorker::dispatch(std::function<void()> t)
+{
+    QMutexLocker lock(&m_taskQueueMut);
+    m_taskQueue.enqueue(t);
+    m_taskQueueCondition.wakeAll();
+}
+
+void ThreadWorker::shutdown()
+{
+    if(needDispatch())
+    {
+        dispatch([this](){m_shutdown=true;});
+        QThread::wait();
+    }
+    else
+    {
+        QThread::terminate();
+    }
+}
+
+void ThreadWorker::run()
+{
+    while(!m_shutdown)
+    {
+        m_taskQueueMut.lock();
+        while(m_taskQueue.isEmpty())
+        {
+            m_taskQueueCondition.wait(&m_taskQueueMut);
+        }
+        auto const t = m_taskQueue.dequeue();
+        m_taskQueueMut.unlock();
+        t();
+    }
+}
 
 Gimbal::Gimbal()
     : FactGroup(100, ":/json/Vehicle/GimbalFact.json") // No need to set parent as this will be deleted by gimbalController destructor
@@ -85,14 +143,21 @@ GimbalController::GimbalController(MAVLinkProtocol* mavlink, Vehicle* vehicle)
     : _mavlink(mavlink)
     , _vehicle(vehicle)
     , _activeGimbal(nullptr)
+    , _scrollWheelGimbal(false)
+    , mp_slotHandler{std::make_unique<ThreadWorker>()}
+
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &GimbalController::_mavlinkMessageReceived);
+    mp_slotHandler->start();
+
 }
 
 GimbalController::~GimbalController()
 {
     _gimbals.clearAndDeleteContents();
+    mp_slotHandler->shutdown();
+
 }
 
 void
@@ -110,6 +175,234 @@ GimbalController::setActiveGimbal(Gimbal* gimbal)
     }
 
     sendPitchBodyYaw(0,0,false);
+    _readScrollWheelGimbalSetting();
+}
+
+void GimbalController::_readScrollWheelGimbalSetting()
+{
+    if(mp_slotHandler->needDispatch())
+    {
+        mp_slotHandler->dispatch([this](){_readScrollWheelGimbalSetting();});
+    }
+    else
+    {
+        if(qgcApp()->isHerelink())
+        {
+            qCDebug(GimbalLog) << "ENTER GimbalController::_readScrollWheelGimbalSetting()";
+            ssh_session p_session = nullptr;
+            ssh_channel p_channel = nullptr;
+            int returnCode=0;
+            bool isConnected=false;
+            char p_buffer[4096];
+            do
+            {
+                p_session = ssh_new();
+                if(!p_session)
+                {
+                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() :  Unable to create SSH session";
+                    break;
+                }
+                returnCode=ssh_options_set(p_session, SSH_OPTIONS_HOST, np_pi_herelink_host);
+                if(returnCode)
+                {
+                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() : ssh_options_set failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    break;
+                }
+                returnCode=ssh_connect(p_session);
+                if(returnCode)
+                {
+                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() : ssh_connect failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    break;
+                }
+                isConnected=true;
+                returnCode = ssh_userauth_password(p_session, np_monark_name_and_pass, np_monark_name_and_pass);
+                if(returnCode)
+                {
+                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() : ssh_userauth_password failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    break;
+                }
+                p_channel=ssh_channel_new(p_session);
+                if(!p_channel)
+                {
+                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() : ssh_channel_new failed: "<<ssh_get_error(p_session);
+                    break;
+                }
+                returnCode = ssh_channel_open_session(p_channel);
+                if(returnCode)
+                {
+                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() : ssh_channel_open_session failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    break;
+                }
+                returnCode = ssh_channel_request_shell(p_channel);
+                if(returnCode)
+                {
+                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() : ssh_channel_request_shell failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    break;
+                }
+                QString command = QString("test -f ")+np_scrollWheelGimbalFile+" && echo exists || echo not found";
+                ssh_channel_write(p_channel,command.toUtf8().data(), command.size());
+                char* p_bufferItr = &p_buffer[0];
+                auto const start = std::chrono::system_clock::now();
+                for(;;)
+                {
+                    if(!ssh_channel_is_open(p_channel))
+                    {
+                        break;
+                    }
+                    if(ssh_channel_poll_timeout(p_channel,2000,0)>0)
+                    {
+                        int numBytesRead = ssh_channel_read(p_channel, p_bufferItr, sizeof(p_buffer) - (p_bufferItr - (&p_buffer[0])),0);
+                        p_bufferItr+=numBytesRead;
+                        if(numBytesRead>0)
+                        {
+                            QString responseStr=  QString::fromUtf8(p_buffer,p_bufferItr - (&p_buffer[0]));
+                            qCDebug(GimbalLog) <<"responseStr = "<<responseStr;
+                            if(responseStr.indexOf("exists")>=0)
+                            {
+                                _scrollWheelGimbal=true;
+                                //the file exists
+                                break;
+                            }
+                            else if(responseStr.indexOf("not found")>=0)
+                            {
+                                _scrollWheelGimbal=false;
+                                //the file does not exist
+                                break;
+                            }
+                        }
+                    }
+                    if(std::chrono::system_clock::now() - start > std::chrono::seconds(5))
+                    {
+                        break;
+                    }
+                    if(size_t(p_bufferItr - (&p_buffer[0])) >= sizeof(p_buffer))
+                    {
+                        break;
+                    }
+                }
+            }
+            while(false);
+            if(p_channel)
+            {
+                ssh_channel_close(p_channel);
+                ssh_channel_free(p_channel);
+                p_channel=nullptr;
+            }
+            if(isConnected)
+            {
+                ssh_disconnect(p_session);
+                isConnected=false;
+            }
+            if(p_session)
+            {
+                ssh_free(p_session);
+                p_session=nullptr;
+            }
+            ssh_finalize();
+            emit scrollWheelGimbalChanged();
+            qCDebug(GimbalLog) << "EXIT  GimbalController::_readScrollWheelGimbalSetting()";
+
+        }
+    }
+}
+
+void GimbalController::setScrollWheelGimbal(bool val)
+{
+    if(mp_slotHandler->needDispatch())
+    {
+        mp_slotHandler->dispatch([this,val](){setScrollWheelGimbal(val);});
+    }
+    else
+    {
+        if(qgcApp()->isHerelink() && _scrollWheelGimbal!=val)
+        {
+            _scrollWheelGimbal=val;
+            ssh_session p_session = nullptr;
+            ssh_channel p_channel = nullptr;
+            int returnCode=0;
+            bool isConnected=false;
+            do
+            {
+                p_session = ssh_new();
+                if(!p_session)
+                {
+                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") :  Unable to create SSH session";
+                    break;
+                }
+                returnCode=ssh_options_set(p_session, SSH_OPTIONS_HOST, np_pi_herelink_host);
+                if(returnCode)
+                {
+                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_options_set failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    break;
+                }
+                returnCode=ssh_connect(p_session);
+                if(returnCode)
+                {
+                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_connect failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    break;
+                }
+                isConnected=true;
+                returnCode = ssh_userauth_password(p_session, np_monark_name_and_pass, np_monark_name_and_pass);
+                if(returnCode)
+                {
+                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_userauth_password failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    break;
+                }
+                p_channel=ssh_channel_new(p_session);
+                if(!p_channel)
+                {
+                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_channel_new failed: "<<ssh_get_error(p_session);
+                    break;
+                }
+                returnCode = ssh_channel_open_session(p_channel);
+                if(returnCode)
+                {
+                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_channel_open_session failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    break;
+                }
+                returnCode = ssh_channel_request_shell(p_channel);
+                if(returnCode)
+                {
+                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_channel_request_shell failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    break;
+                }
+                QString command;
+                if(_scrollWheelGimbal)
+                {
+                    command = QString("touch ") + np_scrollWheelGimbalFile;
+                }
+                else
+                {
+                    command = QString("rm ") + np_scrollWheelGimbalFile;
+                }
+                returnCode = ssh_channel_write(p_channel,command.toUtf8().data(), command.size());
+                if(returnCode <= 0)
+                {
+                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_channel_write failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
+                    break;
+                }
+            }
+            while(false);
+            if(p_channel)
+            {
+                ssh_channel_close(p_channel);
+                ssh_channel_free(p_channel);
+                p_channel=nullptr;
+            }
+            if(isConnected)
+            {
+                ssh_disconnect(p_session);
+                isConnected=false;
+            }
+            if(p_session)
+            {
+                ssh_free(p_session);
+                p_session=nullptr;
+            }
+            ssh_finalize();
+            emit scrollWheelGimbalChanged();
+        }
+    }
 }
 
 void
@@ -149,6 +442,7 @@ GimbalController::_handleHeartbeat(const mavlink_message_t& message)
     // This is because we address the gimbal manager by compid, but a gimbal device might have an
     // id different than the message compid it comes from. For more information see https://mavlink.io/en/services/gimbal_v2.html
     if (!gimbalManager.receivedInformation && gimbalManager.requestGimbalManagerInformationRetries > 0) {
+        qCWarning(GimbalLog) << "_requestGimbalInformation = " << message.compid;
         _requestGimbalInformation(message.compid);
         --gimbalManager.requestGimbalManagerInformationRetries;
     }
@@ -252,6 +546,7 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
     GimbalPairId pairId;
 
     // If gimbal_device_id is 0, we must take the compid of the message
+    qCDebug(GimbalLog) << "attitude_status.gimbal_device_id = " << attitude_status.gimbal_device_id << " message.compid = " << message.compid;
     if (attitude_status.gimbal_device_id == 0) {
         pairId.deviceId = message.compid;
 
@@ -289,6 +584,7 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
 
     float roll, pitch, yaw;
     mavlink_quaternion_to_euler(attitude_status.q, &roll, &pitch, &yaw);
+    qCDebug(GimbalLog) << "pitch qRadiansToDegrees=" << qRadiansToDegrees(pitch);
 
     gimbal.setAbsoluteRoll(qRadiansToDegrees(roll));
     gimbal.setAbsolutePitch(qRadiansToDegrees(pitch));
@@ -325,7 +621,7 @@ GimbalController::_requestGimbalInformation(uint8_t compid)
     qCDebug(GimbalLog) << "_requestGimbalInformation(" << compid << ")";
 
     if(_vehicle) {
-        _vehicle->sendMavCommand(compid,
+        _vehicle->sendMavCommand(190,
                                  MAV_CMD_REQUEST_MESSAGE,
                                  false /* no error */,
                                  MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION);
@@ -341,6 +637,7 @@ GimbalController::_checkComplete(Gimbal& gimbal, GimbalPairId pairId)
     }
 
     if (!gimbal._receivedInformation && gimbal._requestInformationRetries > 0) {
+        qCWarning(GimbalLog) << "_requestGimbalInformation _checkComplete= " << pairId.managerCompid;
         _requestGimbalInformation(pairId.managerCompid);
         --gimbal._requestInformationRetries;
     }
@@ -368,6 +665,7 @@ GimbalController::_checkComplete(Gimbal& gimbal, GimbalPairId pairId)
         // telling us which gimbal device it is responsible for.
         uint8_t gimbalDeviceCompid = pairId.deviceId;
         // If the device ID is 1-6, we need to request the message from the manager itself.
+        qCDebug(GimbalLog) << "gimbalDeviceCompid = " << gimbalDeviceCompid;
         if (gimbalDeviceCompid <= 6) {
             gimbalDeviceCompid = pairId.managerCompid;
         }
@@ -436,8 +734,10 @@ void GimbalController::gimbalPitchStep(int direction)
     }
 
     if (_activeGimbal->yawLock()) {
+        qCDebug(GimbalLog) << "sendPitchAbsoluteYaw absolutePitch: " << _activeGimbal->absolutePitch()->rawValue().toFloat();
         sendPitchAbsoluteYaw(_activeGimbal->absolutePitch()->rawValue().toFloat() + direction, _activeGimbal->absoluteYaw()->rawValue().toFloat(), false);
     } else {
+        qCDebug(GimbalLog) << "sendPitchBodyYaw absolutePitch: " << _activeGimbal->absolutePitch()->rawValue().toFloat();
         sendPitchBodyYaw(_activeGimbal->absolutePitch()->rawValue().toFloat() + direction, _activeGimbal->bodyYaw()->rawValue().toFloat(), false);
     }
 }
@@ -445,7 +745,7 @@ void GimbalController::gimbalPitchStep(int direction)
 void GimbalController::gimbalYawStep(int direction)
 {
     if (!_activeGimbal) {
-        qCDebug(GimbalLog) << "gimbalStepPitch: active gimbal is nullptr, returning";
+        qCDebug(GimbalLog) << "gimbalYawStep: active gimbal is nullptr, returning";
         return;
     }
 
@@ -459,7 +759,7 @@ void GimbalController::gimbalYawStep(int direction)
 void GimbalController::centerGimbal()
 {
     if (!_activeGimbal) {
-        qCDebug(GimbalLog) << "gimbalYawStep: active gimbal is nullptr, returning";
+        qCDebug(GimbalLog) << "centerGimbal: active gimbal is nullptr, returning";
         return;
     }
     sendPitchBodyYaw(0.0, 0.0);
@@ -515,7 +815,7 @@ void GimbalController::sendPitchBodyYaw(float pitch, float yaw, bool showError) 
         return;
     }
 
-    // qDebug() << "sendPitch: " << pitch << " BodyYaw: " << yaw;
+    qCDebug(GimbalLog) << "sendPitch: " << pitch << " BodyYaw: " << yaw << " ComponentID: "<<_activeGimbal->managerCompid()->rawValue().toUInt()<<" DeviceID: "<<_activeGimbal->deviceId()->rawValue().toUInt();
 
     unsigned flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK
         | GIMBAL_MANAGER_FLAGS_PITCH_LOCK
@@ -547,12 +847,13 @@ void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool showErr
         yaw += 360.0f;
     }
 
-    // qDebug() << "sendPitch: " << pitch << " absoluteYaw: " << yaw;
+    qDebug() << "sendPitch: " << pitch << " absoluteYaw: " << yaw;
 
     unsigned flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK
         | GIMBAL_MANAGER_FLAGS_PITCH_LOCK
         | GIMBAL_MANAGER_FLAGS_YAW_LOCK
-        | GIMBAL_MANAGER_FLAGS_YAW_IN_EARTH_FRAME;
+        | GIMBAL_MANAGER_FLAGS_YAW_IN_VEHICLE_FRAME;
+        //| GIMBAL_MANAGER_FLAGS_YAW_IN_EARTH_FRAME;
 
     _vehicle->sendMavCommand(
                 _activeGimbal->managerCompid()->rawValue().toUInt(),
@@ -621,6 +922,7 @@ void GimbalController::acquireGimbalControl()
         qCDebug(GimbalLog) << "acquireGimbalControl: active gimbal is nullptr, returning";
         return;
     }
+    qCDebug(GimbalLog) << "acquireGimbalControl: gimbal aquired" << _mavlink->getSystemId() << _mavlink->getComponentId() << _activeGimbal->deviceId()->rawValue().toUInt();
     _vehicle->sendMavCommand(
         _activeGimbal->managerCompid()->rawValue().toUInt(),
         MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
@@ -640,6 +942,7 @@ void GimbalController::releaseGimbalControl()
         qCDebug(GimbalLog) << "releaseGimbalControl: active gimbal is nullptr, returning";
         return;
     }
+    qCDebug(GimbalLog) << "releaseGimbalControl: gimbal released";
     _vehicle->sendMavCommand(
         _activeGimbal->managerCompid()->rawValue().toUInt(),
         MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,

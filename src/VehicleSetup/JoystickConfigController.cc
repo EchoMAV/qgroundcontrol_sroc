@@ -27,47 +27,55 @@ const int JoystickConfigController::_calMinDelta =          1000;       ///< Amo
 const int JoystickConfigController::_stickDetectSettleMSecs = 500;
 
 static const JoystickConfigController::stateStickPositions stSticksCentered {
-    0.25, 0.5, 0.75, 0.5, 0.75
+    0.25, 0.5, 0.75, 0.5, 0.75, 0.25
 };
 
 static const JoystickConfigController::stateStickPositions stLeftStickUp {
-    0.25, 0.3084, 0.75, 0.5, 0.75
+    0.25, 0.3084, 0.75, 0.5, 0.75, 0.25
 };
 
 static const JoystickConfigController::stateStickPositions stLeftStickDown {
-    0.25, 0.6916, 0.75, 0.5, 0.75
+    0.25, 0.6916, 0.75, 0.5, 0.75, 0.25
 };
 
 static const JoystickConfigController::stateStickPositions stLeftStickLeft {
-    0.1542, 0.5, 0.75, 0.5, 0.75
+    0.1542, 0.5, 0.75, 0.5, 0.75, 0.25
 };
 
 static const JoystickConfigController::stateStickPositions stLeftStickRight {
-    0.3458, 0.5, 0.75, 0.5, 0.75
+    0.3458, 0.5, 0.75, 0.5, 0.75, 0.25
 };
 
 static const JoystickConfigController::stateStickPositions stRightStickUp {
-    0.25, 0.5, 0.75, 0.3084, 0.75
+    0.25, 0.5, 0.75, 0.3084, 0.75, 0.25
 };
 
 static const JoystickConfigController::stateStickPositions stRightStickDown {
-    0.25, 0.5, 0.75, 0.6916, 0.75
+    0.25, 0.5, 0.75, 0.6916, 0.75, 0.25
 };
 
 static const JoystickConfigController::stateStickPositions stRightStickLeft {
-    0.25, 0.5, 0.6542, 0.5, 0.75
+    0.25, 0.5, 0.6542, 0.5, 0.75, 0.25
 };
 
 static const JoystickConfigController::stateStickPositions stRightStickRight {
-    0.25, 0.5, 0.8423, 0.5, 0.75
+    0.25, 0.5, 0.8423, 0.5, 0.75, 0.25
 };
 
 static const JoystickConfigController::stateStickPositions stSticksRightRockerLeft {
-    0.25, 0.5, 0.75, 0.5, 0.6542
+    0.25, 0.5, 0.75, 0.5, 0.6542, 0.25
 };
 
 static const JoystickConfigController::stateStickPositions stSticksRightRockerRight {
-    0.25, 0.5, 0.75, 0.5, 0.8423
+    0.25, 0.5, 0.75, 0.5, 0.8423, 0.25
+};
+
+static const JoystickConfigController::stateStickPositions stSticksLeftRockerLeft {
+    0.25, 0.5, 0.75, 0.5, 0.75, 0.1542
+};
+
+static const JoystickConfigController::stateStickPositions stSticksLeftRockerRight {
+    0.25, 0.5, 0.75, 0.5, 0.75, 0.3458
 };
 
 JoystickConfigController::JoystickConfigController(void)
@@ -76,11 +84,12 @@ JoystickConfigController::JoystickConfigController(void)
     
     connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::_activeJoystickChanged);
     connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::hasRightRockerZoomChanged);
+    connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::hasLeftRockerGimbalPitchChanged);
 
     _activeJoystickChanged(_joystickManager->activeJoystick());
     _setStickPositions();
     _resetInternalCalibrationValues();
-    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY << _sticksCentered.rightRockerX;
+    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY << _sticksCentered.rightRockerX<< _sticksCentered.leftRockerX;
 }
 
 void JoystickConfigController::start(void)
@@ -120,24 +129,30 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
     static const char* msgZoomIn =              "Move the Zoom stick all the way to the right and hold it there...";
     static const char* msgZoomOut =             "Move the Zoom stick all the way to the left and hold it there...";
     static const char* msgZoomCenter =          "Allow the Zoom stick to move back to center...";
+    static const char* msgGimbalPitchDown =     "Move the Gimbal Pitch stick all the way to the right and hold it there...";
+    static const char* msgGimbalPitchUp =       "Move the Gimbal Pitch stick all the way to the left and hold it there...";
+    static const char* msgGimbalPitchCenter =   "Allow the Gimbal Pitch stick to move back to center...";
     static const char* msgComplete =            "All settings have been captured.\nClick Next to enable the joystick.";
 
     static const stateMachineEntry rgStateMachine[] = {
         //Function
-        { Joystick::maxFunction,            msgBegin,           _sticksCentered,        &JoystickConfigController::_inputCenterWaitBegin,   &JoystickConfigController::_saveAllTrims,        nullptr, 0 },
-        { Joystick::throttleFunction,       msgThrottleUp,      _sticksThrottleUp,      &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 0 },
-        { Joystick::throttleFunction,       msgThrottleDown,    _sticksThrottleDown,    &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 0 },
-        { Joystick::yawFunction,            msgYawRight,        _sticksYawRight,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 1 },
-        { Joystick::yawFunction,            msgYawLeft,         _sticksYawLeft,         &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 1 },
-        { Joystick::rollFunction,           msgRollRight,       _sticksRollRight,       &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 2 },
-        { Joystick::rollFunction,           msgRollLeft,        _sticksRollLeft,        &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 2 },
-        { Joystick::pitchFunction,          msgPitchUp,         _sticksPitchUp,         &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 3 },
-        { Joystick::pitchFunction,          msgPitchDown,       _sticksPitchDown,       &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 3 },
-        { Joystick::pitchFunction,          msgPitchCenter,     _sticksCentered,        &JoystickConfigController::_inputCenterWait,        nullptr,                                         nullptr, 3 },
-        { Joystick::zoomFunction,           msgZoomIn,          _sticksZoomIn,          &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 4 },
-        { Joystick::zoomFunction,           msgZoomOut,         _sticksZoomOut,         &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 4 },
-        { Joystick::zoomFunction,           msgZoomCenter,      _sticksCentered,        &JoystickConfigController::_inputCenterWait,        nullptr,                                         nullptr, 4 },
-        { Joystick::maxFunction,            msgComplete,        _sticksCentered,        nullptr,                                            &JoystickConfigController::_writeCalibration,    nullptr, -1 },
+        { Joystick::maxFunction,            msgBegin,             _sticksCentered,        &JoystickConfigController::_inputCenterWaitBegin,   &JoystickConfigController::_saveAllTrims,        nullptr, 0 },
+        { Joystick::throttleFunction,       msgThrottleUp,        _sticksThrottleUp,      &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 0 },
+        { Joystick::throttleFunction,       msgThrottleDown,      _sticksThrottleDown,    &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 0 },
+        { Joystick::yawFunction,            msgYawRight,          _sticksYawRight,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 1 },
+        { Joystick::yawFunction,            msgYawLeft,           _sticksYawLeft,         &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 1 },
+        { Joystick::rollFunction,           msgRollRight,         _sticksRollRight,       &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 2 },
+        { Joystick::rollFunction,           msgRollLeft,          _sticksRollLeft,        &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 2 },
+        { Joystick::pitchFunction,          msgPitchUp,           _sticksPitchUp,         &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 3 },
+        { Joystick::pitchFunction,          msgPitchDown,         _sticksPitchDown,       &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 3 },
+        { Joystick::pitchFunction,          msgPitchCenter,       _sticksCentered,        &JoystickConfigController::_inputCenterWait,        nullptr,                                         nullptr, 3 },
+        { Joystick::zoomFunction,           msgZoomIn,            _sticksZoomIn,          &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 4 },
+        { Joystick::zoomFunction,           msgZoomOut,           _sticksZoomOut,         &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 4 },
+        { Joystick::zoomFunction,           msgZoomCenter,        _sticksCentered,        &JoystickConfigController::_inputCenterWait,        nullptr,                                         nullptr, 4 },
+        { Joystick::gimbalPitchFunction,    msgGimbalPitchDown,   _sticksGimbalPitchDown, &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 5 },
+        { Joystick::gimbalPitchFunction,    msgGimbalPitchUp,     _sticksGimbalPitchUp,   &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 5 },
+        { Joystick::gimbalPitchFunction,    msgGimbalPitchCenter, _sticksCentered,        &JoystickConfigController::_inputCenterWait,        nullptr,                                         nullptr, 5 },
+        { Joystick::maxFunction,            msgComplete,          _sticksCentered,        nullptr,                                            &JoystickConfigController::_writeCalibration,    nullptr, -1 },
     };
 
     Q_ASSERT(step >= 0 && step < static_cast<int>((sizeof(rgStateMachine) / sizeof(rgStateMachine[0]))));
@@ -149,7 +164,12 @@ void JoystickConfigController::_advanceState()
     if(_currentStep == 9 && !hasRightRockerZoom())
     {
         //Skip to end if no zoom function
-        _currentStep = 13;
+        _currentStep = 15;
+    }
+    else if(_currentStep==12 && !hasLeftRockerGimbalPitch())
+    {
+        //Skip to end if no gimbal pitch function
+        _currentStep = 15;
     }
     else
     {
@@ -174,7 +194,19 @@ bool JoystickConfigController::hasRightRockerZoom()
     if(_activeJoystick && _activeJoystick->axisCount() > 4 && _joystickManager)
     {
         QString const& activeJoystickName = _joystickManager->activeJoystickName();
-        return activeJoystickName == "Kutta KTAC GC v1" || "Kutta KTAC GC v2" || activeJoystickName == "UXV Technologies SROC";
+        return activeJoystickName == "Kutta KTAC GC v1" || activeJoystickName == "Kutta KTAC GC v2" || activeJoystickName == "UXV Technologies SROC" || activeJoystickName == "EchoMAV EchoControl";
+    }
+    return false;
+}
+
+bool JoystickConfigController::hasLeftRockerGimbalPitch()
+{
+    if(_activeJoystick && _activeJoystick->axisCount() > 5 && _joystickManager)
+    {
+        QString const& activeJoystickName = _joystickManager->activeJoystickName();
+        return activeJoystickName == "Kutta KTAC GC v2" || activeJoystickName == "EchoMAV EchoControl";
+        //TODO add activeJoystickName == "Kutta KTAC GC v1";
+        //TODO add activeJoystickName == "UXV Technologies SROC";
     }
     return false;
 }
@@ -197,7 +229,7 @@ void JoystickConfigController::_setupCurrentState()
     _stickDetectSettleStarted = false;
     _calSaveCurrentValues();
     _currentStickPositions.clear();
-    _currentStickPositions << state->stickPositions.leftX << state->stickPositions.leftY << state->stickPositions.rightX << state->stickPositions.rightY << state->stickPositions.rightRockerX;
+    _currentStickPositions << state->stickPositions.leftX << state->stickPositions.leftY << state->stickPositions.rightX << state->stickPositions.rightY << state->stickPositions.rightRockerX << state->stickPositions.leftRockerX;
     emit stickPositionsChanged();
     emit nextEnabledChanged();
     emit skipEnabledChanged();
@@ -598,7 +630,7 @@ void JoystickConfigController::_stopCalibration()
     _setStatusText("");
     emit calibratingChanged();
     _currentStickPositions.clear();
-    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY << _sticksCentered.rightRockerX;
+    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY << _sticksCentered.rightRockerX  << _sticksCentered.leftRockerX;
     emit stickPositionsChanged();
 }
 
@@ -616,16 +648,18 @@ void JoystickConfigController::_setStickPositions()
     _sticksCentered = stSticksCentered;
     switch(_transmitterMode) {
     case 1:
-        _sticksThrottleUp   = stRightStickUp;
-        _sticksThrottleDown = stRightStickDown;
-        _sticksYawLeft      = stLeftStickLeft;
-        _sticksYawRight     = stLeftStickRight;
-        _sticksRollLeft     = stRightStickLeft;
-        _sticksRollRight    = stRightStickRight;
-        _sticksPitchUp      = stLeftStickUp;
-        _sticksPitchDown    = stLeftStickDown;
-        _sticksZoomIn       = stSticksRightRockerRight;
-        _sticksZoomOut      = stSticksRightRockerLeft;
+        _sticksThrottleUp      = stRightStickUp;
+        _sticksThrottleDown    = stRightStickDown;
+        _sticksYawLeft         = stLeftStickLeft;
+        _sticksYawRight        = stLeftStickRight;
+        _sticksRollLeft        = stRightStickLeft;
+        _sticksRollRight       = stRightStickRight;
+        _sticksPitchUp         = stLeftStickUp;
+        _sticksPitchDown       = stLeftStickDown;
+        _sticksZoomIn          = stSticksRightRockerRight;
+        _sticksZoomOut         = stSticksRightRockerLeft;
+        _sticksGimbalPitchDown = stSticksLeftRockerRight;
+        _sticksGimbalPitchUp   = stSticksLeftRockerLeft;
         break;
     case 2:
         _sticksThrottleUp   = stLeftStickUp;
@@ -638,6 +672,8 @@ void JoystickConfigController::_setStickPositions()
         _sticksPitchDown    = stRightStickDown;
         _sticksZoomIn       = stSticksRightRockerRight;
         _sticksZoomOut      = stSticksRightRockerLeft;
+        _sticksGimbalPitchDown = stSticksLeftRockerRight;
+        _sticksGimbalPitchUp   = stSticksLeftRockerLeft;
         break;
     case 3:
         _sticksThrottleUp   = stRightStickUp;
@@ -650,6 +686,8 @@ void JoystickConfigController::_setStickPositions()
         _sticksPitchDown    = stLeftStickDown;
         _sticksZoomIn       = stSticksRightRockerRight;
         _sticksZoomOut      = stSticksRightRockerLeft;
+        _sticksGimbalPitchDown = stSticksLeftRockerRight;
+        _sticksGimbalPitchUp   = stSticksLeftRockerLeft;
         break;
     case 4:
         _sticksThrottleUp   = stLeftStickUp;
@@ -662,6 +700,8 @@ void JoystickConfigController::_setStickPositions()
         _sticksPitchDown    = stRightStickDown;
         _sticksZoomIn       = stSticksRightRockerRight;
         _sticksZoomOut      = stSticksRightRockerLeft;
+        _sticksGimbalPitchDown = stSticksLeftRockerRight;
+        _sticksGimbalPitchUp   = stSticksLeftRockerLeft;
         break;
     default:
         Q_ASSERT(false);
@@ -713,6 +753,15 @@ bool JoystickConfigController::zoomAxisReversed()
     }
 }
 
+bool JoystickConfigController::gimbalPitchAxisReversed()
+{
+    if (_rgFunctionAxisMapping[Joystick::gimbalPitchFunction] != _axisNoAxis) {
+        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::gimbalPitchFunction]].reversed;
+    } else {
+        return false;
+    }
+}
+
 void JoystickConfigController::setTransmitterMode(int mode)
 {
     // Mode selection is disabled during calibration
@@ -731,12 +780,14 @@ void JoystickConfigController::_signalAllAttitudeValueChanges()
     emit yawAxisMappedChanged(yawAxisMapped());
     emit throttleAxisMappedChanged(throttleAxisMapped());
     emit zoomAxisMappedChanged(zoomAxisMapped());
+    emit gimbalPitchAxisMappedChanged(gimbalPitchAxisMapped());
 
     emit rollAxisReversedChanged(rollAxisReversed());
     emit pitchAxisReversedChanged(pitchAxisReversed());
     emit yawAxisReversedChanged(yawAxisReversed());
     emit throttleAxisReversedChanged(throttleAxisReversed());
     emit zoomAxisReversedChanged(zoomAxisReversed());
+    emit gimbalPitchAxisReversedChanged(gimbalPitchAxisReversed());
 
     emit transmitterModeChanged(_transmitterMode);
 }

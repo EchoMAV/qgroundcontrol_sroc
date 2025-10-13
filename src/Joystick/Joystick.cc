@@ -226,6 +226,7 @@ void Joystick::_setDefaultCalibration(void) {
     else if(_name == "Kutta KTAC GC v2")
     {
         _rgCalibration[pitchFunction].reversed = true;
+        //_rgCalibration[gimbalPitchFunction].reversed = true;
         //_rgCalibration[throttleFunction].reversed = true;
 
         _rgFunctionAxis[rollFunction]       = 5;
@@ -233,8 +234,8 @@ void Joystick::_setDefaultCalibration(void) {
         _rgFunctionAxis[yawFunction]        = 7;
         _rgFunctionAxis[throttleFunction]   = 6;
         _rgFunctionAxis[zoomFunction]       = 3;
-        _rgFunctionAxis[gimbalPitchFunction]= 1;
-        _rgFunctionAxis[gimbalYawFunction]  = 4;
+        _rgFunctionAxis[gimbalPitchFunction]= 4;
+        _rgFunctionAxis[gimbalYawFunction]  = 1;
         _deadband = false;
         //_deadband           = true;
         //for(int axis=0;axis<_axisCount;++axis)
@@ -292,11 +293,12 @@ void Joystick::_setDefaultCalibration(void) {
         _rgCalibration[pitchFunction].reversed = true;
         _rgCalibration[throttleFunction].reversed = true;
 
-        _rgFunctionAxis[rollFunction]       = 5;
-        _rgFunctionAxis[pitchFunction]      = 4;
-        _rgFunctionAxis[yawFunction]        = 2;
-        _rgFunctionAxis[throttleFunction]   = 1;
-        _rgFunctionAxis[zoomFunction]       = 0;
+        _rgFunctionAxis[rollFunction]        = 5;
+        _rgFunctionAxis[pitchFunction]       = 4;
+        _rgFunctionAxis[yawFunction]         = 2;
+        _rgFunctionAxis[throttleFunction]    = 1;
+        _rgFunctionAxis[zoomFunction]        = 0;
+        _rgFunctionAxis[gimbalPitchFunction] = 3;
         _deadband           = false;
 
 
@@ -670,6 +672,7 @@ void Joystick::run()
     _open();
     //-- Reset timers
     _axisTime.start();
+    _gimbalAxisTimer.start();
     for (int buttonIndex = 0; buttonIndex < _totalButtonCount; buttonIndex++) {
         if(_buttonActionArray[buttonIndex]) {
             _buttonActionArray[buttonIndex]->buttonTime.start();
@@ -825,12 +828,12 @@ void Joystick::_handleAxis()
 
             if(_axisCount > 5) {
                 axis = _rgFunctionAxis[gimbalPitchFunction];
-                gimbalPitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband, false);
+                gimbalPitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband, _rgCalibration[axis].reversed);
             }
 
             if(_axisCount > 6) {
                 axis = _rgFunctionAxis[gimbalYawFunction];
-                gimbalYaw = _adjustRange(_rgAxisValues[axis],   _rgCalibration[axis],_deadband, false);
+                gimbalYaw = _adjustRange(_rgAxisValues[axis],   _rgCalibration[axis],_deadband, _rgCalibration[axis].reversed);
             }
 
             if (_accumulator) {
@@ -883,7 +886,7 @@ void Joystick::_handleAxis()
                     buttonPressedBits |= buttonBit;
                 }
             }
-            emit axisValues(roll, pitch, yaw, throttle, zoom);
+            emit axisValues(roll, pitch, yaw, throttle, zoom, gimbalPitch);
             auto const prevZoom = _previousZoom;
             _previousZoom = zoom;
             if(zoom >= 0.5)
@@ -917,6 +920,15 @@ void Joystick::_handleAxis()
                 else if(prevZoom <=-0.5)
                 {
                     _executeButtonAction(_buttonActionContinuousZoomOut, false);
+                }
+            }
+            if(gimbalPitch >= 0.2 || gimbalPitch <=-0.2)
+            {
+                qCWarning(JoystickLog) << "gimbalPitch:" << gimbalPitch;
+                if(_gimbalAxisTimer.elapsed() > static_cast<int>(1000.0f / _buttonFrequencyHz))
+                {
+                    _gimbalAxisTimer.start();
+                    emit gimbalPitchStep(int(-gimbalPitch * 15));
                 }
             }
 

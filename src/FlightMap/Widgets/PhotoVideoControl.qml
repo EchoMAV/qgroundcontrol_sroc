@@ -565,9 +565,15 @@ Rectangle {
                     flow: GridLayout.TopToBottom
                     rows: dynamicRows + (_mavlinkCamera ? _mavlinkCamera.activeSettings.length : 0)
 
-                    property int dynamicRows: 11
+                    property int dynamicRows: 12
 
                     // First column
+                    QGCLabel {
+                        text: qsTr("Scroll Wheel Function")
+                        visible: _isHerelink
+                        onVisibleChanged: gridLayout.dynamicRows += visible ? 1 : -1
+                    }
+
                     QGCLabel {
                         text: qsTr("Camera")
                         visible: _multipleMavlinkCameras
@@ -648,6 +654,15 @@ Rectangle {
                     }
 
                     // Second column
+                    QGCComboBox {
+                        Layout.fillWidth: true
+                        sizeToContents: true
+                        model: [qsTr("Zoom"), qsTr("Gimbal")]
+                        currentIndex: _isHerelink ? _gimbalController.scrollWheelGimbal ? 1 : 0 : -1
+                        visible: _isHerelink
+                        onActivated: _gimbalController.scrollWheelGimbal = index > 0
+                    }
+
                     QGCComboBox {
                         Layout.fillWidth: true
                         sizeToContents: true

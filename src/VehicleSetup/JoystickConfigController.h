@@ -46,12 +46,14 @@ public:
     Q_PROPERTY(bool yawAxisMapped               READ yawAxisMapped              NOTIFY yawAxisMappedChanged)
     Q_PROPERTY(bool throttleAxisMapped          READ throttleAxisMapped         NOTIFY throttleAxisMappedChanged)
     Q_PROPERTY(bool zoomAxisMapped              READ zoomAxisMapped             NOTIFY zoomAxisMappedChanged)
+    Q_PROPERTY(bool gimbalPitchAxisMapped       READ gimbalPitchAxisMapped      NOTIFY gimbalPitchAxisMappedChanged)
 
     Q_PROPERTY(int  rollAxisReversed            READ rollAxisReversed           NOTIFY rollAxisReversedChanged)
     Q_PROPERTY(int  pitchAxisReversed           READ pitchAxisReversed          NOTIFY pitchAxisReversedChanged)
     Q_PROPERTY(int  yawAxisReversed             READ yawAxisReversed            NOTIFY yawAxisReversedChanged)
     Q_PROPERTY(int  throttleAxisReversed        READ throttleAxisReversed       NOTIFY throttleAxisReversedChanged)
     Q_PROPERTY(int  zoomAxisReversed            READ zoomAxisReversed           NOTIFY zoomAxisReversedChanged)
+    Q_PROPERTY(int  gimbalPitchAxisReversed     READ gimbalPitchAxisReversed    NOTIFY gimbalPitchAxisReversedChanged)
 
     Q_PROPERTY(bool deadbandToggle              READ getDeadbandToggle          WRITE setDeadbandToggle    NOTIFY deadbandToggled)
 
@@ -61,6 +63,7 @@ public:
     Q_PROPERTY(bool skipEnabled                 READ skipEnabled                NOTIFY skipEnabledChanged)
 
     Q_PROPERTY(bool hasRightRockerZoom          READ hasRightRockerZoom         NOTIFY hasRightRockerZoomChanged)
+    Q_PROPERTY(bool hasLeftRockerGimbalPitch    READ hasLeftRockerGimbalPitch   NOTIFY hasLeftRockerGimbalPitchChanged)
 
     Q_PROPERTY(QList<qreal> stickPositions      READ stickPositions             NOTIFY stickPositionsChanged)
 
@@ -77,12 +80,14 @@ public:
     bool yawAxisMapped                      () { return _rgFunctionAxisMapping[Joystick::yawFunction]           != _axisNoAxis; }
     bool throttleAxisMapped                 () { return _rgFunctionAxisMapping[Joystick::throttleFunction]      != _axisNoAxis; }
     bool zoomAxisMapped                     () { return _rgFunctionAxisMapping[Joystick::zoomFunction]      != _axisNoAxis; }
+    bool gimbalPitchAxisMapped              () { return _rgFunctionAxisMapping[Joystick::gimbalPitchFunction]      != _axisNoAxis; }
 
     bool rollAxisReversed                   ();
     bool pitchAxisReversed                  ();
     bool yawAxisReversed                    ();
     bool throttleAxisReversed               ();
     bool zoomAxisReversed                   ();
+    bool gimbalPitchAxisReversed            ();
 
     bool getDeadbandToggle                  ();
     void setDeadbandToggle                  (bool);
@@ -97,6 +102,7 @@ public:
     bool skipEnabled                        ();
 
     bool hasRightRockerZoom                 ();
+    bool hasLeftRockerGimbalPitch           ();
 
     QList<qreal> stickPositions             () { return _currentStickPositions; }
 
@@ -106,6 +112,7 @@ public:
         qreal   rightX;
         qreal   rightY;
         qreal   rightRockerX;
+        qreal   leftRockerX;
     };
 
 signals:
@@ -116,16 +123,19 @@ signals:
     void yawAxisMappedChanged               (bool mapped);
     void throttleAxisMappedChanged          (bool mapped);
     void zoomAxisMappedChanged              (bool mapped);
+    void gimbalPitchAxisMappedChanged       (bool mapped);
     void rollAxisReversedChanged            (bool reversed);
     void pitchAxisReversedChanged           (bool reversed);
     void yawAxisReversedChanged             (bool reversed);
     void throttleAxisReversedChanged        (bool reversed);
     void zoomAxisReversedChanged            (bool reversed);
+    void gimbalPitchAxisReversedChanged     (bool reversed);
     void deadbandToggled                    (bool value);
     void transmitterModeChanged             (int mode);
     void calibratingChanged                 ();
     void nextEnabledChanged                 ();
     void hasRightRockerZoomChanged          ();
+    void hasLeftRockerGimbalPitchChanged    ();
     void skipEnabledChanged                 ();
     void stickPositionsChanged              ();
     void statusTextChanged                  ();
@@ -227,6 +237,8 @@ private:
     stateStickPositions _sticksPitchDown;
     stateStickPositions _sticksZoomIn;
     stateStickPositions _sticksZoomOut;
+    stateStickPositions _sticksGimbalPitchDown;
+    stateStickPositions _sticksGimbalPitchUp;
 
     QList<qreal> _currentStickPositions;
 

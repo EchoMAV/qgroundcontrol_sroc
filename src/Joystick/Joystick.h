@@ -198,7 +198,7 @@ signals:
     void accumulatorChanged         (bool accumulator);
     void enabledChanged             (bool enabled);
     void circleCorrectionChanged    (bool circleCorrection);
-    void axisValues                 (float roll, float pitch, float yaw, float throttle, float zoom);
+    void axisValues                 (float roll, float pitch, float yaw, float throttle, float zoom, float gimbalPitch);
 
     void axisFrequencyHzChanged     ();
     void buttonFrequencyHzChanged   ();
@@ -283,6 +283,7 @@ protected:
     Vehicle* _activeVehicle         = nullptr;
 
     float _previousZoom             = 0;
+    QElapsedTimer _gimbalAxisTimer;
 
     bool    _pollingStartedForCalibration = false;
 
