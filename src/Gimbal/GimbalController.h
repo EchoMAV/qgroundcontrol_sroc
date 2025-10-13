@@ -64,6 +64,7 @@ signals:
     void gimbalHaveControlChanged();
     void gimbalOthersHaveControlChanged();
 
+
 private:
     void _initFacts(); // To be called EXCLUSIVELY in Gimbal constructors
 
@@ -169,6 +170,8 @@ public slots:
 signals:
     void    activeGimbalChanged           ();
     void    showAcquireGimbalControlPopup (); // This triggers a popup in QML asking the user for aproval to take control
+    void gimbalPitchChanged(float newPitch);
+
 
 private slots:
     void    _mavlinkMessageReceived(const mavlink_message_t& message);

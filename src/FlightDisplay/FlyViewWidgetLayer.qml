@@ -349,38 +349,30 @@ Item {
         anchors.verticalCenter: toolStrip.verticalCenter
         orientation: Qt.Vertical
         from: -90
-        to: 30
+        to: 0
         stepSize: 5
+
         visible: QGroundControl.multiVehicleManager.activeVehicle
                  && QGroundControl.multiVehicleManager.activeVehicle.gimbalController
                  && QGroundControl.multiVehicleManager.activeVehicle.gimbalController.activeGimbal
 
-        // track user dragging explicitly
-        property bool userDragging: false
-
-        // when gimbal telemetry updates pitch
         Connections {
             target: QGroundControl.multiVehicleManager.activeVehicle
-                    && QGroundControl.multiVehicleManager.activeVehicle.gimbalController
-                    && QGroundControl.multiVehicleManager.activeVehicle.gimbalController.activeGimbal ? QGroundControl.multiVehicleManager.activeVehicle.gimbalController.activeGimbal.absolutePitch : null
+                    && QGroundControl.multiVehicleManager.activeVehicle.gimbalController ? QGroundControl.multiVehicleManager.activeVehicle.gimbalController : null
 
-            function onValueChanged(newValue) {
-                // only update slider if user isn't currently dragging
-                if (!gimbalPitchSlider.userDragging) {
-                    gimbalPitchSlider.value = newValue
-                }
+            function onGimbalPitchChanged(newPitch) {
+                gimbalPitchSlider.value = newPitch
             }
         }
 
-        // send commands while slider moves
+        // send pitch when user drags
         onMoved: {
             const v = QGroundControl.multiVehicleManager.activeVehicle
             if (v && v.gimbalController) {
+                gimbalPitchSlider.value = value // immediate visual feedback
                 v.gimbalController.sendPitchAbsoluteYaw(value, 0, false)
             }
         }
-
-        onPressedChanged: userDragging = pressed
 
         background: Rectangle {
             anchors.fill: parent
@@ -389,8 +381,8 @@ Item {
         }
 
         handle: Rectangle {
-            width: 33
-            height: 12
+            width: 70
+            height: 14
             radius: 5
             color: "#00C853"
             border.color: "#00FF88"
@@ -399,6 +391,7 @@ Item {
             y: (1.0 - (gimbalPitchSlider.value - gimbalPitchSlider.from)
                 / (gimbalPitchSlider.to - gimbalPitchSlider.from))
                * (gimbalPitchSlider.height - height)
+
             Behavior on y {
                 NumberAnimation {
                     duration: 50

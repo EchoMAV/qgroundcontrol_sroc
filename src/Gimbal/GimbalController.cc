@@ -300,6 +300,7 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
 
     gimbal.setAbsoluteRoll(qRadiansToDegrees(roll));
     gimbal.setAbsolutePitch(qRadiansToDegrees(pitch));
+    emit gimbalPitchChanged(gimbal.absolutePitch()->rawValue().toFloat());
 
     if (yaw_in_vehicle_frame) {
         float bodyYaw = qRadiansToDegrees(yaw);
@@ -448,10 +449,13 @@ void GimbalController::gimbalPitchStep(int direction)
     if (_activeGimbal->yawLock()) {
         qCDebug(GimbalLog) << "sendPitchAbsoluteYaw absolutePitch: " << _activeGimbal->absolutePitch()->rawValue().toFloat();
         sendPitchAbsoluteYaw(_activeGimbal->absolutePitch()->rawValue().toFloat() + direction, _activeGimbal->absoluteYaw()->rawValue().toFloat(), false);
+
     } else {
         qCDebug(GimbalLog) << "sendPitchBodyYaw absolutePitch: " << _activeGimbal->absolutePitch()->rawValue().toFloat();
         sendPitchBodyYaw(_activeGimbal->absolutePitch()->rawValue().toFloat() + direction, _activeGimbal->bodyYaw()->rawValue().toFloat(), false);
     }
+
+    emit gimbalPitchChanged(_activeGimbal->absolutePitch()->rawValue().toFloat() + direction);
 }
 
 void GimbalController::gimbalYawStep(int direction)
