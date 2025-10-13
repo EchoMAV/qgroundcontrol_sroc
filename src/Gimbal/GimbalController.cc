@@ -11,13 +11,6 @@
 
 QGC_LOGGING_CATEGORY(GimbalLog, "GimbalLog")
 
-namespace
-{
-static constexpr char const*const np_pi_herelink_host = "192.168.144.100";
-static constexpr char const*const np_monark_name_and_pass = "monark";
-static constexpr char const*const np_scrollWheelGimbalFile = "/home/monark/.herelinkScrollGimbal";
-
-}
 
 const char* GimbalController::_gimbalFactGroupNamePrefix =  "gimbal";
 const char* Gimbal::_absoluteRollFactName =                 "gimbalRoll";
@@ -27,54 +20,6 @@ const char* Gimbal::_absoluteYawFactName =                  "gimbalAzimuth";
 const char* Gimbal::_deviceIdFactName =                     "deviceId";
 const char* Gimbal::_managerCompidFactName =                "managerCompid";
 
-
-ThreadWorker::ThreadWorker()
-    : m_taskQueueCondition{}
-    , m_taskQueueMut{}
-    , m_taskQueue{}
-    , m_shutdown{false}
-{
-}
-
-bool ThreadWorker::needDispatch()
-{
-    return QThread::currentThread() != this;
-}
-
-void ThreadWorker::dispatch(std::function<void()> t)
-{
-    QMutexLocker lock(&m_taskQueueMut);
-    m_taskQueue.enqueue(t);
-    m_taskQueueCondition.wakeAll();
-}
-
-void ThreadWorker::shutdown()
-{
-    if(needDispatch())
-    {
-        dispatch([this](){m_shutdown=true;});
-        QThread::wait();
-    }
-    else
-    {
-        QThread::terminate();
-    }
-}
-
-void ThreadWorker::run()
-{
-    while(!m_shutdown)
-    {
-        m_taskQueueMut.lock();
-        while(m_taskQueue.isEmpty())
-        {
-            m_taskQueueCondition.wait(&m_taskQueueMut);
-        }
-        auto const t = m_taskQueue.dequeue();
-        m_taskQueueMut.unlock();
-        t();
-    }
-}
 
 Gimbal::Gimbal()
     : FactGroup(100, ":/json/Vehicle/GimbalFact.json") // No need to set parent as this will be deleted by gimbalController destructor
@@ -143,20 +88,16 @@ GimbalController::GimbalController(MAVLinkProtocol* mavlink, Vehicle* vehicle)
     : _mavlink(mavlink)
     , _vehicle(vehicle)
     , _activeGimbal(nullptr)
-    , _scrollWheelGimbal(false)
-    , mp_slotHandler{std::make_unique<ThreadWorker>()}
 
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &GimbalController::_mavlinkMessageReceived);
-    mp_slotHandler->start();
 
 }
 
 GimbalController::~GimbalController()
 {
     _gimbals.clearAndDeleteContents();
-    mp_slotHandler->shutdown();
 
 }
 
@@ -175,235 +116,8 @@ GimbalController::setActiveGimbal(Gimbal* gimbal)
     }
 
     sendPitchBodyYaw(0,0,false);
-    _readScrollWheelGimbalSetting();
 }
 
-void GimbalController::_readScrollWheelGimbalSetting()
-{
-    if(mp_slotHandler->needDispatch())
-    {
-        mp_slotHandler->dispatch([this](){_readScrollWheelGimbalSetting();});
-    }
-    else
-    {
-        if(qgcApp()->isHerelink())
-        {
-            qCDebug(GimbalLog) << "ENTER GimbalController::_readScrollWheelGimbalSetting()";
-            ssh_session p_session = nullptr;
-            ssh_channel p_channel = nullptr;
-            int returnCode=0;
-            bool isConnected=false;
-            char p_buffer[4096];
-            do
-            {
-                p_session = ssh_new();
-                if(!p_session)
-                {
-                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() :  Unable to create SSH session";
-                    break;
-                }
-                returnCode=ssh_options_set(p_session, SSH_OPTIONS_HOST, np_pi_herelink_host);
-                if(returnCode)
-                {
-                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() : ssh_options_set failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
-                    break;
-                }
-                returnCode=ssh_connect(p_session);
-                if(returnCode)
-                {
-                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() : ssh_connect failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
-                    break;
-                }
-                isConnected=true;
-                returnCode = ssh_userauth_password(p_session, np_monark_name_and_pass, np_monark_name_and_pass);
-                if(returnCode)
-                {
-                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() : ssh_userauth_password failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
-                    break;
-                }
-                p_channel=ssh_channel_new(p_session);
-                if(!p_channel)
-                {
-                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() : ssh_channel_new failed: "<<ssh_get_error(p_session);
-                    break;
-                }
-                returnCode = ssh_channel_open_session(p_channel);
-                if(returnCode)
-                {
-                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() : ssh_channel_open_session failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
-                    break;
-                }
-                returnCode = ssh_channel_request_shell(p_channel);
-                if(returnCode)
-                {
-                    qCCritical(GimbalLog)<<"_readScrollWheelGimbalSetting() : ssh_channel_request_shell failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
-                    break;
-                }
-                QString command = QString("test -f ")+np_scrollWheelGimbalFile+" && echo exists || echo not found";
-                ssh_channel_write(p_channel,command.toUtf8().data(), command.size());
-                char* p_bufferItr = &p_buffer[0];
-                auto const start = std::chrono::system_clock::now();
-                for(;;)
-                {
-                    if(!ssh_channel_is_open(p_channel))
-                    {
-                        break;
-                    }
-                    if(ssh_channel_poll_timeout(p_channel,2000,0)>0)
-                    {
-                        int numBytesRead = ssh_channel_read(p_channel, p_bufferItr, sizeof(p_buffer) - (p_bufferItr - (&p_buffer[0])),0);
-                        p_bufferItr+=numBytesRead;
-                        if(numBytesRead>0)
-                        {
-                            QString responseStr=  QString::fromUtf8(p_buffer,p_bufferItr - (&p_buffer[0]));
-                            qCDebug(GimbalLog) <<"responseStr = "<<responseStr;
-                            if(responseStr.indexOf("exists")>=0)
-                            {
-                                _scrollWheelGimbal=true;
-                                //the file exists
-                                break;
-                            }
-                            else if(responseStr.indexOf("not found")>=0)
-                            {
-                                _scrollWheelGimbal=false;
-                                //the file does not exist
-                                break;
-                            }
-                        }
-                    }
-                    if(std::chrono::system_clock::now() - start > std::chrono::seconds(5))
-                    {
-                        break;
-                    }
-                    if(size_t(p_bufferItr - (&p_buffer[0])) >= sizeof(p_buffer))
-                    {
-                        break;
-                    }
-                }
-            }
-            while(false);
-            if(p_channel)
-            {
-                ssh_channel_close(p_channel);
-                ssh_channel_free(p_channel);
-                p_channel=nullptr;
-            }
-            if(isConnected)
-            {
-                ssh_disconnect(p_session);
-                isConnected=false;
-            }
-            if(p_session)
-            {
-                ssh_free(p_session);
-                p_session=nullptr;
-            }
-            ssh_finalize();
-            emit scrollWheelGimbalChanged();
-            qCDebug(GimbalLog) << "EXIT  GimbalController::_readScrollWheelGimbalSetting()";
-
-        }
-    }
-}
-
-void GimbalController::setScrollWheelGimbal(bool val)
-{
-    if(mp_slotHandler->needDispatch())
-    {
-        mp_slotHandler->dispatch([this,val](){setScrollWheelGimbal(val);});
-    }
-    else
-    {
-        if(qgcApp()->isHerelink() && _scrollWheelGimbal!=val)
-        {
-            _scrollWheelGimbal=val;
-            ssh_session p_session = nullptr;
-            ssh_channel p_channel = nullptr;
-            int returnCode=0;
-            bool isConnected=false;
-            do
-            {
-                p_session = ssh_new();
-                if(!p_session)
-                {
-                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") :  Unable to create SSH session";
-                    break;
-                }
-                returnCode=ssh_options_set(p_session, SSH_OPTIONS_HOST, np_pi_herelink_host);
-                if(returnCode)
-                {
-                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_options_set failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
-                    break;
-                }
-                returnCode=ssh_connect(p_session);
-                if(returnCode)
-                {
-                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_connect failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
-                    break;
-                }
-                isConnected=true;
-                returnCode = ssh_userauth_password(p_session, np_monark_name_and_pass, np_monark_name_and_pass);
-                if(returnCode)
-                {
-                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_userauth_password failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
-                    break;
-                }
-                p_channel=ssh_channel_new(p_session);
-                if(!p_channel)
-                {
-                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_channel_new failed: "<<ssh_get_error(p_session);
-                    break;
-                }
-                returnCode = ssh_channel_open_session(p_channel);
-                if(returnCode)
-                {
-                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_channel_open_session failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
-                    break;
-                }
-                returnCode = ssh_channel_request_shell(p_channel);
-                if(returnCode)
-                {
-                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_channel_request_shell failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
-                    break;
-                }
-                QString command;
-                if(_scrollWheelGimbal)
-                {
-                    command = QString("touch ") + np_scrollWheelGimbalFile;
-                }
-                else
-                {
-                    command = QString("rm ") + np_scrollWheelGimbalFile;
-                }
-                returnCode = ssh_channel_write(p_channel,command.toUtf8().data(), command.size());
-                if(returnCode <= 0)
-                {
-                    qCCritical(GimbalLog)<<"setScrollWheelGimbal("<<val<<") : ssh_channel_write failed: rc="<<returnCode<<": "<<ssh_get_error(p_session);
-                    break;
-                }
-            }
-            while(false);
-            if(p_channel)
-            {
-                ssh_channel_close(p_channel);
-                ssh_channel_free(p_channel);
-                p_channel=nullptr;
-            }
-            if(isConnected)
-            {
-                ssh_disconnect(p_session);
-                isConnected=false;
-            }
-            if(p_session)
-            {
-                ssh_free(p_session);
-                p_session=nullptr;
-            }
-            ssh_finalize();
-            emit scrollWheelGimbalChanged();
-        }
-    }
-}
 
 void
 GimbalController::_mavlinkMessageReceived(const mavlink_message_t& message)
@@ -851,7 +565,6 @@ void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool showErr
         | GIMBAL_MANAGER_FLAGS_PITCH_LOCK
         | GIMBAL_MANAGER_FLAGS_YAW_LOCK
         | GIMBAL_MANAGER_FLAGS_YAW_IN_VEHICLE_FRAME;
-        //| GIMBAL_MANAGER_FLAGS_YAW_IN_EARTH_FRAME;
 
     _vehicle->sendMavCommand(
                 _activeGimbal->managerCompid()->rawValue().toUInt(),

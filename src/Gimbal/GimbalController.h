@@ -13,23 +13,6 @@ Q_DECLARE_LOGGING_CATEGORY(GimbalLog)
 class MavlinkProtocol;
 
 
-class ThreadWorker : public QThread
-{
-    Q_OBJECT
-public:
-    ThreadWorker();
-    bool needDispatch();
-    void dispatch(std::function<void()> t);
-    void shutdown();
-protected:
-    void run() override;
-private:
-    QWaitCondition m_taskQueueCondition;
-    QMutex m_taskQueueMut;
-    QQueue<std::function<void()>> m_taskQueue;
-    bool m_shutdown;
-};
-
 class Gimbal : public FactGroup
 {
     Q_OBJECT
@@ -160,15 +143,12 @@ public:
     };
 
     Q_PROPERTY(Gimbal*             activeGimbal      READ activeGimbal      WRITE setActiveGimbal      NOTIFY activeGimbalChanged)
-    Q_PROPERTY(bool                scrollWheelGimbal READ scrollWheelGimbal WRITE setScrollWheelGimbal NOTIFY scrollWheelGimbalChanged)
     Q_PROPERTY(QmlObjectListModel* gimbals           READ gimbals           CONSTANT)
 
     Gimbal*             activeGimbal()  { return _activeGimbal; }
-    bool                scrollWheelGimbal()  { return _scrollWheelGimbal; }
     QmlObjectListModel* gimbals()       { return &_gimbals; }
 
     void setActiveGimbal(Gimbal* gimbal);
-    void setScrollWheelGimbal(bool val);
 
     void sendPitchYawFlags                  (uint32_t flags);
     Q_INVOKABLE void gimbalOnScreenControl  (float panpct, float tiltpct, bool clickAndPoint, bool clickAndDrag, bool rateControl, bool retract = false, bool neutral = false, bool yawlock = false);
@@ -188,7 +168,6 @@ public slots:
 
 signals:
     void    activeGimbalChanged           ();
-    void    scrollWheelGimbalChanged           ();
     void    showAcquireGimbalControlPopup (); // This triggers a popup in QML asking the user for aproval to take control
 
 private slots:
@@ -203,12 +182,10 @@ private:
     void    _checkComplete                      (Gimbal& gimbal, GimbalPairId pairId);
     bool    _tryGetGimbalControl                ();
     bool    _yawInVehicleFrame                  (uint32_t flags);
-    void    _readScrollWheelGimbalSetting       ();
 
     MAVLinkProtocol*    _mavlink            = nullptr;
     Vehicle*            _vehicle            = nullptr;
     Gimbal*             _activeGimbal       = nullptr;
-    bool                _scrollWheelGimbal  = false;
 
     QMap<uint8_t, PotentialGimbalManager> _potentialGimbalManagers; // key is compid
 
@@ -216,6 +193,5 @@ private:
     QmlObjectListModel _gimbals;
 
     static const char* _gimbalFactGroupNamePrefix;
-    std::unique_ptr<ThreadWorker> mp_slotHandler;
 
 };
