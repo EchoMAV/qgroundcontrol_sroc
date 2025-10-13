@@ -105,6 +105,8 @@ DECLARE_SETTINGGROUP(Video, "Video")
 
     // Set default value for videoSource
     _setDefaults();
+    _nameToMetaDataMap[gridLinesName]->setRawDefaultValue(true);
+    _nameToMetaDataMap[recordOnFlyingName]->setRawDefaultValue(false);
 }
 
 void VideoSettings::_setDefaults()

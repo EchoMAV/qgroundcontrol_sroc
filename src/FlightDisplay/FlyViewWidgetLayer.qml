@@ -349,7 +349,7 @@ Item {
         anchors.verticalCenter: toolStrip.verticalCenter
         orientation: Qt.Vertical
         from: -90
-        to: 0
+        to: 30
         stepSize: 5
         visible: QGroundControl.multiVehicleManager.activeVehicle
                  && QGroundControl.multiVehicleManager.activeVehicle.gimbalController

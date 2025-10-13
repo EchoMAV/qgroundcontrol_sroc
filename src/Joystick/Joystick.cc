@@ -175,13 +175,13 @@ void Joystick::_setDefaultCalibration(void) {
         _rgCalibration[axis] = calibration;
     }
 
-
+    // aka herelink
     if(_name == "gpio-keys")
     {
         setButtonAction(0, "Altitude Hold");
         setButtonAction(1, _buttonActionToggleVideoRecord);
         setButtonAction(2, "GPS Loiter");
-        setButtonAction(3, "Flow Hold");
+        // setButtonAction(3, "Flow Hold");
         setButtonAction(4, "RTL");
         setButtonAction(5, _buttonActionTriggerCamera);
     }
@@ -924,11 +924,10 @@ void Joystick::_handleAxis()
             }
             if(gimbalPitch >= 0.2 || gimbalPitch <=-0.2)
             {
-                qCWarning(JoystickLog) << "gimbalPitch:" << gimbalPitch;
-                if(_gimbalAxisTimer.elapsed() > static_cast<int>(1000.0f / _buttonFrequencyHz))
+                if(_gimbalAxisTimer.elapsed() > static_cast<int>(15.0F))
                 {
                     _gimbalAxisTimer.start();
-                    emit gimbalPitchStep(int(-gimbalPitch * 15));
+                    emit gimbalPitchStep(int(-gimbalPitch * 5));
                 }
             }
 

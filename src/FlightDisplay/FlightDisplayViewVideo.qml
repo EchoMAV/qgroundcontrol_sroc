@@ -98,6 +98,7 @@ Item {
                     }
                 }
                 Rectangle {
+                    z: QGroundControl.zOrderTopMost + 10
                     color: Qt.rgba(1, 1, 1, 0.5)
                     height: parent.height * 0.25
                     width: 3
@@ -108,6 +109,7 @@ Item {
                     border.color: Qt.rgba(1, 1, 1, 0.5)
                 }
                 Rectangle {
+                    z: QGroundControl.zOrderTopMost + 10
                     color: Qt.rgba(1, 1, 1, 0.5)
                     width: parent.height * 0.25
                     height: 3
