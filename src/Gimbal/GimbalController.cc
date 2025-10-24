@@ -92,6 +92,28 @@ GimbalController::GimbalController(MAVLinkProtocol* mavlink, Vehicle* vehicle)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &GimbalController::_mavlinkMessageReceived);
+    _gimbalCommandTimer.setParent(this);
+    _gimbalCommandTimer.setTimerType(Qt::CoarseTimer);
+    _gimbalCommandTimer.setInterval(200);
+    connect(&_gimbalCommandTimer, &QTimer::timeout, this, [this]() {
+        if (!_activeGimbal || std::isnan(_targetPitch))
+            return;
+
+        static float lastSentPitch = NAN;
+
+        float currentPitch = _activeGimbal->absolutePitch()->rawValue().toFloat();
+
+        // Only resend if target changed significantly or gimbal lags behind
+        bool targetChanged = std::isnan(lastSentPitch) ||
+                             fabs(_targetPitch - lastSentPitch) > 0.5f;
+        bool gimbalLagging = fabs(_targetPitch - currentPitch) > 1.0f;
+        if (targetChanged || gimbalLagging) {
+            lastSentPitch = _targetPitch;
+            qCDebug(GimbalLog) << "sendPitch2:" << _targetPitch;
+            sendPitchAbsoluteYaw(_targetPitch, _targetYaw, false);
+        }
+    });
+    _gimbalCommandTimer.start();
 
 }
 
@@ -300,7 +322,8 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
 
     gimbal.setAbsoluteRoll(qRadiansToDegrees(roll));
     gimbal.setAbsolutePitch(qRadiansToDegrees(pitch));
-    emit gimbalPitchChanged(gimbal.absolutePitch()->rawValue().toFloat());
+
+    _checkComplete(gimbal, pairId);
 
     if (yaw_in_vehicle_frame) {
         float bodyYaw = qRadiansToDegrees(yaw);
@@ -454,8 +477,6 @@ void GimbalController::gimbalPitchStep(int direction)
         qCDebug(GimbalLog) << "sendPitchBodyYaw absolutePitch: " << _activeGimbal->absolutePitch()->rawValue().toFloat();
         sendPitchBodyYaw(_activeGimbal->absolutePitch()->rawValue().toFloat() + direction, _activeGimbal->bodyYaw()->rawValue().toFloat(), false);
     }
-
-    emit gimbalPitchChanged(_activeGimbal->absolutePitch()->rawValue().toFloat() + direction);
 }
 
 void GimbalController::gimbalYawStep(int direction)
@@ -531,8 +552,6 @@ void GimbalController::sendPitchBodyYaw(float pitch, float yaw, bool showError) 
         return;
     }
 
-    qCDebug(GimbalLog) << "sendPitch: " << pitch << " BodyYaw: " << yaw << " ComponentID: "<<_activeGimbal->managerCompid()->rawValue().toUInt()<<" DeviceID: "<<_activeGimbal->deviceId()->rawValue().toUInt();
-
     unsigned flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK
         | GIMBAL_MANAGER_FLAGS_PITCH_LOCK
         | GIMBAL_MANAGER_FLAGS_YAW_IN_VEHICLE_FRAME;
@@ -551,6 +570,9 @@ void GimbalController::sendPitchBodyYaw(float pitch, float yaw, bool showError) 
 }
 
 void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool showError) {
+    _targetPitch = pitch;
+    _targetYaw   = yaw;
+
     if (!_tryGetGimbalControl()) {
         return;
     }

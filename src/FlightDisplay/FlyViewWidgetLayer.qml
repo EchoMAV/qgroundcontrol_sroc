@@ -351,24 +351,33 @@ Item {
         from: -90
         to: 0
         stepSize: 5
+        value: 0
 
         visible: QGroundControl.multiVehicleManager.activeVehicle
                  && QGroundControl.multiVehicleManager.activeVehicle.gimbalController
                  && QGroundControl.multiVehicleManager.activeVehicle.gimbalController.activeGimbal
 
-        Connections {
-            target: QGroundControl.multiVehicleManager.activeVehicle
-                    && QGroundControl.multiVehicleManager.activeVehicle.gimbalController ? QGroundControl.multiVehicleManager.activeVehicle.gimbalController : null
+        // Connections {
+        //     target: QGroundControl.multiVehicleManager.activeVehicle
+        //             && QGroundControl.multiVehicleManager.activeVehicle.gimbalController ? QGroundControl.multiVehicleManager.activeVehicle.gimbalController : null
 
-            function onGimbalPitchChanged(newPitch) {
-                gimbalPitchSlider.value = newPitch
-            }
-        }
+        //     function onGimbalPitchChanged(newPitch) {
+        //         gimbalPitchSlider.value = newPitch
+        //     }
+        // }
 
         // send pitch when user drags
+        property real _lastSentValue: NaN
+
         onMoved: {
             const v = QGroundControl.multiVehicleManager.activeVehicle
-            if (v && v.gimbalController) {
+            if (!v || !v.gimbalController)
+                return
+
+            // Send only if slider *actually moved enough*
+            if (isNaN(_lastSentValue) || Math.abs(
+                        value - _lastSentValue) >= 0.5) {
+                _lastSentValue = value
                 gimbalPitchSlider.value = value // immediate visual feedback
                 v.gimbalController.sendPitchAbsoluteYaw(value, 0, false)
             }

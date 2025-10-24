@@ -170,7 +170,6 @@ public slots:
 signals:
     void    activeGimbalChanged           ();
     void    showAcquireGimbalControlPopup (); // This triggers a popup in QML asking the user for aproval to take control
-    void gimbalPitchChanged(float newPitch);
 
 
 private slots:
@@ -185,6 +184,12 @@ private:
     void    _checkComplete                      (Gimbal& gimbal, GimbalPairId pairId);
     bool    _tryGetGimbalControl                ();
     bool    _yawInVehicleFrame                  (uint32_t flags);
+    float  _lastPitchCommand = NAN;
+    float  _lastYawCommand   = NAN;
+    int    _pendingRetries = 0;
+    QTimer _gimbalCommandTimer;
+    float _targetPitch = NAN;
+    float _targetYaw = NAN;
 
     MAVLinkProtocol*    _mavlink            = nullptr;
     Vehicle*            _vehicle            = nullptr;
