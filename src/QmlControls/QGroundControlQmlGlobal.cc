@@ -72,7 +72,6 @@ bool                    QGroundControlQmlGlobal::isHerelink          ()  const
 
 
 int QGroundControlQmlGlobal::androidBatteryVoltage() const {
-    qDebug() << "Reading androidBatteryVoltage";
     return _androidBatteryVoltage;
 }
 
