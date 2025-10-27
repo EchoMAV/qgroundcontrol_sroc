@@ -245,6 +245,12 @@ signals:
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
     void skipSetupPageChanged           ();
+    void androidBatteryVoltageChanged();
+
+public:
+    Q_PROPERTY(int androidBatteryVoltage READ androidBatteryVoltage NOTIFY androidBatteryVoltageChanged)
+    int androidBatteryVoltage() const;
+    Q_INVOKABLE void updateAndroidBatteryVoltage();
 
 private:
     double                  _flightMapInitialZoom   = 17.0;
@@ -265,6 +271,7 @@ private:
     ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
     QmlUnitsConversion      _unitsConversion;
+    int _androidBatteryVoltage = 0;
 #if defined(QGC_ENABLE_PAIRING)
     PairingManager*         _pairingManager         = nullptr;
 #endif

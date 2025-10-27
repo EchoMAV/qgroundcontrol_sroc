@@ -16,7 +16,7 @@
  *
  */
 
-#define ECHOMAV_VERSION "v1.0.15"
+#define ECHOMAV_VERSION "v1.0.16"
 
 #include <QFile>
 #include <QRegularExpression>
@@ -24,7 +24,6 @@
 #include <QQuickWindow>
 #include <QQuickImageProvider>
 #include <QQuickStyle>
-
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
 #endif

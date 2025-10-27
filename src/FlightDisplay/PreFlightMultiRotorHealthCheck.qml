@@ -22,14 +22,14 @@ import QGroundControl.SettingsManager 1.0
 
 PreFlightCheckButton {
     name: qsTr("Motor Run Up")
-    manualText: qsTr("A run up of the motors is recommended to ensure proper orientation and connection prior to flight.")
+    manualText: qsTr("Verify power and spin direction.")
 
     bottomPadding: Math.round(ScreenTools.defaultFontPixelHeight / 2)
                    + motorTestButton.height + Math.round(
                        ScreenTools.defaultFontPixelHeight / 2)
     property bool allowFailurePercentOverride: false
     property string _buttonLabel: qsTr("Motor Run Up")
-    property int _motorTestThrottle: 3 //percent throttle to use for motor runup
+    property int _motorTestThrottle: 6 //percent throttle to use for motor runup
     property int _motorTestDurationSec: 2 //seconds for the motor test to last
     property int _testDelayDurationSec: 4 //seconds to delay between each motor test message
 
@@ -79,7 +79,7 @@ PreFlightCheckButton {
                             width: ScreenTools.defaultFontPixelWidth * 60
                             height: ScreenTools.defaultFontPixelHeight * 4
                             wrapMode: Text.WordWrap
-                            text: qsTr("WARNING: Running up the motors is dangerous! Ensure the props are clear, then push and hold the button below. The test will spin each motor sequentially for 3 seconds each. Watch each motor and ensure it spins normally.")
+                            text: qsTr("WARNING: Running up the motors can be dangerous! Ensure the props are clear. The test will spin each motor sequentially. Watch each motor and ensure it spins normally.")
                         }
                         Item {
                             width: 1

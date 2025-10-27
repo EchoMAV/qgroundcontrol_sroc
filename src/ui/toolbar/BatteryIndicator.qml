@@ -60,22 +60,6 @@ Item {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
 
-            function getBatteryColor() {
-                switch (battery.chargeState.rawValue) {
-                case MAVLink.MAV_BATTERY_CHARGE_STATE_OK:
-                    return qgcPal.text
-                case MAVLink.MAV_BATTERY_CHARGE_STATE_LOW:
-                    return qgcPal.colorOrange
-                case MAVLink.MAV_BATTERY_CHARGE_STATE_CRITICAL:
-                case MAVLink.MAV_BATTERY_CHARGE_STATE_EMERGENCY:
-                case MAVLink.MAV_BATTERY_CHARGE_STATE_FAILED:
-                case MAVLink.MAV_BATTERY_CHARGE_STATE_UNHEALTHY:
-                    return qgcPal.colorRed
-                default:
-                    return qgcPal.text
-                }
-            }
-
             function getBatteryVoltageColor() {
                 if (!isNaN(battery.voltage.rawValue)) {
                     if (battery.voltage.rawValue >= 22.81) {
@@ -89,22 +73,6 @@ Item {
                     }
                 }
                 return qgcPal.colorRed
-            }
-
-            function getBatteryPercentageText() {
-                if (!isNaN(battery.percentRemaining.rawValue)) {
-                    if (battery.percentRemaining.rawValue > 98.9) {
-                        return qsTr("100%")
-                    } else {
-                        return battery.percentRemaining.valueString + battery.percentRemaining.units
-                    }
-                } else if (!isNaN(battery.voltage.rawValue)) {
-                    return battery.voltage.valueString + battery.voltage.units
-                } else if (battery.chargeState.rawValue
-                           !== MAVLink.MAV_BATTERY_CHARGE_STATE_UNDEFINED) {
-                    return battery.chargeState.enumStringValue
-                }
-                return ""
             }
 
             function getBatteryVoltageText() {
@@ -233,8 +201,8 @@ Item {
 
                     ColumnLayout {
                         QGCLabel {
-                            text: QGroundControl.monarkManager?(QGroundControl.monarkManager.echoLinkBatteryVoltage).toFixed(
-                                      1) + " V":""
+                            text: QGroundControl.monarkManager ? (QGroundControl.monarkManager.echoLinkBatteryVoltage).toFixed(
+                                                                     1) + " V" : ""
                         }
                         Repeater {
                             model: _activeVehicle ? _activeVehicle.batteries : 0

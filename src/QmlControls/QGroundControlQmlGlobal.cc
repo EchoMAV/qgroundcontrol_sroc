@@ -13,7 +13,10 @@
 #include <QSettings>
 #include <QLineF>
 #include <QPointF>
-
+#ifdef Q_OS_ANDROID
+#include <QtAndroidExtras/QAndroidJniObject>
+#include <QtAndroidExtras/QtAndroid>
+#endif
 static const char* kQmlGlobalKeyName = "QGCQml";
 
 const char* QGroundControlQmlGlobal::_flightMapPositionSettingsGroup =          "FlightMapPosition";
@@ -66,6 +69,61 @@ bool                    QGroundControlQmlGlobal::isHerelink          ()  const
 {
     return qgcApp()->isHerelink();
 }
+
+
+int QGroundControlQmlGlobal::androidBatteryVoltage() const {
+    qDebug() << "Reading androidBatteryVoltage";
+    return _androidBatteryVoltage;
+}
+
+void QGroundControlQmlGlobal::updateAndroidBatteryVoltage() {
+#ifndef Q_OS_ANDROID
+    qWarning() << "Attempting to read Android battery voltage but system is not Android!";
+    return;
+#endif
+
+    QAndroidJniObject activity = QtAndroid::androidActivity();
+    if (!activity.isValid()) {
+        qWarning() << "Android activity not yet valid — skipping voltage read";
+        return;
+    }
+
+    QAndroidJniObject intentFilter(
+        "android/content/IntentFilter",
+        "(Ljava/lang/String;)V",
+        QAndroidJniObject::fromString("android.intent.action.BATTERY_CHANGED").object());
+    QAndroidJniObject batteryStatus = activity.callObjectMethod(
+        "registerReceiver",
+        "(Landroid/content/BroadcastReceiver;Landroid/content/IntentFilter;)Landroid/content/Intent;",
+        nullptr,
+        intentFilter.object());
+
+    if (!batteryStatus.isValid()) {
+        qWarning() << "Battery intent invalid";
+        return;
+    }
+
+    // --- Get battery level and scale ---
+    jint level = batteryStatus.callMethod<jint>(
+        "getIntExtra",
+        "(Ljava/lang/String;I)I",
+        QAndroidJniObject::fromString("level").object(),
+        -1);
+
+    jint scale = batteryStatus.callMethod<jint>(
+        "getIntExtra",
+        "(Ljava/lang/String;I)I",
+        QAndroidJniObject::fromString("scale").object(),
+        -1);
+
+    if (level >= 0 && scale > 0) {
+        double percent = (static_cast<double>(level) / static_cast<double>(scale)) * 100.0;
+        _androidBatteryVoltage = percent;
+        emit androidBatteryVoltageChanged();
+        qDebug() << "Android battery percent:" << percent << "%";
+    }
+}
+
 
 void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 {

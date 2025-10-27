@@ -1,3 +1,5 @@
+
+
 /****************************************************************************
  *
  *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
@@ -6,72 +8,61 @@
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
+import QtQuick 2.11
+import QtQuick.Controls 2.4
+import QtQml.Models 2.1
+import QtQuick.Layouts 1.12
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQml.Models                 2.1
-import QtQuick.Layouts              1.12
-
-
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
+import QGroundControl 1.0
+import QGroundControl.ScreenTools 1.0
+import QGroundControl.Controls 1.0
 import QGroundControl.FlightDisplay 1.0
-import QGroundControl.Vehicle       1.0
+import QGroundControl.Vehicle 1.0
 
 //going to do stuff for monark
 Item {
     property var model: listModel
     PreFlightCheckModel {
-        id:     listModel
+        id: listModel
         PreFlightCheckGroup {
             name: qsTr("Multirotor Initial Checks")
             PreFlightJoystickCheck {
-                allowTelemetryFailureOverride:    false//!QGroundControl.settingsManager.appSettings.enforceJoystickRequired.value
+                allowTelemetryFailureOverride: false //!QGroundControl.settingsManager.appSettings.enforceJoystickRequired.value
             }
-
-
 
             PreFlightCheckButton {
-                name:           qsTr("Folding Arms")
-                manualText:     qsTr("Open Arms until fully locked.")
-
-                need_pic:       true
-                pic_name:       "/qmlimages/folding_arms.png"
-            }
-
-            PreFlightBatteryCheck {
-                failurePercent:                 40
-                allowFailurePercentOverride:    false
+                name: qsTr("Folding Arms")
+                manualText: qsTr("Fully extended")
 
                 need_pic: true
-                pic_name: "/qmlimages/battery_latch.png"
+                pic_name: "/qmlimages/folding_arms.png"
             }
 
             PreFlightCheckButton {
-                name:           qsTr("Antenna Orientation")
-                manualText:     qsTr("Orientate antennas up 90deg.")
-            }
-
-            PreFlightSensorsHealthCheck {
-            }
-
-            PreFlightGPSCheck {
-                failureSatCount:        9
-                allowOverrideSatCount:  true
-            }
-
-            PreFlightCheckButton {
-                name:           qsTr("Propellers")
-                manualText:     qsTr("unfolded Propellers")
+                name: qsTr("Propellers")
+                manualText: qsTr("Fully extended")
 
                 need_pic: true
                 pic_name: "/qmlimages/folding_props.png"
             }
 
+            PreFlightBatteryCheck {
+                failurePercent: 40
+                allowFailurePercentOverride: false
+
+                need_pic: false
+            }
+
             PreFlightMultiRotorHealthCheck {
                 need_pic: true
                 pic_name: "/qmlimages/motor_test.png"
+            }
+
+            PreFlightSensorsHealthCheck {}
+
+            PreFlightGPSCheck {
+                failureSatCount: 9
+                allowOverrideSatCount: true
             }
         }
 
@@ -79,8 +70,8 @@ Item {
             name: qsTr("Please arm the vehicle here")
 
             PreFlightCheckButton {
-                name:           qsTr("Mission")
-                manualText:     qsTr("Please confirm mission is valid (waypoints valid, no terrain collision).")
+                name: qsTr("Mission")
+                manualText: qsTr("Please confirm mission is valid (waypoints valid, no terrain collision).")
             }
         }
 
@@ -89,20 +80,19 @@ Item {
 
             // Check list item group 2 - Final checks before launch
             PreFlightCheckButton {
-                name:           qsTr("Payload")
-                manualText:     qsTr("Is Video Feed Operational?")
+                name: qsTr("Payload")
+                manualText: qsTr("Is Video Feed Operational?")
             }
 
             PreFlightCheckButton {
-                name:           qsTr("Wind & weather")
-                manualText:     qsTr("Under 35mph winds? Raining?")
+                name: qsTr("Wind & weather")
+                manualText: qsTr("Under 40mph winds? Raining?")
             }
 
             PreFlightCheckButton {
-                name:           qsTr("Flight area")
-                manualText:     qsTr("Launch area and path free of obstacles/people?")
+                name: qsTr("Flight area")
+                manualText: qsTr("Launch area and path free of obstacles/people?")
             }
         }
     }
 }
-
