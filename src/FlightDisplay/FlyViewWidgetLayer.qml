@@ -353,21 +353,32 @@ Item {
         stepSize: 5
         value: 0
 
+        onPressedChanged: {
+            if (pressed)
+                userDragging = true
+            else
+                userDragging = false
+        }
+
         visible: QGroundControl.multiVehicleManager.activeVehicle
                  && QGroundControl.multiVehicleManager.activeVehicle.gimbalController
                  && QGroundControl.multiVehicleManager.activeVehicle.gimbalController.activeGimbal
 
         Connections {
             target: QGroundControl.multiVehicleManager.activeVehicle
-                    && QGroundControl.multiVehicleManager.activeVehicle.gimbalController ? QGroundControl.multiVehicleManager.activeVehicle.gimbalController.pitch : null
+                    && QGroundControl.multiVehicleManager.activeVehicle.gimbalController
+                    && QGroundControl.multiVehicleManager.activeVehicle.gimbalController.activeGimbal ? QGroundControl.multiVehicleManager.activeVehicle.gimbalController.activeGimbal.absolutePitch : null
 
-            function onValueChanged(newPitch) {
-                gimbalPitchSlider.value = newPitch
+            function onRawValueChanged(newPitch) {
+                if (!gimbalPitchSlider.userDragging) {
+                    gimbalPitchSlider.value = newPitch
+                }
             }
         }
 
         // send pitch when user drags
         property real _lastSentValue: NaN
+        property bool userDragging: false
 
         onMoved: {
             const v = QGroundControl.multiVehicleManager.activeVehicle
@@ -378,7 +389,7 @@ Item {
             if (isNaN(_lastSentValue) || Math.abs(
                         value - _lastSentValue) >= 0.5) {
                 _lastSentValue = value
-                gimbalPitchSlider.value = value // immediate visual feedback
+                // gimbalPitchSlider.value = value // immediate visual feedback
                 v.gimbalController.sendPitchAbsoluteYaw(value, 0, false)
             }
         }

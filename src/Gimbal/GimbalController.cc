@@ -570,12 +570,22 @@ void GimbalController::sendPitchBodyYaw(float pitch, float yaw, bool showError) 
 }
 
 void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool showError) {
-    _targetPitch = pitch;
-    _targetYaw   = yaw;
 
     if (!_tryGetGimbalControl()) {
         return;
     }
+
+    static uint64_t lastSend = 0;
+    uint64_t now = QDateTime::currentMSecsSinceEpoch();
+
+    // Limit to 10 Hz (100 ms) to prevent ArduPilot gimbal freeze
+    if (now - lastSend < 100) {
+        return;     // DROP SPAM
+    }
+    lastSend = now;
+
+    _targetPitch = pitch;
+    _targetYaw   = yaw;
 
     if (yaw > 180.0f) {
         yaw -= 360.0f;
