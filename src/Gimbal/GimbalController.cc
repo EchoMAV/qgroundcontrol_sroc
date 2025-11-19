@@ -585,7 +585,7 @@ void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool showErr
         yaw += 360.0f;
     }
 
-    qDebug() << "sendPitch: " << pitch << " absoluteYaw: " << yaw;
+    // qDebug() << "sendPitch: " << pitch << " absoluteYaw: " << yaw;
 
     unsigned flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK
         | GIMBAL_MANAGER_FLAGS_PITCH_LOCK

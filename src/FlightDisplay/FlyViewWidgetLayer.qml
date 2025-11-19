@@ -357,14 +357,14 @@ Item {
                  && QGroundControl.multiVehicleManager.activeVehicle.gimbalController
                  && QGroundControl.multiVehicleManager.activeVehicle.gimbalController.activeGimbal
 
-        // Connections {
-        //     target: QGroundControl.multiVehicleManager.activeVehicle
-        //             && QGroundControl.multiVehicleManager.activeVehicle.gimbalController ? QGroundControl.multiVehicleManager.activeVehicle.gimbalController : null
+        Connections {
+            target: QGroundControl.multiVehicleManager.activeVehicle
+                    && QGroundControl.multiVehicleManager.activeVehicle.gimbalController ? QGroundControl.multiVehicleManager.activeVehicle.gimbalController.pitch : null
 
-        //     function onGimbalPitchChanged(newPitch) {
-        //         gimbalPitchSlider.value = newPitch
-        //     }
-        // }
+            function onValueChanged(newPitch) {
+                gimbalPitchSlider.value = newPitch
+            }
+        }
 
         // send pitch when user drags
         property real _lastSentValue: NaN
@@ -387,6 +387,26 @@ Item {
             anchors.fill: parent
             radius: 4
             color: Qt.rgba(0.1, 0.1, 0.1, 0.6)
+            border.color: "white"
+            border.width: 1
+        }
+
+        Repeater {
+            model: 7
+
+            Rectangle {
+                width: index === 3 ? 34 : 22
+                height: index === 3 ? 3 : 2
+                color: "white"
+                opacity: 0.7
+
+                x: gimbalPitchSlider.width - width - 4
+
+                property real v: gimbalPitchSlider.from + (index * 15)
+                y: (1.0 - (v - gimbalPitchSlider.from)
+                    / (gimbalPitchSlider.to - gimbalPitchSlider.from))
+                   * (gimbalPitchSlider.height - height)
+            }
         }
 
         handle: Rectangle {

@@ -74,19 +74,19 @@ Item {
                     property var acqControlButtonEnabled: QGroundControl.settingsManager.gimbalControllerSettings.toolbarIndicatorShowAcquireReleaseControl.rawValue
 
                     model: [//  {id: "yawLock",   text: activeGimbal.yawLock ? qsTr("Yaw <br> Follow") : qsTr("Yaw <br> Lock")  , visible: true                    },
-                        {
-                            "id": "center",
-                            "text": qsTr("Home"),
-                            "visible": true
-                        }, {
-                            "id": "tilt45",
-                            "text": qsTr("Tilt 45"),
-                            "visible": true
-                        }, {
-                            "id": "tilt90",
-                            "text": qsTr("Tilt 90"),
-                            "visible": true
-                        } //,
+                        // {
+                        //     "id": "center",
+                        //     "text": qsTr("Home"),
+                        //     "visible": true
+                        // }, {
+                        //     "id": "tilt45",
+                        //     "text": qsTr("Tilt 45"),
+                        //     "visible": true
+                        // }, {
+                        //     "id": "tilt90",
+                        //     "text": qsTr("Tilt 90"),
+                        //     "visible": true
+                        // } //,
                         //  {id: "pointHome", text: qsTr("Point <br> Home")                                                 , visible: true                    },
                         //  {id: "retract",   text: qsTr("Retract")                                                         , visible: true                    },
                         //  {id: "acqControl",text: hasControl ? qsTr("Release <br> Control") : qsTr("Acquire <br> Control"), visible: acqControlButtonEnabled }
@@ -94,22 +94,22 @@ Item {
 
                     QGCButton {
                         property var callbackList: [// {"yawLock":      function(){ gimbalController.toggleGimbalYawLock(!activeGimbal.yawLock) }   },
-                            {
-                                "center": function () {
-                                    gimbalController.sendPitchBodyYaw(0, 0,
-                                                                      false)
-                                }
-                            }, {
-                                "tilt45": function () {
-                                    gimbalController.sendPitchBodyYaw(-45, 0,
-                                                                      false)
-                                }
-                            }, {
-                                "tilt90": function () {
-                                    gimbalController.sendPitchBodyYaw(-90, 0,
-                                                                      false)
-                                }
-                            } //,
+                            // {
+                            //     "center": function () {
+                            //         gimbalController.sendPitchBodyYaw(0, 0,
+                            //                                           false)
+                            //     }
+                            // }, {
+                            //     "tilt45": function () {
+                            //         gimbalController.sendPitchBodyYaw(-45, 0,
+                            //                                           false)
+                            //     }
+                            // }, {
+                            //     "tilt90": function () {
+                            //         gimbalController.sendPitchBodyYaw(-90, 0,
+                            //                                           false)
+                            //     }
+                            // } //,
                             // {"pointHome":    function(){ activeVehicle.guidedModeROI(activeVehicle.homePosition) }       },
                             // {"retract":      function(){ gimbalController.toggleGimbalRetracted(true) }                  },
                             // This button changes its action depending on gimbal being under control or not
@@ -415,13 +415,13 @@ Item {
         }
         QGCLabel {
             id: pitchLabel
-            text: activeGimbal ? qsTr("P: ") + activeGimbal.absolutePitch.rawValue.toFixed(
-                                     1) : ""
+            text: activeGimbal ? qsTr("Pitch: ") + activeGimbal.absolutePitch.rawValue.toFixed(
+                                     1) + "°" : ""
         }
-        QGCLabel {
-            id: panLabel
-            text: activeGimbal ? gimbalTelemetryLayout.showAzimuth ? (qsTr("Az: ") + activeGimbal.absoluteYaw.rawValue.toFixed(1)) : (qsTr("Y: ") + activeGimbal.bodyYaw.rawValue.toFixed(1)) : ""
-        }
+        // QGCLabel {
+        //     id: panLabel
+        //     text: activeGimbal ? gimbalTelemetryLayout.showAzimuth ? (qsTr("Az: ") + activeGimbal.absoluteYaw.rawValue.toFixed(1)) : (qsTr("Y: ") + activeGimbal.bodyYaw.rawValue.toFixed(1)) : ""
+        // }
     }
 
     MouseArea {

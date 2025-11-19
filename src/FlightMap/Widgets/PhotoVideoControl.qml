@@ -456,25 +456,25 @@ Rectangle {
                 //visible: _modeIndicatorPhotoMode
             }
             RowLayout {
-                QGCButton {
-                    property real _upDelta: 15
-                    visible: _isHerelink
-                    id: gimbalUpButton
-                    Layout.alignment: Qt.AlignHCenter
-                    enabled: true
-                    text: qsTr("Up")
-                    width: 100
-                    onClicked: {
-                        if (_activeGimbal) {
-                            var curVal = _activeGimbal.absolutePitch.rawValue
-                            var newVal = curVal + _upDelta
-                            if (newVal > 0) {
-                                newVal = 0
-                            }
-                            _gimbalController.sendPitchBodyYaw(newVal, 0, false)
-                        }
-                    }
-                }
+                // QGCButton {
+                //     property real _upDelta: 15
+                //     visible: _isHerelink
+                //     id: gimbalUpButton
+                //     Layout.alignment: Qt.AlignHCenter
+                //     enabled: true
+                //     text: qsTr("Up")
+                //     width: 100
+                //     onClicked: {
+                //         if (_activeGimbal) {
+                //             var curVal = _activeGimbal.absolutePitch.rawValue
+                //             var newVal = curVal + _upDelta
+                //             if (newVal > 0) {
+                //                 newVal = 0
+                //             }
+                //             _gimbalController.sendPitchBodyYaw(newVal, 0, false)
+                //         }
+                //     }
+                // }
                 QGCButton {
                     Layout.alignment: Qt.AlignHCenter
                     enabled: true
@@ -489,25 +489,25 @@ Rectangle {
                             _mavlinkCamera.thermalMode = QGCCameraControl.THERMAL_OFF
                     }
                 }
-                QGCButton {
-                    property real _downDelta: 15
-                    visible: _isHerelink
-                    id: gimbalDownButton
-                    Layout.alignment: Qt.AlignHCenter
-                    enabled: true
-                    text: qsTr("Down")
-                    width: 100
-                    onClicked: {
-                        if (_activeGimbal) {
-                            var curVal = _activeGimbal.absolutePitch.rawValue
-                            var newVal = curVal - _downDelta
-                            if (newVal < -90) {
-                                newVal = -90
-                            }
-                            _gimbalController.sendPitchBodyYaw(newVal, 0, false)
-                        }
-                    }
-                }
+                // QGCButton {
+                //     property real _downDelta: 15
+                //     visible: _isHerelink
+                //     id: gimbalDownButton
+                //     Layout.alignment: Qt.AlignHCenter
+                //     enabled: true
+                //     text: qsTr("Down")
+                //     width: 100
+                //     onClicked: {
+                //         if (_activeGimbal) {
+                //             var curVal = _activeGimbal.absolutePitch.rawValue
+                //             var newVal = curVal - _downDelta
+                //             if (newVal < -90) {
+                //                 newVal = -90
+                //             }
+                //             _gimbalController.sendPitchBodyYaw(newVal, 0, false)
+                //         }
+                //     }
+                // }
             }
 
             QGCLabel {
