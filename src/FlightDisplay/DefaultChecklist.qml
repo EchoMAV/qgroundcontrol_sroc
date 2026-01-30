@@ -34,9 +34,6 @@ Item {
                 allowFailurePercentOverride:    false
             }
 
-            PreFlightSensorsHealthCheck {
-            }
-
             PreFlightGPSCheck {
                 failureSatCount:        9
                 allowOverrideSatCount:  true

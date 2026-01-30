@@ -58,8 +58,6 @@ Item {
                 pic_name: "/qmlimages/motor_test.png"
             }
 
-            PreFlightSensorsHealthCheck {}
-
             PreFlightGPSCheck {
                 failureSatCount: 9
                 allowOverrideSatCount: true
