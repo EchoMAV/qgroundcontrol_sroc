@@ -1660,7 +1660,7 @@ void MonarkManager::startScanning()
                 }
                 else
                 {
-                    qgcApp()->showAppMessage("Cannot authenticate with EchoLink. Perform a factory reset.");
+                    qgcApp()->showAppMessage("Cannot authenticate with EchoLink. Restart application and try again");
                 }
 
             }
@@ -2297,13 +2297,16 @@ void MonarkManager::saveFlutterManagementSettings(QString const& frequency)
         mp_monarkSettings->groundFrequency()->setCookedValue(frequency);
         auto networkId=mp_monarkSettings->networkID()->cookedValueString();
         commands.push_back("AT+MWRADIO=1\n");
-        commands.push_back("AT+MWDISTANCE=8047\n"); //acceptable RF distance 5 miles
+        commands.push_back("AT+MWDISTANCE=12000\n"); //acceptable RF distance 12 km
         commands.push_back("AT+MWTXPOWER="+txPower+"\n");
         commands.push_back("AT+MWFREQ="+frequency+"\n");
         commands.push_back("AT+MWNETWORKID="+networkId+"\n");
         commands.push_back("AT+MWVENCRYPT=2,"+encryptionKey+"\n");
         commands.push_back("AT+MSPWD=monarkmonark,monarkmonark\n");
-        commands.push_back("AT+MWVMODE=0\n");
+        commands.push_back("AT+MWVMODE=0\n"); // master
+        commands.push_back("AT+MWBAND=1\n"); // 4 MHz
+        commands.push_back("AT+MWVRATE=6\n"); // QPSK FEC 3/4
+        commands.push_back("AT+MWMCASTRT=1\n"); //QPSK FEC 3/4
         commands.push_back(QString("AT+MNLAN=LAN,EDIT,0,")+np_srmPairedIp+",255.255.0.0,0\n");
         commands.push_back(QString("AT+MNLANDHCP=LAN,1,")+np_srocIp+",1,0\n");
         commands.push_back("AT&W\n");
@@ -2335,13 +2338,16 @@ void MonarkManager::saveFlutterManagementSettings(QString const& frequency)
         mp_monarkSettings->groundFrequency()->setCookedValue(frequency);
         auto networkId=mp_monarkSettings->networkID()->cookedValueString();
         commands.push_back("AT+MWRADIO=1\n");
-        commands.push_back("AT+MWDISTANCE=8047\n"); //acceptable RF distance 5 miles
+        commands.push_back("AT+MWDISTANCE=12000\n"); //acceptable RF distance 12 km
         commands.push_back("AT+MWTXPOWER="+txPower+"\n");
         commands.push_back("AT+MWFREQ="+frequency+"\n");
         commands.push_back("AT+MWNETWORKID="+networkId+"\n");
         commands.push_back("AT+MWVENCRYPT=2,"+encryptionKey+"\n");
         commands.push_back("AT+MSPWD="+encryptionKey+","+encryptionKey+"\n");
-        commands.push_back("AT+MWVMODE=0\n");
+        commands.push_back("AT+MWVMODE=0\n"); // master
+        commands.push_back("AT+MWBAND=1\n"); // 4 MHz
+        commands.push_back("AT+MWVRATE=6\n"); // QPSK FEC 3/4
+        commands.push_back("AT+MWMCASTRT=1\n"); //QPSK FEC 3/4
         commands.push_back(QString("AT+MNLAN=LAN,EDIT,0,")+np_srmPairedIp+",255.255.0.0,0\n");
         commands.push_back(QString("AT+MNLANDHCP=LAN,1,")+np_srocIp+",1,0\n");
         commands.push_back("AT&W\n");
