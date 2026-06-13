@@ -62,7 +62,7 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         APMCopterMode(APMCopterMode::GUIDED,        true),
         APMCopterMode(APMCopterMode::LOITER,        true),
         APMCopterMode(APMCopterMode::RTL,           true),
-        APMCopterMode(APMCopterMode::CIRCLE,        false),
+        APMCopterMode(APMCopterMode::CIRCLE,        true),
         APMCopterMode(APMCopterMode::LAND,          true),
         APMCopterMode(APMCopterMode::DRIFT,         false),
         APMCopterMode(APMCopterMode::SPORT,         false),
